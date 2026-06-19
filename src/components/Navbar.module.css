@@ -1,0 +1,281 @@
+/* ── desktop: single flex row ── */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px var(--page-x);
+  width: 100%;
+  z-index: 999;
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  gap: 1em;
+}
+
+.logoLink {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.logo {
+  height: 66px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.linksContainer {
+  display: flex;
+  align-items: center;
+  gap: 1.5em;
+}
+
+.link {
+  color: #0B0B0B;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.linkActive {
+  color: #F18E1A;
+  text-decoration: underline #F18E1A;
+}
+.quoteBtn:hover{
+  opacity: 0.8;
+  transition: opacity 0.15s ease-in-out ;
+}
+.quoteBtn {
+  padding: 0.55em;
+  border: 2px solid #F18E1A;
+  background-color: #F18E1A;
+  color: white;
+  border-radius: 0.4em;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.searchContainer {
+  height: 36px;
+  width: 407px;
+  max-width: 100%;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.input {
+  padding: 0.6em;
+  border: 2px solid #F18E1A;
+  flex: 1;
+  border-top-left-radius: 0.4em;
+  border-bottom-left-radius: 0.4em;
+  outline: none;
+  color: #0B0B0B;
+  min-width: 0;
+}
+
+.select {
+  padding: 0.55em;
+  border: 2px solid #F18E1A;
+  outline: none;
+  color: #0B0B0B;
+  margin-left: -1px;
+  font-weight: 500;
+}
+
+.searchBtn {
+  padding: 0.25em 0.4em 0.3em;
+  border: 2px solid #F18E1A;
+  background-color: #F18E1A;
+  color: white;
+  border-top-right-radius: 0.4em;
+  border-bottom-right-radius: 0.4em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.icon:hover { color: #F18E1A; }
+
+.cartWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.cartWrap:hover{
+  color: #F18E1A;
+}
+.cartBadge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: #F18E1A;
+  color: #fff;
+  font-size: 0.65em;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* hamburger hidden on desktop */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #0B0B0B;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+/* mobile drawer hidden by default */
+.mobileMenu {
+  display: none;
+}
+
+.mobileLink {
+  color: #0B0B0B;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1em;
+  padding: 0.7em 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.mobileLink:last-child {
+  border-bottom: none;
+}
+
+.quoteform {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh; /* Lock height to viewport */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100000;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px); /* Increased blur for better focus */
+  overflow-y: auto; /* Allows the FORM to scroll if the screen is small */
+  padding: 20px;
+}
+.end {
+  display: flex;
+  justify-content: space-between;
+}
+.end button:hover{
+  color: #F18E1A;
+  transition: color 0.15s ease;
+}
+
+.end button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border-radius: 12em;
+  font-size: 1.4em;
+  color: black;
+  width: 10%;
+  height: 10%;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+.form{
+display: flex;
+flex-direction: column;
+background-color: white;
+box-shadow: 0 2px 5px #f18d1a82;
+border-radius: 0.4em;
+padding: 1.7em;
+gap: 2em;
+width: 50%;
+}
+
+.formInput{
+  display: block;
+    width: 100%;
+    height: calc(1.5em + .75rem + 2px);
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+/* ── tablet ── */
+@media (max-width: 1024px) {
+  .searchContainer { width: 260px; }
+  .linksContainer  { gap: 1em; }
+}
+
+/* ── mobile ── */
+@media (max-width: 768px) {
+  .nav {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px var(--page-x);
+    row-gap: 6px;
+  }
+
+  /* row 1: search — full width */
+  .searchContainer {
+    order: 0;
+    width: 100%;
+    flex-basis: 100%;
+  }
+  .select { display: none; }
+
+  /* row 2: logo left, icons right */
+  .logoLink  { order: 1; }
+  .cartWrap  { order: 2; margin-left: auto; }
+  .icon      { order: 3; }
+  .hamburger { order: 4; display: flex; }
+
+  /* hide desktop-only items */
+  .linksContainer { display: none; }
+  .quoteBtn       { display: none; }
+
+  .logo { height: 44px; }
+
+  .mobileMenu {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: blur(14px);
+    padding: 0.5em var(--page-x) 1em;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    z-index: 998;
+  }
+}

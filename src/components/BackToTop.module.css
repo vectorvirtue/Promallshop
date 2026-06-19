@@ -1,0 +1,28 @@
+.btn {
+  position: fixed;
+  bottom: 96px;
+  right: 28px;
+  z-index: 900;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  background: #04091a;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(4, 9, 26, 0.3);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn:hover {
+  background: #F18E1A;
+}
+
+.btn svg {
+  color: #fff;
+  stroke: #fff;
+}

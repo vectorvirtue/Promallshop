@@ -1,0 +1,126 @@
+.section {
+  background-image: url("src/assets/Today's Deals.svg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  width: 100%;
+  min-height: 450px;
+  padding: 2em var(--page-x);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.topLeft {
+  color: white;
+  width: 55%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+
+.ongoingBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  color: white;
+  font-size: 0.78em;
+  font-weight: 600;
+}
+
+.title {
+  font-size: 2em;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.subtitle {
+  font-weight: 300;
+  font-size: 1.1em;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+}
+
+/* ── countdown ── */
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-top: 0.5em;
+}
+
+.unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  border-radius: 1em;
+  padding: 0.5em ;
+  min-width: 32px;
+}
+
+.unitLabel {
+  font-size: 0.7em;
+  font-weight: 500;
+  color: #333;
+}
+
+.unitValue {
+  font-size: 2em;
+  font-weight: 500;
+  color: #0B0B0B;
+  line-height: 1.1;
+}
+
+.colon {
+  font-size: 2em;
+  font-weight: 500;
+  color: white;
+  margin-bottom: 0.1em;
+}
+
+/* ── actions ── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  margin-top: 0.5em;
+}
+
+.buyBtn {
+  background: #0D1D55;
+  color: white;
+  border: none;
+  border-radius: 0.6em;
+  padding: 0.75em 3em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: background 0.2s;
+}
+
+.buyBtn:hover {
+  background: #0d1a3a;
+}
+
+.wishlist {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #0D1D55;
+  padding: 0;
+  transition: color 0.2s, transform 0.15s;
+}
+
+.wishlist:hover {
+  color: #F18E1A;
+  transform: scale(1.15);
+}

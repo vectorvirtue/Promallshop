@@ -1,0 +1,199 @@
+.breadcrumb  {
+      display: flex;
+    align-items: center;
+    gap: 8px;
+     padding: 5px var(--page-x);
+    font-size: 13px;
+    margin-top: 2em;
+
+    color: #0B0B0B;
+}
+.link{
+  color: #0B0B0B;
+  text-decoration: none;
+}
+
+.link:hover{
+  color: #F18E1A;
+  transition: color 0.4s ease;
+}
+.choices {
+  scroll-margin-top: 80px; /* Adjust this value based on your header's actual height */
+}
+
+.tocenter{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2em var(--page-x);
+}
+
+.details{
+display: flex;
+flex-direction: column;
+gap: 1em;
+}
+.inputfield{
+    display: flex;
+    align-items: center;
+    gap: 2em;
+}
+.trackbtn{
+background-color: #F18E1A;
+border: none;
+border-radius: 0.2em;
+cursor: pointer;
+color: #fff;
+padding: 0.7em;
+padding: 0.7em;
+width: 40%;
+}
+
+.trackinput{
+border: 1px solid #7f7f7f;
+border-radius: 0.2em;
+color: #0B0B0B;
+padding: 0.7em;
+width: 70%;
+}
+
+.sub{
+    font-weight: 700;
+    font-size: 0.8em;
+}
+
+.container{
+    padding: 5px var(--page-x);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-top: 1em;
+  border-bottom: 1px solid #F18E1A;
+}
+.choices{
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    margin-bottom: 1em;
+    
+}
+.header{
+    margin-top: 1em;
+}
+.margin{
+    margin-left: 0;
+    padding-left: 1.5em;
+    font-weight: 600; 
+    margin-bottom: 2em;
+}
+li{
+    margin-top: 0.5em;
+}
+.margin li a{
+    color: #0B0B0B;
+   
+}
+/* removed: bare `ul` reset was leaking globally and hiding all list markers */
+
+.choices p{
+font-size: 0.83em;
+}
+
+.list{
+   font-size: 0.83em; 
+   padding: 2em var(--page-x);
+   list-style-position: outside;
+   padding-left: calc(var(--page-x) + 1.5em);
+}
+
+.list li {
+   margin-bottom: 0.75em;
+   line-height: 1.6;
+}
+
+.hero{
+    background-image: url('src/assets/Frame 265.svg');
+    background-position: center;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding: 2em;
+    gap: 2em;
+    margin-top: 1em;
+}
+
+.span{
+    background: linear-gradient(to right, #E9D1B4, #F18E1A);
+-webkit-background-clip: text;
+background-clip: text;
+-webkit-text-fill-color: transparent;
+}
+
+.italic{
+    color: #F18E1A;
+    font-weight: 500;
+    font-style: italic;
+    margin-bottom: 2em;
+}
+
+
+/* FAQ */
+.faqContainer {
+  margin-top: 2em;
+  width: 100%;
+  margin-bottom: 2em;
+}
+
+/* The grid container that distributes items into 2 equal columns */
+.faqlist {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Creates two equal-width columns */
+  column-gap: 4rem;                     /* Horizontal space between the columns */
+  row-gap: 2rem;                        /* Vertical space between the FAQ items */
+}
+.faqItem {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.faqQuestion {
+ width: 90%;                          /* Take full width of its grid column */
+  padding: 18px 0;                      /* Removed side padding to align left edge */
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.9em;                     /* Adjusted slightly for readability */
+  font-weight: 500;
+  color: #0B0B0B;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 1.5em;
+
+}
+hr{
+    width: 75%;
+}
+
+
+.faqAnswer {
+ 
+  font-size: 0.8em;
+  color: #0B0B0B;
+  line-height: 1.75;
+  width: 80%;
+  margin-top: 2em;
+}
+
+.faqAnswer ul {
+  margin: 8px 0 0 16px;
+}
+
+.faqAnswer li {
+  margin-bottom: 6px;
+}

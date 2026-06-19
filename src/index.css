@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+:root {
+  font-family: 'Montserrat', sans-serif;
+
+  /* ── global spacing token ── */
+  /* use padding: <vertical> var(--page-x) in each section component */
+  --page-x: 41px;
+}
+
+*, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Montserrat', sans-serif;
+}
+html {
+  scroll-behavior: smooth;
+}
+/* ── responsive root ── */
+@media (max-width: 768px) {
+  :root {
+    --page-x: 20px;
+  }
+}
+@media (max-width: 480px) {
+  :root {
+    --page-x: 16px;
+  }
+}

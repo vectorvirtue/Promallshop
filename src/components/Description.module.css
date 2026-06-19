@@ -1,0 +1,132 @@
+.container{
+      padding: 5px var(--page-x);
+
+}
+
+.buttons{
+    display: flex;
+    width: 100%;
+    color: #7f7f7f;
+   
+}
+
+.active{
+background-color: black;
+border: none;
+outline: none;
+cursor: pointer;
+width: 40%;
+color: white;
+}
+
+.panelBtn{
+    padding: 16px;
+  width: 40%;
+cursor: pointer;
+outline: none;
+color: #7f7f7f;
+border-radius: 1px solid #7f7f7f;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Nav Bar Wrapper matching the image border */
+.tabHeader {
+  display: flex;
+  width: 100%;
+  border: 1px solid #D0D4DC;
+  background-color: #ffffff;
+}
+
+/* Tab button formatting distributed across available width */
+.tabBtn {
+  flex: 1;
+  padding: 18px 12px;
+  background: none;
+  border: none;
+  font-size: 0.95em;
+  font-weight: 500;
+  color: #7B829A;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease-index;
+}
+
+/* Vertical separator rules between tabs */
+.tabBtn:not(:last-child) {
+  border-right: 1px solid #D0D4DC;
+}
+
+/* Dark focus highlight blocks */
+.activeBtn {
+  background-color: #060B18; /* Dark navy black background */
+  color: #ffffff;            /* Crisp white text */
+}
+
+/* Two-column layout grid wrapper */
+.gridContent {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr; /* Slight bias width toward the left text column */
+  gap: 5rem;                         /* Broad gutter width between columns */
+  margin-top: 2.5rem;
+  align-items: start;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.sectionBlock {
+  margin-bottom: 0.5rem;
+}
+
+/* All-caps bold subheaders */
+.blockHeading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #060B18;
+  text-transform: uppercase;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: 0.03em;
+}
+
+.blockSubheading {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #5A627A;
+  text-transform: uppercase;
+  margin: 0 0 0.4rem 0;
+}
+
+/* Core data body text copy */
+.blockText {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: #2F3443;
+  margin: 0;
+  /* Crucial to convert "\n" breaks into standard carriage returns natively */
+  white-space: pre-line; 
+}
+
+/* Responsive collapse check for small screens */
+@media (max-width: 768px) {
+  .tabHeader {
+    flex-direction: column;
+  }
+  .tabBtn:not(:last-child) {
+    border-right: none;
+    border-bottom: 1px solid #D0D4DC;
+  }
+  .gridContent {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
