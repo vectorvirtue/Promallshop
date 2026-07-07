@@ -7,7 +7,7 @@ import Choose from "../components/Whychoose"
 import Whybuy from "../components/Whybuy"
 import Partners from "../components/Partners"
 import Newsletter from "../components/Newsletter"
-
+import Blogs from "../components/Blogs"
   
 export default function Home() {
   return (
@@ -18,6 +18,7 @@ export default function Home() {
       <FlashSales />
       <FeaturedProducts />
       <Deals/>
+      <Blogs/>
       <Choose/>
       <Whybuy/>
       <Partners/>

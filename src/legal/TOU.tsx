@@ -14,7 +14,7 @@ export default function TermsOfUse() {
       </nav>
       <div className={styles.hero}>
 <h3>Terms & Conditions </h3>
-<h1>We Abide by <span className={styles.span}>these Rules</span></h1>
+<h1 className={styles.h1}>We Abide by <span className={styles.span}>these Rules</span></h1>
       </div>
       <div className={styles.container}>
         <h2>Table Of Contents</h2>

@@ -183,3 +183,24 @@
   border: none;
   display: block;
 }
+
+@media (max-width:1024px){
+.boxes{
+background-color: #0D1D55;
+height: fit-content;
+margin-top: 0.003em;
+display: flex;
+padding: 0;
+gap: 0;
+flex-direction: column;
+width: 100%;
+  }
+  .box{
+    width: 95%;
+    margin-bottom: 1em;
+  }
+
+  .image{
+    width: 19em;
+  }
+}

@@ -58,7 +58,7 @@ export default function FAQ(){
         </nav>
              <div className={styles.hero}>
 <h3>Frequently Asked Questions </h3>
-<h1>Here is How we <span className={styles.span}>Help You</span></h1>
+<h1 className={styles.h1}>Here is How we <span className={styles.span}>Help You</span></h1>
       </div>
 
       <div className={styles.container}>

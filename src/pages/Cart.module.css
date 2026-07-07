@@ -387,6 +387,11 @@
 
 
 /* ── responsive ── */
+@media (max-width:1024px) {
+  .cartPanel{
+    width: 100%;
+  }
+}
 @media (max-width: 900px) {
   .layout {
     flex-direction: column;

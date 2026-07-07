@@ -17,7 +17,7 @@ export default function Privacy(){
       </nav>
       <div className={styles.hero}>
 <h3>Privacy  Policy </h3>
-<h1>We Protect your <span className={styles.span}> Information</span></h1>
+<h1 className={styles.h1}>We Protect your <span className={styles.span}> Information</span></h1>
       </div>
       <div className={styles.container}>
         <h5 className={styles.italic}>Last Updated: May 31, 2021</h5>

@@ -18,7 +18,8 @@ import Privacy from "./legal/Privacy";
 import FAQ from "./pages/FAQ";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
-import Cart from "./pages/Cart";
+import Cart from "./pages/Cart"
+import Checkout from "./pages/Checkout";
 import ForgotPassword from "./pages/Forgot";
 import Product from "./pages/Productpage";
 export default function App() {
@@ -42,6 +43,7 @@ export default function App() {
                <Route  path="/about-us" element={<About />} />
                <Route  path="/contact" element={<Contact />} />
                <Route  path="/cart" element={<Cart />} />
+               <Route  path="/checkout" element={<Checkout />} />
                <Route  path="/forgotpassword" element={<ForgotPassword />} />
                <Route  path="/product/" element={<Product />} />
         </Routes>

@@ -20,7 +20,7 @@ export default function OrderTracking() {
             </div>
             
            </div>
-             <img src={pana} alt="no order" />
+             <img className={styles.noorder} src={pana} alt="no order" />
           </div>
    </>
   );

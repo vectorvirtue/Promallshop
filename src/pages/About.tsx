@@ -58,7 +58,7 @@ export default function About(){
         </nav>
              <div className={styles.hero}>
 <h3>Frequently Asked Questions </h3>
-<h1>Here is How we <span className={styles.span}>Help You</span></h1>
+<h1 className={styles.h1}>Here is How we <span className={styles.span}>Help You</span></h1>
       </div>
 
       <div className={styles.container}>
@@ -76,7 +76,7 @@ export default function About(){
                 <span>{faq.q}</span>
                
               </button>
-              <hr />
+              <hr className={styles.hr} />
               {open === i && <div className={styles.faqAnswer}><p>{faq.a}</p></div>}
             </div>
           ))}

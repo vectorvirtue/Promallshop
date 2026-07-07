@@ -197,3 +197,31 @@ hr{
 .faqAnswer li {
   margin-bottom: 6px;
 }
+
+
+@media (max-width:1024px) {
+  .h1{
+    text-align: center;
+  }
+  .faqlist{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  .faqAnswer{
+    width: 100%;
+  }
+  .hr{
+    width: 100%;
+  }
+
+  .tocenter{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .noorder{
+    width: 95%;
+  }
+}

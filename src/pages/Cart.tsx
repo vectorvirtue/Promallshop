@@ -194,7 +194,7 @@ return (
         <button
             className={styles.confirmBtn}
             disabled={items.length === 0}
-            onClick={() => alert('Checkout coming soon!')}
+            onClick={() => navigate('/checkout')}
         >
             Confirm Order
         </button>

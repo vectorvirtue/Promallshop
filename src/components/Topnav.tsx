@@ -8,8 +8,8 @@ const countries = [
     label: 'Nigeria',
     flag: (
       <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true">
-        <rect width="7"  height="14" fill="#008751" />
-        <rect x="7" width="6"  height="14" fill="#fff" />
+        <rect width="7" height="14" fill="#008751" />
+        <rect x="7" width="6" height="14" fill="#fff" />
         <rect x="13" width="7" height="14" fill="#008751" />
       </svg>
     ),
@@ -19,7 +19,7 @@ const countries = [
     label: 'Ghana',
     flag: (
       <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true">
-        <rect width="20" height="5"  fill="#006B3F" />
+        <rect width="20" height="5" fill="#006B3F" />
         <rect y="5" width="20" height="4" fill="#FCD116" />
         <rect y="9" width="20" height="5" fill="#CE1126" />
         <polygon points="10,4 11.5,8.5 7,6 13,6 8.5,8.5" fill="#000" />
@@ -30,14 +30,12 @@ const countries = [
     value: 'kenya',
     label: 'Kenya',
     flag: (
-      /* Kenya: black / red / green horizontal stripes, white edges on red, Maasai shield */
       <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true">
         <rect width="20" height="14" fill="#006600" />
         <rect y="3.5" width="20" height="7" fill="#000" />
         <rect y="4.5" width="20" height="5" fill="#BB0000" />
         <rect y="4.5" width="20" height="0.8" fill="#fff" />
         <rect y="8.7" width="20" height="0.8" fill="#fff" />
-        {/* simplified Maasai shield */}
         <ellipse cx="10" cy="7" rx="2" ry="3.5" fill="#fff" />
         <ellipse cx="10" cy="7" rx="1.2" ry="2.8" fill="#BB0000" />
         <rect x="9.6" y="3.5" width="0.8" height="7" fill="#000" />
@@ -49,14 +47,13 @@ const countries = [
     value: 'cotedivoire',
     label: "Côte d'Ivoire",
     flag: (
-      /* Côte d'Ivoire: orange / white / green vertical stripes */
       <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true">
-        <rect width="7"  height="14" fill="#F77F00" />
-        <rect x="7" width="6"  height="14" fill="#fff" />
+        <rect width="7" height="14" fill="#F77F00" />
+        <rect x="7" width="6" height="14" fill="#fff" />
         <rect x="13" width="7" height="14" fill="#009A44" />
       </svg>
     ),
-  },
+  }
 ]
 
 export default function Topnav() {
