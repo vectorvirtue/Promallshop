@@ -1,0 +1,234 @@
+/* outer section — Hero.svg is the dark hex background */
+.hero {
+  background-image: url('src/assets/Hero.svg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  width: 100%;
+  min-height: 450px;
+  padding: 2em var(--page-x);
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  gap: 1.5em;
+}
+
+/* ── left: slider card ─────────────────────────────── */
+.sliderCard {
+  position: relative;
+  flex: 1 1 65%;
+  border-radius: 1em;
+  overflow: hidden;
+  min-height: 380px;
+  transition: opacity 0.6s ease;
+}
+
+.fadeIn  { opacity: 1; }
+.fadeOut { opacity: 0; }
+
+/* slide image fills the card */
+.slideImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* text overlay on top of the image */
+.textBlock {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1em;
+  padding: 2em;
+  /* dark gradient on the left so white text stays readable */
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.7) 45%, transparent 80%);
+  z-index: 1;
+}
+
+.subtitle {
+  background-color: white;
+  border-top-left-radius: 1.5em;
+  border-bottom-right-radius: 1.5em;
+  color: #0B0B0B;
+  font-weight: 500;
+  font-size: 0.85em;
+  padding: 0.45em 1em;
+  display: inline-block;
+}
+
+.title {
+  text-transform: uppercase;
+  font-size: 1.9em;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0;
+  color: white;
+  max-width: 50%;
+}
+
+.button {
+  border: 2px solid #F18E1A;
+  background-color: #F18E1A;
+  color: white;
+  border-radius: 0.4em;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.7em 2em;
+  font-size: 0.95em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.button:hover {
+  background-color: #d97d10;
+  border-color: #d97d10;
+}
+
+/* ── right: deals panel ────────────────────────────── */
+.dealsPanel {
+  flex: 0 0 280px;
+  background: white;
+  border-radius: 1em;
+  padding: 1.2em 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8em;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  overflow-y: auto;
+}
+
+.dealsLabel {
+  font-size: 0.75em;
+  color: #F18E1A;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.dealsTitle {
+  font-size: 1.3em;
+  font-weight: 800;
+  color: #0B0B0B;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.dealsSubtext {
+  font-size: 0.78em;
+  color: #555;
+  margin: 0;
+}
+
+.dealsSubtext a {
+  color: #F18E1A;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.dealsDivider {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 0;
+}
+
+/* individual deal item */
+.dealItem {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+}
+
+.dealImage {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 0.5em;
+  border: 1px solid #F18E1A;
+  background: #fafafa;
+  flex-shrink: 0;
+  padding: 4px;
+}
+
+.dealInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+}
+
+.dealName {
+  font-size: 0.78em;
+  font-weight: 600;
+  color: #0B0B0B;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.dealPrice {
+  font-size: 0.8em;
+  font-weight: 700;
+  color: #F18E1A;
+  margin: 0;
+}
+
+.dealOldPrice {
+  font-size: 0.72em;
+  color: #999;
+  text-decoration: line-through;
+  margin: 0;
+}
+
+.dealStars {
+  font-size: 0.7em;
+  color: #F18E1A;
+  margin: 0;
+}
+
+/* ── responsive ── */
+@media (max-width: 1024px) {
+  .dealsPanel {
+    flex: 0 0 220px;
+  }
+  .title {
+    font-size: 1.5em;
+    max-width: 60%;
+  }
+}
+@media (max-width: 768px) {
+  .hero {
+    flex-direction: column;
+    min-height: unset;
+    padding: 1em var(--page-x);
+    gap: 1em;
+  }
+  .sliderCard {
+    flex: unset;
+    width: 100%;
+    min-height: 260px;
+  }
+  .dealsPanel {
+    flex: unset;
+    width: 100%;
+  }
+  .title {
+    font-size: 1.2em;
+    max-width: 70%;
+  }
+}
+@media (max-width: 480px) {
+  .title {
+    font-size: 1em;
+    max-width: 85%;
+  }
+  .button {
+    padding: 0.5em 1.2em;
+    font-size: 0.85em;
+  }
+}

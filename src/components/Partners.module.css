@@ -1,0 +1,71 @@
+.container {
+  padding: 2em var(--page-x);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5em;
+  background: #04091a;
+  color: white;
+  overflow: hidden;
+}
+
+.title {
+  font-size: 1.4em;
+  font-weight: 700;
+
+  margin: 0;
+}
+
+/* ── marquee ── */
+.marqueeWrapper {
+  width: 100%;
+  overflow: hidden;
+  /* fade edges */
+  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.marqueeTrack {
+  display: flex;
+  align-items: center;
+  gap: 1.5em;
+  width: max-content;
+  animation: scroll 28s linear infinite;
+}
+
+.marqueeTrack:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* white pill */
+.logoWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 0.7em 1.8em;
+  flex-shrink: 0;
+  transition: box-shadow 0.2s;
+}
+
+.logoWrap:hover {
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.2);
+}
+
+.logo {
+  height: 32px;
+  width: auto;
+  max-width: 110px;
+  object-fit: contain;
+}
+
+/* Logitech logo needs more width */
+.logo[alt="Logitech"] {
+  max-width: 160px;
+}
