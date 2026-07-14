@@ -814,15 +814,55 @@
   margin-bottom: 2.5em;
 }
 
+.similarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1em;
+}
+
+.similarNav {
+  display: flex;
+  gap: 0.5em;
+}
+
+.similarNavBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid #F18E1A;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #F18E1A;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.similarNavBtn:hover {
+  background: #F18E1A;
+  color: #fff;
+}
+
 .similarGrid {
   display: flex;
-  flex-wrap: wrap;
-  gap: 2em;
-  margin-top: 1em;
+  gap: 1.5em;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 4px;
+}
+
+.similarGrid::-webkit-scrollbar {
+  display: none;
 }
 
 .similarCard {
   width: 250px;
+  min-width: 250px;
   height: 457px;
   background: #fff;
   border: 1.5px solid #f18d1a9c;
@@ -831,6 +871,7 @@
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  scroll-snap-align: start;
   transition: box-shadow 0.2s;
 }
 

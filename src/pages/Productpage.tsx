@@ -90,6 +90,11 @@ export default function Productpage() {
   const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'faq'>('description')
   const [showFullDesc, setShowFullDesc] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const similarRef = useRef<HTMLDivElement>(null)
+  const scrollSimilar = (dir: 'left' | 'right') => {
+    similarRef.current?.scrollBy({ left: dir === 'left' ? -280 : 280, behavior: 'smooth' })
+  }
+
   const [countdown, setCountdown] = useState(() => getCountdownTimeLeft(getMonthEndTarget()))
 
   /* countdown tick */
@@ -461,19 +466,27 @@ export default function Productpage() {
         {/* ── SIMILAR PRODUCTS ── */}
         {similar.length > 0 && (
           <div className={styles.similarSection}>
-            <h3 className={styles.sectionTitle}>Similar Products</h3>
-            <div className={styles.similarGrid}>
+            <div className={styles.similarHeader}>
+              <h3 className={styles.sectionTitle}>Similar Products</h3>
+              <div className={styles.similarNav}>
+                <button className={styles.similarNavBtn} onClick={() => scrollSimilar('left')} aria-label="Scroll left">
+                  <ChevronLeft size={18} />
+                </button>
+                <button className={styles.similarNavBtn} onClick={() => scrollSimilar('right')} aria-label="Scroll right">
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.similarGrid} ref={similarRef}>
               {similar.map(p => (
                 <div key={p.id} className={styles.similarCard}>
-                  {/* image area */}
                   <div className={styles.similarImgWrap}>
                     <img src={getImageUrl(p.image)} alt={p.name} className={styles.similarProductImg} />
                     {p.discount > 0 && (
                       <span className={styles.similarDiscountBadge}>{p.discount}% OFF</span>
                     )}
                   </div>
-
-                  {/* info + heart row */}
                   <div className={styles.similarInfoRow}>
                     <div className={styles.similarInfo}>
                       <p className={styles.similarName}>
@@ -486,8 +499,6 @@ export default function Productpage() {
                       <Heart size={18} />
                     </button>
                   </div>
-
-                  {/* add to cart */}
                   <button
                     className={styles.similarAddToCart}
                     onClick={() => addToCart({
