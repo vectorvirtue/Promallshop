@@ -4,7 +4,7 @@ export default function Newsletter() {
       const [subscribed, setSubscribed] = useState(false)
   const [email, setEmail] = useState('')
 
-  const handleSubscribe = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubscribe = (e: React.SyntheticEvent) => {
     e.preventDefault()
     if (email) { setSubscribed(true); setEmail('') }
   }

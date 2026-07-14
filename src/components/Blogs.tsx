@@ -4,7 +4,7 @@ import swiper from '../assets/Frame 20.svg'
 export default function Blogs(){
     return(
          <section className={styles.blogs}>
-             <h2 className={styles.header}>Featured Products</h2>
+             <h2 className={styles.header}>Our Latest Blogs</h2>
       <div className={styles.blogcontainer}>
 <div className={styles.blogOne}>
 <img className={styles.image} src={image} alt="screens" />

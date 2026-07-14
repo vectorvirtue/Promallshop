@@ -16,7 +16,7 @@ function QuoteForm({ onBack }: { onBack: () => void }) {
     };
   }, []); 
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     // Get form data

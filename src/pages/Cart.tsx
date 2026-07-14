@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import styles from './Cart.module.css'
 import { TriangleAlert } from 'lucide-react'
+import { getToken } from '../lib/api'
 
 /* ── helpers ── */
 const parsePrice = (str: string): number =>
@@ -194,7 +195,13 @@ return (
         <button
             className={styles.confirmBtn}
             disabled={items.length === 0}
-            onClick={() => navigate('/checkout')}
+            onClick={() => {
+              if (getToken()) {
+                navigate('/checkout')
+              } else {
+                navigate('/login?redirect=/checkout')
+              }
+            }}
         >
             Confirm Order
         </button>

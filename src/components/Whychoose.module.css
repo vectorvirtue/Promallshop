@@ -23,3 +23,11 @@
     color: #0b0b0b;
     font-size: 1em;
 }
+
+.intro {
+  font-size: 0.95em;
+  font-weight: 300;
+  line-height: 1.7;
+  margin-bottom: 1em;
+  color: #333;
+}

@@ -45,16 +45,47 @@
 }
 
 /* ── filter pills ── */
+.filtersWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  min-width: 0;
+  max-width: 620px;
+}
+
+.filterNavBtn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid #F18E1A;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #F18E1A;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  transition: background 0.2s, color 0.2s;
+  z-index: 1;
+}
+
+.filterNavBtn:hover {
+  background: #F18E1A;
+  color: #fff;
+}
+
 .filters {
   display: flex;
   align-items: center;
   gap: 0.5em;
   overflow-x: auto;
-  max-width: 600px;
   min-width: 0;
+  flex: 1;
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding-bottom: 2px;
+  scroll-behavior: smooth;
 }
 
 .filters::-webkit-scrollbar {
@@ -243,7 +274,7 @@
   .imgWrap {
     height: 180px;
   }
-  .filters {
+  .filtersWrap {
     max-width: 100%;
   }
 }
@@ -253,10 +284,9 @@
     align-items: flex-start;
     gap: 0.8em;
   }
-  .filters {
+  .filtersWrap {
     max-width: 100%;
     width: 100%;
-    justify-content: flex-start;
   }
   .card {
     width: 100%;
@@ -273,4 +303,14 @@
   .title {
     font-size: 1.3em;
   }
+}
+
+.productLink {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.productLink:hover {
+  color: #F18E1A;
 }

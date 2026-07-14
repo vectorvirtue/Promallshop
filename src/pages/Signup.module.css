@@ -179,3 +179,64 @@ margin-top: 1em;
     width: 100%;
   }
 }
+
+.errorMsg {
+  width: 100%;
+  background: #fff0f0;
+  border: 1px solid #f5c6c6;
+  color: #c0392b;
+  border-radius: 6px;
+  padding: 0.6em 0.9em;
+  font-size: 0.82em;
+  font-weight: 500;
+  margin: 0;
+  text-align: center;
+}
+
+.successMsg {
+  width: 100%;
+  background: #f0fff4;
+  border: 1px solid #b2dfdb;
+  color: #1a7a4a;
+  border-radius: 6px;
+  padding: 0.6em 0.9em;
+  font-size: 0.82em;
+  font-weight: 500;
+  margin: 0;
+  text-align: center;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── password input wrapper ── */
+.inputWrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.inputWrap .input {
+  width: 100%;
+  padding-right: 2em;
+}
+
+.eyeBtn {
+  position: absolute;
+  right: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #7f7f7f;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.eyeBtn:hover {
+  color: #F18E1A;
+}

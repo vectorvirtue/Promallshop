@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { TriangleAlert, CheckCircle2 } from 'lucide-react'
 import styles from './Checkout.module.css'
 import frame from '../assets/Frame 312.svg'
+import { billingApi, ordersApi } from '../lib/api'
 
 /* ── Paystack inline SDK type ── */
 declare global {
@@ -49,16 +50,7 @@ const COUNTRIES: { value: string; label: string }[] = [
   { value: 'Ghana', label: 'Ghana' },
   { value: 'Kenya', label: 'Kenya' },
   { value: "Côte d'Ivoire", label: "Côte d'Ivoire" },
-  { value: 'South Africa', label: 'South Africa' },
-  { value: 'Tanzania', label: 'Tanzania' },
-  { value: 'Senegal', label: 'Senegal' },
-  { value: 'Ethiopia', label: 'Ethiopia' },
-  { value: 'Cameroon', label: 'Cameroon' },
-  { value: 'Uganda', label: 'Uganda' },
-  { value: 'Rwanda', label: 'Rwanda' },
-  { value: 'Angola', label: 'Angola' },
-  { value: 'Zambia', label: 'Zambia' },
-  { value: 'Zimbabwe', label: 'Zimbabwe' },
+
 ]
 
 const REGIONS: Record<string, string[]> = {
@@ -101,6 +93,19 @@ export default function Checkout() {
 
   const [step, setStep] = useState(1)
 
+  /* load Paystack script only when user reaches payment step */
+  useEffect(() => {
+    if (step === 3) {
+      const existing = document.querySelector('script[src*="paystack"]')
+      if (!existing) {
+        const script = document.createElement('script')
+        script.src = 'https://js.paystack.co/v1/inline.js'
+        script.async = true
+        document.body.appendChild(script)
+      }
+    }
+  }, [step])
+
   /* address state */
   const [address, setAddress] = useState<AddressForm>({
     firstName: '',
@@ -131,6 +136,12 @@ export default function Checkout() {
     0
   )
   const discount = originalTotal - subtotal
+  const VAT_RATE = 7.5
+  const vatCharge = parseFloat(((subtotal * VAT_RATE) / 100).toFixed(2))
+  const netAmount = parseFloat((subtotal + vatCharge).toFixed(2))
+
+  const [orderLoading, setOrderLoading] = useState(false)
+  const [orderError, setOrderError] = useState('')
 
   const handleAddressChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -152,44 +163,82 @@ export default function Checkout() {
     address.address.trim() &&
     address.state.trim()
 
-  const handlePlaceOrder = () => {
-    if (paymentMethod === 'online') {
-      // Paystack inline popup
-      const handler = window.PaystackPop.setup({
-        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string,
+  const handlePlaceOrder = async () => {
+    setOrderError('')
+    setOrderLoading(true)
+
+    try {
+      // 1. save billing address
+      const billingPayload = {
+        name: `${address.firstName} ${address.lastName}`,
+        billing_address1: address.address,
+        billing_address2: address.additionalInfo || '',
+        country: address.country,
+        city: address.state,
+        state: address.state,
+        zipcode: '',
+        phone: address.phone,
         email: address.email,
-        // Paystack expects amount in kobo (smallest currency unit)
-        amount: subtotal * 100,
-        currency: 'NGN',
-        ref: `promallshop-${Date.now()}`,
-        metadata: {
-          custom_fields: [
-            {
-              display_name: 'Customer Name',
-              variable_name: 'customer_name',
-              value: `${address.firstName} ${address.lastName}`,
-            },
-            {
-              display_name: 'Delivery',
-              variable_name: 'delivery',
-              value: deliveryType === 'pickup' ? pickupLocation : `Door — ${address.address}, ${address.state}`,
-            },
-          ],
-        },
-        callback(response) {
-          // Payment successful — reference is response.reference
-          console.log('Payment successful, ref:', response.reference)
-          navigate(`/order-success?ref=${response.reference}`)
-        },
-        onClose() {
-          // User closed the popup without paying — stay on checkout
-          console.log('Payment popup closed')
-        },
-      })
-      handler.openIframe()
-    } else {
-      // Bank transfer or cheque — no payment gateway needed
-      navigate('/')
+        delivery_method: deliveryType === 'door' ? 'home_delivery' : 'pickup',
+      }
+      await billingApi.addAddress(billingPayload)
+
+      // 2. create order
+      const billingAddressStr = deliveryType === 'door'
+        ? `${address.address}, ${address.state}, ${address.country}`
+        : pickupLocation
+
+      const orderPayload = {
+        billing_address: billingAddressStr,
+        gross_amount: String(subtotal),
+        payment_type: paymentMethod === 'bank' ? 'bank_transfer'
+          : paymentMethod === 'cheque' ? 'cheque'
+          : 'card',
+        vat_charge_rate: String(VAT_RATE),
+        vat_charge: String(vatCharge),
+        net_amount: String(netAmount),
+        discount: String(discount),
+        name: `${address.firstName} ${address.lastName}`,
+        phone: address.phone,
+        email: address.email,
+        delivery_cost: deliveryType === 'door' ? 2000 : 0,
+      }
+
+      if (paymentMethod === 'online') {
+        // open Paystack — create order after successful payment
+        const handler = window.PaystackPop.setup({
+          key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string,
+          email: address.email,
+          amount: netAmount * 100, // kobo
+          currency: 'NGN',
+          ref: `promallshop-${Date.now()}`,
+          metadata: {
+            custom_fields: [
+              { display_name: 'Customer Name', variable_name: 'customer_name', value: `${address.firstName} ${address.lastName}` },
+              { display_name: 'Delivery', variable_name: 'delivery', value: billingAddressStr },
+            ],
+          },
+          async callback(response) {
+            console.log('Payment successful, ref:', response.reference)
+            const orderRes = await ordersApi.create({ ...orderPayload, payment_ref: response.reference }) as { data?: { bill_no?: string } }
+            console.log('Order created:', orderRes)
+            navigate(`/order-success?ref=${response.reference}&bill=${orderRes?.data?.bill_no ?? ''}`)
+          },
+          onClose() {
+            setOrderLoading(false)
+          },
+        })
+        handler.openIframe()
+      } else {
+        // bank transfer or cheque — create order immediately
+        const orderRes = await ordersApi.create(orderPayload) as { data?: { bill_no?: string } }
+        console.log('Order created:', orderRes)
+        navigate(`/order-success?bill=${orderRes?.data?.bill_no ?? ''}`)
+      }
+    } catch (err) {
+      setOrderError(err instanceof Error ? err.message : 'Failed to place order. Please try again.')
+    } finally {
+      setOrderLoading(false)
     }
   }
 
@@ -616,10 +665,15 @@ export default function Checkout() {
                   <button className={styles.backBtn} onClick={() => setStep(2)}>
                     Cancel
                   </button>
-                  <button className={styles.nextBtn} onClick={handlePlaceOrder}>
-                    Confirm Payment Method
+                  <button className={styles.nextBtn} onClick={handlePlaceOrder} disabled={orderLoading}>
+                    {orderLoading ? 'Placing Order…' : 'Confirm Payment Method'}
                   </button>
                 </div>
+                {orderError && (
+                  <p style={{ color: '#c0392b', fontSize: '0.82em', marginTop: '0.75em', textAlign: 'center' }}>
+                    {orderError}
+                  </p>
+                )}
               </div>
             )}
           </div>

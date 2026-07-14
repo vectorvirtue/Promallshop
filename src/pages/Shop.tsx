@@ -1,98 +1,38 @@
 import styles from './Shop.module.css'
 import logitechgif from '../assets/ad-banner.gif'
-import maxhubImg   from '../assets/6615738024026-0 2.svg'
 import { Heart, ChevronDown, SlidersHorizontal } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Pagination } from 'antd'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { productsApi } from '../lib/api'
+interface ApiProduct {
+  id: number
+  name: string
+  price: string | number
+  end_user_price: string | number
+  image: string
+  discount: number
+  availability: number
+  qty?: number | string
+  sku?: string
+  description?: string
+}
 
-const categoryList = [
-  {
-    label: 'Video Conferencing',
-    sub: ['Logitech Video Conferencing', 'Logitech Video Conferencing', 'Logitech Video Conferencing', 'Logitech Video Conferencing ',' Logitech Video Conferencing'],
-  },
-  {
-    label: 'Screens',
-    sub: ['Interactive Flat Panels', 'Non Interactive Flat Panels', 'Signage Screens'],
-  },
-  {
-    label: 'Computer Peripherals',
-    
-  },
-  {
-    label: 'Home Automation',
-  
-  },
-  {
-    label: 'Phone Accessories',
-  
-  },
-  {
-    label: 'Office Equipments',
-  },
-  {
-    label: 'Coding & Robotics Kits',
-  },
-   {
-    label: 'Professional Imaging Solutions',
-  },
-   {
-    label: 'VC Accessories',
-  },
-]
-    const products = [
-  {
-    img: maxhubImg,
-    name: 'SAMSUNG 75 INCHES FLIPCHART',
-    price: '₦ 5,950,000',
-    oldPrice: '₦ 6,842,500',
-    discount: '15% OFF',
-    stars: 4,
-  },
- {
-    img: maxhubImg,
-    name: 'SAMSUNG 75 INCHES FLIPCHART',
-    price: '₦ 5,950,000',
-    oldPrice: '₦ 6,842,500',
-    discount: '15% OFF',
-    stars: 4,
-  },
-   {
-    img: maxhubImg,
-    name: 'SAMSUNG 75 INCHES FLIPCHART',
-    price: '₦ 5,950,000',
-    oldPrice: '₦ 6,842,500',
-    discount: '15% OFF',
-    stars: 4,
-  },
-   {
-    img: maxhubImg,
-    name: 'SAMSUNG 75 INCHES FLIPCHART',
-    price: '₦ 5,950,000',
-    oldPrice: '₦ 6,842,500',
-    discount: '15% OFF',
-    stars: 4,
-  },
-   {
-    img: maxhubImg,
-    name: 'SAMSUNG 75 INCHES FLIPCHART',
-    price: '₦ 5,950,000',
-    oldPrice: '₦ 6,842,500',
-    discount: '15% OFF',
-    stars: 4,
-  },
-   {
-    img: maxhubImg,
-    name: 'SAMSUNG 75 INCHES FLIPCHART',
-    price: '₦ 5,950,000',
-    oldPrice: '₦ 6,842,500',
-    discount: '15% OFF',
-    stars: 4,
-  },]
-  function Stars({ count }: { count: number }) {
+interface ApiCategory {
+  category_id: number
+  category_name: string
+  category_slug: string
+  category_description: string
+  online_discount: number
+  product_count: number
+  products: ApiProduct[]
+}
+
+
+function Stars({ count }: { count: number }) {
   return (
     <span className={styles.stars}>
       {Array.from({ length: 5 }, (_, i) => (
@@ -110,6 +50,7 @@ const cardVariants = {
     transition: { duration: 0.4, delay: i * 0.07, ease: 'easeOut' as const },
   }),
 }
+
 export default function Shop(){
  const { addToCart } = useCart()
  const [currentPage, setCurrentPage] = useState(1)
@@ -118,24 +59,69 @@ export default function Shop(){
  const [mobileCatOpen, setMobileCatOpen] = useState(false)
  const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
 
+ /* api state */
+ const [categories, setCategories] = useState<ApiCategory[]>([])
+ const [products, setProducts] = useState<ApiProduct[]>([])
+ const [loadingProducts, setLoadingProducts] = useState(true)
+ const [fetchError, setFetchError] = useState('')
+ const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
+
+ useEffect(() => {
+   setLoadingProducts(true)
+   productsApi.getAll()
+     .then((res: unknown) => {
+       const r = res as { success: boolean; data: ApiCategory[] }
+       const cats = Array.isArray(r.data) ? r.data : []
+       setCategories(cats)
+       // flatten all products from all categories by default
+       const allProducts = cats.flatMap(c => c.products)
+       setProducts(allProducts)
+       console.log('Categories received:', cats.length, 'Total products:', allProducts.length)
+     })
+     .catch((err) => {
+       console.error('Products fetch error:', err)
+       setFetchError('failed')
+     })
+     .finally(() => setLoadingProducts(false))
+ }, [])
+
+ /* filter by selected category */
+ useEffect(() => {
+   if (selectedCategory === null) {
+     const allProducts = categories.flatMap(c => c.products)
+     setProducts(allProducts)
+   } else {
+     const cat = categories.find(c => c.category_id === selectedCategory)
+     setProducts(cat?.products ?? [])
+   }
+   setCurrentPage(1)
+ }, [selectedCategory, categories])
+
  /* price range state */
  const MIN_PRICE = 0
- const MAX_PRICE = 16_000_000
+ const MAX_PRICE = 20_000_000
  const [priceMin, setPriceMin] = useState(MIN_PRICE)
  const [priceMax, setPriceMax] = useState(MAX_PRICE)
- const [appliedMin, setAppliedMin] = useState(MIN_PRICE)
- const [appliedMax, setAppliedMax] = useState(MAX_PRICE)
 
  const pageSize = 6
 
+  /* price-filtered products */
+  const filteredProducts = products.filter(p => {
+    const price = parseFloat(String(p.end_user_price || p.price)) || 0
+    // products with price 0 always show (price not set yet)
+    if (price === 0) return true
+    return price >= priceMin && price <= priceMax
+  })
+
   const indexOfLastProduct = currentPage * pageSize
   const indexOfFirstProduct = indexOfLastProduct - pageSize
-  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct)
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct)
 
-  function toggleCat(label: string) {
+  function toggleCat(categoryId: number, label: string) {
     const isOpen = openCat === label
     setOpenCat(isOpen ? null : label)
     setActiveCat(isOpen ? null : label)
+    setSelectedCategory(isOpen ? null : categoryId)
   }
 
   const formatPrice = (n: number) => '₦ ' + n.toLocaleString('en-NG')
@@ -189,7 +175,6 @@ export default function Shop(){
   const PriceFilter = () => (
     <div className={styles.priceFilterPanel}>
       <p className={styles.priceFilterHint}>Drag handles to set price range</p>
-
       <div className={styles.rangeTrack} ref={trackRef}>
         {/* grey base */}
         <div className={styles.rangeBase} />
@@ -217,17 +202,10 @@ export default function Shop(){
         <span>{formatPrice(priceMax)}</span>
       </div>
 
-      <button
-        className={styles.button}
-        style={{ width: '100%', marginTop: '0.75em', padding: '0.6em 1em', fontFamily: 'inherit', fontWeight: 600, fontSize: '0.85em' }}
-        onClick={() => { setAppliedMin(priceMin); setAppliedMax(priceMax) }}
-      >
-        Apply
-      </button>
-      {(appliedMin !== MIN_PRICE || appliedMax !== MAX_PRICE) && (
+      {(priceMin !== MIN_PRICE || priceMax !== MAX_PRICE) && (
         <button
-          style={{ width: '100%', marginTop: '0.4em', background: 'none', border: 'none', color: '#F18E1A', cursor: 'pointer', fontSize: '0.8em', fontFamily: 'inherit' }}
-          onClick={() => { setPriceMin(MIN_PRICE); setPriceMax(MAX_PRICE); setAppliedMin(MIN_PRICE); setAppliedMax(MAX_PRICE) }}
+          style={{ width: '100%', marginTop: '0.75em', background: 'none', border: 'none', color: '#F18E1A', cursor: 'pointer', fontSize: '0.8em', fontFamily: 'inherit', fontWeight: 600 }}
+          onClick={() => { setPriceMin(MIN_PRICE); setPriceMax(MAX_PRICE) }}
         >
           Clear filter
         </button>
@@ -278,26 +256,34 @@ export default function Shop(){
            >
              <div className={styles.dropdownPanel}>
                <p className={styles.dropdownPanelTitle}>Browse Categories</p>
-               {categoryList.map((cat) => (
-               <div key={cat.label} className={styles.catItem}>
+               {categories.map((cat) => (
+               <div key={cat.category_id} className={styles.catItem}>
                  <button
-                   className={`${styles.catBtn} ${activeCat === cat.label ? styles.catBtnActive : ''}`}
-                   onClick={() => toggleCat(cat.label)}
+                   className={`${styles.catBtn} ${activeCat === cat.category_name ? styles.catBtnActive : ''}`}
+                   onClick={() => toggleCat(cat.category_id, cat.category_name)}
                  >
-                   <span>{cat.label}</span>
-                   <motion.span animate={{ rotate: openCat === cat.label ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ display: 'flex' }}>
+                   <span>{cat.category_name}</span>
+                   <motion.span animate={{ rotate: openCat === cat.category_name ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ display: 'flex' }}>
                      <ChevronDown size={14} />
                    </motion.span>
                  </button>
                  <AnimatePresence initial={false}>
-                   {openCat === cat.label && cat.sub && (
-                     <motion.ul className={styles.subList} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
-                       {cat.sub.map((s) => <li key={s} className={styles.subItem}>{s}</li>)}
-                     </motion.ul>
+                   {openCat === cat.category_name && (
+                     <motion.div className={styles.subList} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
+                       <li className={styles.subItem} style={{ listStyle: 'none', fontWeight: 600, color: '#F18E1A' }}>{cat.product_count} products</li>
+                     </motion.div>
                    )}
                  </AnimatePresence>
                </div>
              ))}
+             {selectedCategory !== null && (
+               <button
+                 onClick={() => { setSelectedCategory(null); setActiveCat(null); setOpenCat(null) }}
+                 style={{ width: '100%', padding: '0.5em', background: 'none', border: 'none', color: '#F18E1A', cursor: 'pointer', fontSize: '0.8em', fontFamily: 'inherit', fontWeight: 600 }}
+               >
+                 Clear filter
+               </button>
+             )}
              </div>
            </motion.div>
          )}
@@ -337,39 +323,49 @@ export default function Shop(){
    Categories
    </h5>
    <div className={styles.two}>
-     {categoryList.map((cat) => (
-       <div key={cat.label} className={styles.catItem}>
+     {categories.map((cat) => (
+       <div key={cat.category_id} className={styles.catItem}>
          <button
-           className={`${styles.catBtn} ${activeCat === cat.label ? styles.catBtnActive : ''}`}
-           onClick={() => toggleCat(cat.label)}
+           className={`${styles.catBtn} ${activeCat === cat.category_name ? styles.catBtnActive : ''}`}
+           onClick={() => toggleCat(cat.category_id, cat.category_name)}
          >
-           <span>{cat.label}</span>
+           <span>{cat.category_name}</span>
            <motion.span
-             animate={{ rotate: openCat === cat.label ? 180 : 0 }}
+             animate={{ rotate: openCat === cat.category_name ? 180 : 0 }}
              transition={{ duration: 0.25 }}
              style={{ display: 'flex' }}
            >
              <ChevronDown size={14} />
            </motion.span>
          </button>
-
          <AnimatePresence initial={false}>
-           {openCat === cat.label && (
-             <motion.ul
+           {openCat === cat.category_name && (
+             <motion.div
                className={styles.subList}
                initial={{ height: 0, opacity: 0 }}
                animate={{ height: 'auto', opacity: 1 }}
                exit={{ height: 0, opacity: 0 }}
                transition={{ duration: 0.25, ease: 'easeInOut' }}
              >
-               {cat.sub.map((s) => (
-                 <li key={s} className={styles.subItem}>{s}</li>
-               ))}
-             </motion.ul>
+               <li
+                 className={styles.subItem}
+                 style={{ listStyle: 'none', fontWeight: 600, color: '#F18E1A', padding: '0.4em 1.5em' }}
+               >
+                 {cat.product_count} products
+               </li>
+             </motion.div>
            )}
          </AnimatePresence>
        </div>
      ))}
+     {selectedCategory !== null && (
+       <button
+         onClick={() => { setSelectedCategory(null); setActiveCat(null); setOpenCat(null) }}
+         style={{ width: '100%', marginTop: '0.5em', background: 'none', border: 'none', color: '#F18E1A', cursor: 'pointer', fontSize: '0.8em', fontFamily: 'inherit', fontWeight: 600 }}
+       >
+         Clear filter
+       </button>
+     )}
    </div>
    </div>
    <img src={logitechgif} alt="" />
@@ -378,10 +374,40 @@ export default function Shop(){
     <h5 className={styles.head}>
    Products
    </h5>
+
+     {loadingProducts && (
+       <div className={styles.grid}>
+         {Array.from({ length: 6 }).map((_, i) => (
+           <div key={i} className={styles.card} style={{ overflow: 'hidden' }}>
+             <div className={styles.imgWrap} style={{ background: '#f0f0f0', animation: 'shimmer 1.5s infinite' }} />
+             <div style={{ padding: '0.6em 0.8em', display: 'flex', flexDirection: 'column', gap: '0.5em' }}>
+               <div style={{ height: 12, borderRadius: 6, background: '#f0f0f0', width: '80%', animation: 'shimmer 1.5s infinite' }} />
+               <div style={{ height: 12, borderRadius: 6, background: '#f0f0f0', width: '50%', animation: 'shimmer 1.5s infinite' }} />
+               <div style={{ height: 12, borderRadius: 6, background: '#f0f0f0', width: '35%', animation: 'shimmer 1.5s infinite' }} />
+             </div>
+             <div style={{ margin: '0 0.8em 0.8em', height: 34, borderRadius: 4, background: '#f0f0f0', animation: 'shimmer 1.5s infinite' }} />
+           </div>
+         ))}
+       </div>
+     )}
+
+     {!loadingProducts && (fetchError || filteredProducts.length === 0) && (
+       <div style={{ padding: '3em', textAlign: 'center' }}>
+         <p style={{ fontSize: '1.1em', fontWeight: 700, color: '#0b0b0b', marginBottom: '0.4em' }}>
+           Products Coming Soon
+         </p>
+         <p style={{ fontSize: '0.85em', color: '#7f7f7f' }}>
+           We're stocking up. Check back shortly.
+         </p>
+       </div>
+     )}
+
+     {!loadingProducts && !fetchError && filteredProducts.length > 0 && (
+       <>
      <div className={styles.grid}>
         {currentProducts.map((p, i) => (
           <motion.div
-            key={i}
+            key={p.id}
             className={styles.card}
             custom={i}
             variants={cardVariants}
@@ -390,16 +416,27 @@ export default function Shop(){
             viewport={{ once: true, amount: 0.15 }}
           >
           <div className={styles.imgWrap}>
-              <img src={p.img} alt={p.name} className={styles.productImg} />
+              <img
+                src={p.image ? `${import.meta.env.VITE_PUBLIC_API_URL?.replace('/api', '')}/${p.image}` : ''}
+                alt={p.name}
+                className={styles.productImg}
+              />
             </div>
 
             <div className={styles.infoRow}>
               <div className={styles.info}>
-                <p className={styles.name}>{p.name}</p>
-                <p className={styles.price}>{p.price}</p>
-                <p className={styles.oldPrice}>{p.oldPrice}</p>
-                <p className={styles.discount}>{p.discount}</p>
-                <Stars count={p.stars} />
+                <p className={styles.name}>
+                  <Link to={`/product/${p.id}`} className={styles.productLink}>{p.name}</Link>
+                </p>
+                <p className={styles.price}>
+                  {Number(p.end_user_price || p.price) === 0
+                    ? 'Price on request'
+                    : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`}
+                </p>
+                {p.discount > 0 && (
+                  <p className={styles.discount}>{p.discount}% OFF</p>
+                )}
+                <Stars count={4} />
               </div>
               <button className={styles.wishlist} aria-label="Add to wishlist">
                 <Heart size={20} />
@@ -408,7 +445,12 @@ export default function Shop(){
 
             <button
               className={styles.addToCart}
-              onClick={() => addToCart({ name: p.name, price: p.price, oldPrice: p.oldPrice, img: p.img })}
+              onClick={() => addToCart({
+                product_id: p.id,
+                name: p.name,
+                price: `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
+                img: p.image ? `${import.meta.env.VITE_PUBLIC_API_URL?.replace('/api', '')}/${p.image}` : '',
+              })}
             >
               Add to Cart
             </button>
@@ -419,11 +461,13 @@ export default function Shop(){
             <Pagination
               current={currentPage}
               pageSize={pageSize}
-              total={products.length}
+              total={filteredProducts.length}
               onChange={(page) => setCurrentPage(page)}
-              showSizeChanger={false} // Prevents changing items-per-page dropdown unless you want it
+              showSizeChanger={false}
             />
           </div>
+      </>
+     )}
    </div>
        </div>
         </>

@@ -45,7 +45,7 @@ export default function App() {
                <Route  path="/cart" element={<Cart />} />
                <Route  path="/checkout" element={<Checkout />} />
                <Route  path="/forgotpassword" element={<ForgotPassword />} />
-               <Route  path="/product/" element={<Product />} />
+               <Route  path="/product/:id" element={<Product />} />
         </Routes>
         <Chatbox />
         <BacktoTop />

@@ -1,171 +1,33 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ShoppingCart, Heart } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import styles from './Featured.module.css'
 import { useCart } from '../context/CartContext'
+import { productsApi } from '../lib/api'
 
-import headsetImg  from '../assets/840760832c.svg'
-import codeyImg    from '../assets/64c255a985357-0 1.svg'
-import mouseImg    from '../assets/60f5808d72fc3-0 1.svg'
-import samsungImg  from '../assets/6615738024026-0 2.svg'
-import codey2Img   from '../assets/Frame 324.svg'
-import vestelImg   from '../assets/VESTEL 56.svg'
+const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
 
-type Badge = 'New' | 'Hot' | 'Special'
-
-interface Product {
-  img: string
+interface ApiProduct {
+  id: number
   name: string
-  category: string
-  price: string
-  oldPrice: string
-  stars: number
-  badge: Badge
-  filterKey: string
+  price: string | number
+  end_user_price: string | number
+  image: string
+  discount: number
+  availability: number
 }
 
-const products: Product[] = [
-  {
-    img: headsetImg,
-    name: 'VT HEADSET X300 BT',
-    category: 'Headsets',
-    price: '₦ 120,000',
-    oldPrice: '₦ 175,000',
-    stars: 4,
-    badge: 'New',
-    filterKey: 'Headsets',
-  },
-  {
-    img: codeyImg,
-    name: '14 In 1 Solar Robot Kit',
-    category: 'Coding and Robotics Kit',
-    price: '₦ 200,000',
-    oldPrice: '₦ 230,000',
-    stars: 5,
-    badge: 'Hot',
-    filterKey: 'VC Accessories',
-  },
-  {
-    img: mouseImg,
-    name: 'LOGITECH M190 Full-Size Wireless Mouse',
-    category: 'Mouse',
-    price: '₦ 14,000',
-    oldPrice: '₦ 16,100',
-    stars: 4,
-    badge: 'Special',
-    filterKey: 'Mouse',
-  },
-  {
-    img: samsungImg,
-    name: 'SAMSUNG 75 INCHES FLIPCHART',
-    category: 'Screens',
-    price: '₦ 5,950,000',
-    oldPrice: '₦ 6,842,500',
-    stars: 4,
-    badge: 'Hot',
-    filterKey: 'Screens',
-  },
- 
-  {
-    img: codey2Img,
-    name: 'MAKEBLOCK CODEY ROCKY',
-    category: 'Coding and Robotics Kit',
-    price: '₦ 600,000',
-    oldPrice: '₦ 690,000',
-    stars: 5,
-    badge: 'Special',
-    filterKey: 'VC Accessories',
-  },
-  {
-    img: vestelImg,
-    name: 'VESTEL 55 INCHES SCREEN',
-    category: 'Screens',
-    price: '₦ 1,200,000',
-    oldPrice: '₦ 1,380,000',
-    stars: 4,
-    badge: 'New',
-    filterKey: 'Screens',
-  },
-     {
-    img: headsetImg,
-    name: 'VT HEADSET X300 BT',
-    category: 'Headsets',
-    price: '₦ 120,000',
-    oldPrice: '₦ 175,000',
-    stars: 4,
-    badge: 'New',
-    filterKey: 'Headsets',
-  },
-  {
-    img: codeyImg,
-    name: '14 In 1 Solar Robot Kit',
-    category: 'Coding and Robotics Kit',
-    price: '₦ 200,000',
-    oldPrice: '₦ 230,000',
-    stars: 5,
-    badge: 'Hot',
-    filterKey: 'VC Accessories',
-  },
-  {
-    img: mouseImg,
-    name: 'LOGITECH M190 Full-Size Wireless Mouse',
-    category: 'Mouse',
-    price: '₦ 14,000',
-    oldPrice: '₦ 16,100',
-    stars: 4,
-    badge: 'Special',
-    filterKey: 'Mouse',
-  },
-  {
-    img: samsungImg,
-    name: 'SAMSUNG 75 INCHES FLIPCHART',
-    category: 'Screens',
-    price: '₦ 5,950,000',
-    oldPrice: '₦ 6,842,500',
-    stars: 4,
-    badge: 'Hot',
-    filterKey: 'Screens',
-  },
- 
-  {
-    img: codey2Img,
-    name: 'MAKEBLOCK CODEY ROCKY',
-    category: 'Coding and Robotics Kit',
-    price: '₦ 600,000',
-    oldPrice: '₦ 690,000',
-    stars: 5,
-    badge: 'Special',
-    filterKey: 'VC Accessories',
-  },
-   {
-    img: vestelImg,
-    name: 'VESTEL 55 INCHES SCREEN',
-    category: 'Screens',
-    price: '₦ 1,200,000',
-    oldPrice: '₦ 1,380,000',
-    stars: 4,
-    badge: 'New',
-    filterKey: 'Screens',
-  },
+interface ApiCategory {
+  category_id: number
+  category_name: string
+  products: ApiProduct[]
+}
 
-]
-
-const filters = [
-  'All',
-  'Office Equipments',
-  'VC Accessories',
-  'Video Conferencing',
-  'Mouse',
-  'Screens',
-  'Keyboards',
-  'Headsets',
-  'Webcams',
-]
-
-const badgeColors: Record<Badge, string> = {
-  New: '#142B80',
-  Hot: '#e53e3e',
-  Special: '#F18E1A',
+function getImageUrl(path: string) {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  return `${IMAGE_BASE}/${path.replace(/^\/+/, '')}`
 }
 
 function Stars({ count }: { count: number }) {
@@ -187,35 +49,69 @@ const cardVariants = {
   }),
 }
 
-export default function FeaturedProducts() {
-  const [active, setActive] = useState('All')
-  const { addToCart } = useCart()
+const LIMIT = 12
 
-  const filtered = active === 'All'
-    ? products
-    : products.filter((p) => p.filterKey === active)
+const toTitleCase = (str: string) =>
+  str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+
+const currentMonth = new Date().toLocaleString('default', { month: 'long' })
+
+export default function FeaturedProducts() {
+  const { addToCart } = useCart()
+  const [allProducts, setAllProducts] = useState<ApiProduct[]>([])
+  const [categories, setCategories] = useState<ApiCategory[]>([])
+  const [active, setActive] = useState('All')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    productsApi.getAll()
+      .then((res: unknown) => {
+        const r = res as { success: boolean; data: ApiCategory[] }
+        const cats = Array.isArray(r.data) ? r.data : []
+        setCategories(cats)
+        setAllProducts(cats.flatMap(c => c.products))
+      })
+      .catch(() => {
+        setCategories([])
+        setAllProducts([])
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = (() => {
+    if (active === 'All') return allProducts.slice(0, LIMIT)
+    const cat = categories.find(c => c.category_name === active)
+    return (cat?.products ?? []).slice(0, LIMIT)
+  })()
+
+  // build filter tabs: All + ALL category names that have products (no limit)
+  const filterTabs = [
+    'All',
+    ...categories
+      .filter(c => c.products.length > 0)
+      .map(c => c.category_name),
+  ]
 
   return (
     <section className={styles.section}>
-
       {/* ── top bar ── */}
       <div className={styles.topBar}>
         <div className={styles.topLeft}>
           <span className={styles.ongoingBadge}>
-            <ShoppingCart size={14} /> This month
+            <ShoppingCart size={14} /> This {currentMonth}
           </span>
           <h2 className={styles.title}>Featured Products</h2>
           <p className={styles.subtitle}>Every listed new product from our trusted sellers</p>
         </div>
 
         <div className={styles.filters}>
-          {filters.map((f) => (
+          {filterTabs.map((f) => (
             <button
               key={f}
               className={`${styles.filterBtn} ${active === f ? styles.filterActive : ''}`}
               onClick={() => setActive(f)}
             >
-              {f}
+              {f === 'All' ? 'All' : toTitleCase(f.length > 20 ? f.slice(0, 18) + '…' : f)}
             </button>
           ))}
         </div>
@@ -223,51 +119,70 @@ export default function FeaturedProducts() {
 
       {/* ── product grid ── */}
       <div className={styles.grid}>
-        {filtered.map((p, i) => (
-          <motion.div
-            key={p.name}
-            className={styles.card}
-            custom={i}
-            variants={cardVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.15 }}
-          >
-            {/* image + badge */}
-            <div className={styles.imgWrap}>
-              <img src={p.img} alt={p.name} className={styles.productImg} />
-              <span
-                className={styles.badge}
-                style={{ background: badgeColors[p.badge] }}
-              >
-                {p.badge}
-              </span>
-            </div>
-
-            {/* info + heart */}
-            <div className={styles.infoRow}>
-              <div className={styles.info}>
-                <p className={styles.name}>{p.name}</p>
-                <p className={styles.categoryLabel}>{p.category}</p>
-                <p className={styles.price}>{p.price}</p>
-                <p className={styles.oldPrice}>{p.oldPrice}</p>
-                <Stars count={p.stars} />
+        {loading
+          ? Array.from({ length: LIMIT }).map((_, i) => (
+              <div key={i} className={styles.card} style={{ overflow: 'hidden' }}>
+                <div className={styles.imgWrap} style={{ background: '#f0f0f0', animation: 'shimmer 1.5s infinite' }} />
+                <div style={{ padding: '0.6em 0.8em', display: 'flex', flexDirection: 'column', gap: '0.5em' }}>
+                  <div style={{ height: 12, borderRadius: 6, background: '#f0f0f0', width: '80%', animation: 'shimmer 1.5s infinite' }} />
+                  <div style={{ height: 12, borderRadius: 6, background: '#f0f0f0', width: '50%', animation: 'shimmer 1.5s infinite' }} />
+                  <div style={{ height: 12, borderRadius: 6, background: '#f0f0f0', width: '35%', animation: 'shimmer 1.5s infinite' }} />
+                </div>
+                <div style={{ margin: '0 0.8em 0.8em', height: 34, borderRadius: 4, background: '#f0f0f0', animation: 'shimmer 1.5s infinite' }} />
               </div>
-              <button className={styles.wishlist} aria-label="Add to wishlist">
-                <Heart size={20} />
-              </button>
-            </div>
+            ))
+          : filtered.map((p, i) => (
+              <motion.div
+                key={p.id}
+                className={styles.card}
+                custom={i}
+                variants={cardVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.15 }}
+              >
+                {/* image */}
+                <div className={styles.imgWrap}>
+                  <img src={getImageUrl(p.image)} alt={p.name} className={styles.productImg} />
+                </div>
 
-            <button
-              className={styles.addToCart}
-              onClick={() => addToCart({ name: p.name, price: p.price, oldPrice: p.oldPrice, img: p.img })}
-            >
-              Add to Cart
-            </button>
-          </motion.div>
-        ))}
+                {/* info + heart */}
+                <div className={styles.infoRow}>
+                  <div className={styles.info}>
+                    <p className={styles.name}>
+                      <Link to={`/product/${p.id}`} className={styles.productLink}>{p.name}</Link>
+                    </p>
+                    <p className={styles.price}>
+                      {Number(p.end_user_price || p.price) === 0
+                        ? 'Price on request'
+                        : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`}
+                    </p>
+                    {p.discount > 0 && (
+                      <p className={styles.oldPrice}>{p.discount}% OFF</p>
+                    )}
+                    <Stars count={4} />
+                  </div>
+                  <button className={styles.wishlist} aria-label="Add to wishlist">
+                    <Heart size={20} />
+                  </button>
+                </div>
+
+                <button
+                  className={styles.addToCart}
+                  onClick={() => addToCart({
+                    product_id: p.id,
+                    name: p.name,
+                    price: Number(p.end_user_price || p.price) === 0
+                      ? 'Price on request'
+                      : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
+                    img: getImageUrl(p.image),
+                  })}
+                >
+                  Add to Cart
+                </button>
+              </motion.div>
+            ))}
       </div>
-
     </section>
   )
 }

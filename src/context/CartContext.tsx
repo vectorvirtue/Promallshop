@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
+import { cartApi, getToken } from '../lib/api'
 
 export interface CartItem {
+  product_id?: string | number
   name: string
   price: string
   oldPrice?: string
@@ -10,7 +12,7 @@ export interface CartItem {
 
 interface CartContextType {
   items: CartItem[]
-  addToCart: (item: Omit<CartItem, 'quantity'>) => void
+  addToCart: (item: Omit<CartItem, 'quantity'>, quantity?: number) => Promise<void>
   removeFromCart: (name: string) => void
   updateQuantity: (name: string, delta: number) => void
   totalItems: number
@@ -21,16 +23,26 @@ const CartContext = createContext<CartContextType | null>(null)
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
 
-  const addToCart = (product: Omit<CartItem, 'quantity'>) => {
+  const addToCart = async (product: Omit<CartItem, 'quantity'>, quantity = 1) => {
+    // always update local state immediately for a snappy UI
     setItems((prev) => {
       const existing = prev.find((i) => i.name === product.name)
       if (existing) {
         return prev.map((i) =>
-          i.name === product.name ? { ...i, quantity: i.quantity + 1 } : i
+          i.name === product.name ? { ...i, quantity: i.quantity + quantity } : i
         )
       }
-      return [...prev, { ...product, quantity: 1 }]
+      return [...prev, { ...product, quantity }]
     })
+
+    // if logged in and product_id is available, sync with backend
+    if (getToken() && product.product_id) {
+      try {
+        await cartApi.add(product.product_id, quantity)
+      } catch (err) {
+        console.error('Failed to sync cart with backend:', err)
+      }
+    }
   }
 
   const removeFromCart = (name: string) => {

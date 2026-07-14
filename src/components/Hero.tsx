@@ -3,9 +3,29 @@ import styles from "./Hero.module.css";
 import { useNavigate } from "react-router-dom";
 import slider1 from "../assets/Sliders (1).svg";
 import slider2 from "../assets/Sliders.svg";
-import dealImg1 from "../assets/64a5ac358868e-01 1.svg";
-import dealImg2 from "../assets/Sharp-AR-7024-7024D.svg";
-import dealImg3 from "../assets/65bd1f891f37c-0 1.svg";
+import { productsApi } from "../lib/api";
+
+const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
+
+function getImageUrl(path: string) {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  return `${IMAGE_BASE}/${path.replace(/^\/+/, '')}`
+}
+
+interface ApiProduct {
+  id: number
+  name: string
+  price: string | number
+  end_user_price: string | number
+  image: string
+  discount: number
+}
+
+interface ApiCategory {
+  category_name: string
+  products: ApiProduct[]
+}
 
 const sliderContent = [
   {
@@ -28,35 +48,49 @@ const sliderContent = [
   },
 ];
 
-const weeklyDeals = [
-  {
-    img: dealImg1,
-    name: "MAXHUB 575FA - 75 Inches",
-    price: "₦ 5,200,000",
-    oldPrice: "₦ 5,200,000",
-    stars: "★★★★★",
-  },
-  {
-    img: dealImg2,
-    name: "SHARP AR-7024 Printer",
-    price: "₦ 770,000",
-    oldPrice: "₦ 885,500",
-    stars: "★★★★☆",
-  },
-  {
-    img: dealImg3,
-    name: "Photon Artificial Intelligence Kit",
-    price: "₦ 1,236,750",
-    oldPrice: "₦ 1,459,365",
-    stars: "★★★★★",
-  },
-];
-
 export default function Hero() {
   const [current, setCurrent] = useState(0);
   const [visible, setVisible] = useState(true);
+  const [weeklyDeals, setWeeklyDeals] = useState<ApiProduct[]>([]);
   const navigate = useNavigate();
-const goToPage = () => navigate("/shop");
+  const goToPage = () => navigate("/shop");
+
+  /* fetch 1 product each from Robotics, Screens, and Video Conferencing */
+  useEffect(() => {
+    productsApi.getAll()
+      .then((res: unknown) => {
+        const r = res as { success: boolean; data: ApiCategory[] }
+        const cats = Array.isArray(r.data) ? r.data : []
+
+        const pick = (keywords: string[]) => {
+          const cat = cats.find(c =>
+            keywords.some(kw => c.category_name.toLowerCase().includes(kw))
+          )
+          return cat?.products[0] ?? null
+        }
+
+        const deals = [
+          pick(['robotics', 'coding']),
+          pick(['screen', 'display', 'signage']),
+          pick(['video conferencing', 'video conf']),
+        ].filter(Boolean) as ApiProduct[]
+
+        // fill up to 3 from any category if some weren't found
+        if (deals.length < 3) {
+          const all = cats.flatMap(c => c.products)
+          const ids = new Set(deals.map(p => p.id))
+          for (const p of all) {
+            if (deals.length >= 3) break
+            if (!ids.has(p.id)) { deals.push(p); ids.add(p.id) }
+          }
+        }
+
+        setWeeklyDeals(deals.slice(0, 3))
+      })
+      .catch(() => {})
+  }, [])
+
+  /* slider auto-advance */
   useEffect(() => {
     const interval = setInterval(() => {
       setVisible(false);
@@ -65,25 +99,22 @@ const goToPage = () => navigate("/shop");
         setVisible(true);
       }, 600);
     }, 4000);
-
     return () => clearInterval(interval);
   }, []);
 
   const slide = sliderContent[current];
 
+  const formatPrice = (p: ApiProduct) => {
+    const n = Number(p.end_user_price || p.price)
+    return n === 0 ? 'Price on request' : `₦ ${n.toLocaleString('en-NG')}`
+  }
+
   return (
     <div className={styles.hero}>
 
-      {/* ── left: slider card with text overlaid on image ── */}
+      {/* ── left: slider card ── */}
       <div className={`${styles.sliderCard} ${visible ? styles.fadeIn : styles.fadeOut}`}>
-        {/* full-bleed slide image */}
-        <img
-          src={slide.contentpicture}
-          alt={slide.title}
-          className={styles.slideImage}
-        />
-
-        {/* text overlay */}
+        <img src={slide.contentpicture} alt={slide.title} className={styles.slideImage} />
         <div className={styles.textBlock}>
           <h2 className={styles.subtitle}>
             {slide.subtitle}{" "}
@@ -105,17 +136,35 @@ const goToPage = () => navigate("/shop");
 
         <hr className={styles.dealsDivider} />
 
-        {weeklyDeals.map((deal, i) => (
-          <div key={i} className={styles.dealItem}>
-            <img src={deal.img} alt={deal.name} className={styles.dealImage} />
-            <div className={styles.dealInfo}>
-              <p className={styles.dealName}>{deal.name}</p>
-              <p className={styles.dealPrice}>{deal.price}</p>
-              <p className={styles.dealOldPrice}>{deal.oldPrice}</p>
-              <p className={styles.dealStars}>{deal.stars}</p>
-            </div>
-          </div>
-        ))}
+        {weeklyDeals.length === 0
+          ? /* skeleton while loading */
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className={styles.dealItem}>
+                <div style={{ width: 64, height: 64, borderRadius: 8, background: '#f0f0f0', flexShrink: 0 }} />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ height: 10, borderRadius: 4, background: '#f0f0f0', width: '80%' }} />
+                  <div style={{ height: 10, borderRadius: 4, background: '#f0f0f0', width: '50%' }} />
+                </div>
+              </div>
+            ))
+          : weeklyDeals.map((deal) => (
+              <div key={deal.id} className={styles.dealItem}>
+                <img
+                  src={getImageUrl(deal.image)}
+                  alt={deal.name}
+                  className={styles.dealImage}
+                />
+                <div className={styles.dealInfo}>
+                  <p className={styles.dealName}>{deal.name}</p>
+                  <p className={styles.dealPrice}>{formatPrice(deal)}</p>
+                  {deal.discount > 0 && (
+                    <p className={styles.dealOldPrice}>{deal.discount}% OFF</p>
+                  )}
+                  <p className={styles.dealStars}>★★★★★</p>
+                </div>
+              </div>
+            ))
+        }
       </div>
 
     </div>
