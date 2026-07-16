@@ -314,3 +314,21 @@
 .productLink:hover {
   color: #F18E1A;
 }
+
+/* ── touch: mirror all hover states as :active for mobile tap feedback ── */
+@media (hover: none) {
+  .filterNavBtn:active { background: #F18E1A; color: #fff; }
+  .card:active { box-shadow: 0 4px 14px rgba(241, 142, 26, 0.2); }
+  .wishlist:active { transform: scale(1.2); }
+  .addToCart:active { border-color: #F18E1A; color: #F18E1A; }
+  .productLink:active { color: #F18E1A; }
+  .filterBtn:active { background: #F18E1A; color: #fff; font-weight: 700; }
+}
+
+/* ── out of stock button ── */
+.addToCart:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #ccc;
+  color: #999;
+}

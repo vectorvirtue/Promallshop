@@ -28,10 +28,10 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const data = await authApi.login(form.email, form.password)
-      saveToken(data.token, form.remember)
-      saveUser(data.user, form.remember)
-      // clear the registration message now that the user has logged in
+      const res = await authApi.login(form.email, form.password)
+      // response: { success, message, data: { token, token_type, user } }
+      saveToken(res.data.token, form.remember)
+      saveUser(res.data.user, form.remember)
       localStorage.removeItem('registration_msg')
       navigate(redirectTo)
     } catch (err) {

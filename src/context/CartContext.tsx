@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { cartApi, getToken } from '../lib/api'
+import { toast } from 'sonner'
 
 export interface CartItem {
   product_id?: string | number
@@ -21,10 +22,22 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | null>(null)
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([])
+  const [items, setItems] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('cart_items')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+
+  // persist cart to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('cart_items', JSON.stringify(items))
+  }, [items])
 
   const addToCart = async (product: Omit<CartItem, 'quantity'>, quantity = 1) => {
-    // always update local state immediately for a snappy UI
+    // update local state immediately
     setItems((prev) => {
       const existing = prev.find((i) => i.name === product.name)
       if (existing) {
@@ -35,7 +48,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return [...prev, { ...product, quantity }]
     })
 
-    // if logged in and product_id is available, sync with backend
+    // show toast
+    toast.success('Added to cart!', {
+      description: product.name,
+      duration: 2500,
+      action: {
+        label: 'View Cart',
+        onClick: () => window.location.href = '/cart',
+      },
+    })
+
+    // sync with backend if logged in
     if (getToken() && product.product_id) {
       try {
         await cartApi.add(product.product_id, quantity)

@@ -1,18 +1,12 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Heart, Star, ChevronDown, ChevronUp, ShoppingCart, ShieldCheck, Truck, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import styles from './Productpage.module.css'
 import { getMonthEndTarget, getTimeLeft as getCountdownTimeLeft } from '../lib/countdown'
+import { getImageUrl, checkHasOrderedBefore } from '../lib/api'
 
 const API = import.meta.env.VITE_PUBLIC_API_URL as string
-const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
-
-function getImageUrl(path: string) {
-  if (!path) return ''
-  if (path.startsWith('http')) return path
-  return `${IMAGE_BASE}/${path.replace(/^\/+/, '')}`
-}
 
 interface Product {
   id: number
@@ -33,6 +27,8 @@ interface Product {
   availability: number
   brand_id: string | null
   category_id: string
+  alternative_products: string | null
+  complementary_products: string | null
 }
 
 interface SimilarProduct {
@@ -75,6 +71,99 @@ function parseFaq(raw: string): { q: string; a: string }[] {
 
 /* ── countdown uses shared month-end utility ── */
 
+/* ── fetch multiple products by ID in parallel ── */
+async function fetchProductsByIds(ids: string): Promise<SimilarProduct[]> {
+  const parsed = ids
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+
+  if (parsed.length === 0) return []
+
+  const results = await Promise.allSettled(
+    parsed.map(pid =>
+      fetch(`${API}/products/${pid}`, {
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
+      }).then(r => r.json())
+    )
+  )
+
+  return results
+    .filter((r): r is PromiseFulfilledResult<{ success: boolean; data: SimilarProduct }> =>
+      r.status === 'fulfilled' && r.value?.success && r.value?.data
+    )
+    .map(r => r.value.data)
+}
+
+/* ── reusable product strip with nav arrows ── */
+interface ProductStripProps {
+  title: string
+  products: SimilarProduct[]
+  stripRef: React.RefObject<HTMLDivElement>
+  onScroll: (dir: 'left' | 'right') => void
+  addToCart: (item: { product_id: number; name: string; price: string; img: string }) => void
+}
+
+function ProductStrip({ title, products, stripRef, onScroll, addToCart }: ProductStripProps) {
+  return (
+    <div className={styles.similarSection}>
+      <div className={styles.similarHeader}>
+        <h3 className={styles.sectionTitle}>{title}</h3>
+        {products.length > 0 && (
+          <div className={styles.similarNav}>
+            <button className={styles.similarNavBtn} onClick={() => onScroll('left')} aria-label="Scroll left">
+              <ChevronLeft size={18} />
+            </button>
+            <button className={styles.similarNavBtn} onClick={() => onScroll('right')} aria-label="Scroll right">
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {products.length === 0 ? (
+        <p style={{ fontSize: '0.85em', color: '#aaa', padding: '0.5em 0' }}>
+          No products found in this section.
+        </p>
+      ) : (
+        <div className={styles.similarGrid} ref={stripRef}>
+          {products.map(p => {
+            const price = formatPrice(p.end_user_price || p.price)
+            return (
+              <div key={p.id} className={styles.similarCard}>
+                <div className={styles.similarImgWrap}>
+                  <img src={getImageUrl(p.image)} alt={p.name} className={styles.similarProductImg} />
+                  {p.discount > 0 && (
+                    <span className={styles.similarDiscountBadge}>{p.discount}% OFF</span>
+                  )}
+                </div>
+                <div className={styles.similarInfoRow}>
+                  <div className={styles.similarInfo}>
+                    <p className={styles.similarName}>
+                      <Link to={`/product/${p.id}`} className={styles.similarNameLink}>{p.name}</Link>
+                    </p>
+                    <p className={styles.similarPrice}>{price}</p>
+                    <span className={styles.similarStars}>★★★★★</span>
+                  </div>
+                  <button className={styles.similarWishlist} aria-label="Add to wishlist">
+                    <Heart size={18} />
+                  </button>
+                </div>
+                <button
+                  className={styles.similarAddToCart}
+                  onClick={() => addToCart({ product_id: p.id, name: p.name, price, img: getImageUrl(p.image) })}
+                >
+                  Add to Cart
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Productpage() {
   const { id } = useParams<{ id: string }>()
   const { addToCart } = useCart()
@@ -82,7 +171,8 @@ export default function Productpage() {
 
   const [product, setProduct] = useState<Product | null>(null)
   const [categoryName, setCategoryName] = useState('')
-  const [similar, setSimilar] = useState<SimilarProduct[]>([])
+  const [alternative, setAlternative] = useState<SimilarProduct[]>([])
+  const [complementary, setComplementary] = useState<SimilarProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeImg, setActiveImg] = useState('')
@@ -90,12 +180,20 @@ export default function Productpage() {
   const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'faq'>('description')
   const [showFullDesc, setShowFullDesc] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-  const similarRef = useRef<HTMLDivElement>(null)
-  const scrollSimilar = (dir: 'left' | 'right') => {
-    similarRef.current?.scrollBy({ left: dir === 'left' ? -280 : 280, behavior: 'smooth' })
-  }
-
+  const [isFirstTimeBuyer, setIsFirstTimeBuyer] = useState(false)
   const [countdown, setCountdown] = useState(() => getCountdownTimeLeft(getMonthEndTarget()))
+
+  const alternativeRef = useRef<HTMLDivElement>(null)
+  const complementaryRef = useRef<HTMLDivElement>(null)
+
+  const scroll = useCallback((ref: React.RefObject<HTMLDivElement>, dir: 'left' | 'right') => {
+    ref.current?.scrollBy({ left: dir === 'left' ? -280 : 280, behavior: 'smooth' })
+  }, [])
+
+  /* check first-time buyer via API */
+  useEffect(() => {
+    checkHasOrderedBefore().then(hasOrdered => setIsFirstTimeBuyer(!hasOrdered))
+  }, [])
 
   /* countdown tick */
   useEffect(() => {
@@ -108,7 +206,8 @@ export default function Productpage() {
     setLoading(true)
     setError('')
     setCategoryName('')
-    setSimilar([])
+    setAlternative([])
+    setComplementary([])
 
     async function load() {
       try {
@@ -122,17 +221,23 @@ export default function Productpage() {
         setProduct(prod)
         setActiveImg(getImageUrl(prod.image))
 
+        // fetch alternative and complementary in parallel
+        const [altProducts, compProducts] = await Promise.all([
+          prod.alternative_products ? fetchProductsByIds(prod.alternative_products) : Promise.resolve([]),
+          prod.complementary_products ? fetchProductsByIds(prod.complementary_products) : Promise.resolve([]),
+        ])
+
+        // resolve category name from grouped endpoint
         const catRes = await fetch(`${API}/products/grouped`, {
           headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
         })
         const catJson = await catRes.json()
         const cats: ApiCategory[] = Array.isArray(catJson.data) ? catJson.data : []
         const matched = cats.find(c => String(c.category_id) === String(prod.category_id))
-        if (matched) {
-          setCategoryName(matched.category_name)
-          const mp = Array.isArray(matched.products) ? matched.products : []
-          setSimilar(mp.filter(p => p.id !== Number(id)).slice(0, 4))
-        }
+        if (matched) setCategoryName(matched.category_name)
+
+        setAlternative(altProducts)
+        setComplementary(compProducts)
       } catch (err) {
         console.error('Product page error:', err)
         setError(err instanceof Error ? err.message : 'Failed to load product')
@@ -310,13 +415,19 @@ export default function Productpage() {
             <div className={styles.actions}>
               <button
                 className={styles.addBtn}
-                onClick={() => addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)}
+                disabled={product.qty <= 0}
+                onClick={() => {
+                  if (product.qty <= 0) return
+                  addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
+                }}
               >
-                Add to Cart
+                {product.qty <= 0 ? 'Out of Stock' : 'Add to Cart'}
               </button>
               <button
                 className={styles.buyBtn}
+                disabled={product.qty <= 0}
                 onClick={() => {
+                  if (product.qty <= 0) return
                   addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
                   navigate('/checkout')
                 }}
@@ -337,26 +448,35 @@ export default function Productpage() {
 
           {/* ── COL 3: right panel ── */}
           <div className={styles.rightPanel}>
-            {/* promo banner */}
-            <div className={styles.promoBanner}>
-              <p className={styles.promoText}>Hurry! Order now and get 15% discount on your purchase 🛍️</p>
-              <div className={styles.countdown}>
-                {[
-                  { label: 'Days',    val: countdown.d },
-                  { label: 'Hours',   val: countdown.h },
-                  { label: 'Minutes', val: countdown.m },
-                  { label: 'Seconds', val: countdown.s },
-                ].map((u, i, arr) => (
-                  <span key={u.label} style={{ display: 'contents' }}>
-                    <div className={styles.cdUnit}>
-                      <span className={styles.cdLabel}>{u.label}</span>
-                      <span className={styles.cdVal}>{u.val}</span>
-                    </div>
-                    {i < arr.length - 1 && <span className={styles.cdColon}>:</span>}
-                  </span>
-                ))}
+            {/* promo banner — first-time buyers see discount offer, returning customers see loyalty message */}
+            {isFirstTimeBuyer ? (
+              <div className={styles.promoBanner}>
+                <p className={styles.promoText}>Hurry! Order now and get 15% discount on your purchase 🛍️</p>
+                <div className={styles.countdown}>
+                  {[
+                    { label: 'Days',    val: countdown.d },
+                    { label: 'Hours',   val: countdown.h },
+                    { label: 'Minutes', val: countdown.m },
+                    { label: 'Seconds', val: countdown.s },
+                  ].map((u, i, arr) => (
+                    <span key={u.label} style={{ display: 'contents' }}>
+                      <div className={styles.cdUnit}>
+                        <span className={styles.cdLabel}>{u.label}</span>
+                        <span className={styles.cdVal}>{u.val}</span>
+                      </div>
+                      {i < arr.length - 1 && <span className={styles.cdColon}>:</span>}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <>
+                <p className={styles.promoText}>
+                  Thank you for choosing Promallshop again. 
+                </p>
+               
+            </>
+            )}
 
             {/* price + discount */}
             <div className={styles.panelPriceRow}>
@@ -463,58 +583,23 @@ export default function Productpage() {
           </div>
         )}
 
-        {/* ── SIMILAR PRODUCTS ── */}
-        {similar.length > 0 && (
-          <div className={styles.similarSection}>
-            <div className={styles.similarHeader}>
-              <h3 className={styles.sectionTitle}>Similar Products</h3>
-              <div className={styles.similarNav}>
-                <button className={styles.similarNavBtn} onClick={() => scrollSimilar('left')} aria-label="Scroll left">
-                  <ChevronLeft size={18} />
-                </button>
-                <button className={styles.similarNavBtn} onClick={() => scrollSimilar('right')} aria-label="Scroll right">
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            </div>
+        {/* ── ALTERNATIVE PRODUCTS ── */}
+        <ProductStrip
+          title="Alternative Products"
+          products={alternative}
+          stripRef={alternativeRef}
+          onScroll={dir => scroll(alternativeRef, dir)}
+          addToCart={addToCart}
+        />
 
-            <div className={styles.similarGrid} ref={similarRef}>
-              {similar.map(p => (
-                <div key={p.id} className={styles.similarCard}>
-                  <div className={styles.similarImgWrap}>
-                    <img src={getImageUrl(p.image)} alt={p.name} className={styles.similarProductImg} />
-                    {p.discount > 0 && (
-                      <span className={styles.similarDiscountBadge}>{p.discount}% OFF</span>
-                    )}
-                  </div>
-                  <div className={styles.similarInfoRow}>
-                    <div className={styles.similarInfo}>
-                      <p className={styles.similarName}>
-                        <Link to={`/product/${p.id}`} className={styles.similarNameLink}>{p.name}</Link>
-                      </p>
-                      <p className={styles.similarPrice}>{formatPrice(p.end_user_price || p.price)}</p>
-                      <span className={styles.similarStars}>★★★★★</span>
-                    </div>
-                    <button className={styles.similarWishlist} aria-label="Add to wishlist">
-                      <Heart size={18} />
-                    </button>
-                  </div>
-                  <button
-                    className={styles.similarAddToCart}
-                    onClick={() => addToCart({
-                      product_id: p.id,
-                      name: p.name,
-                      price: formatPrice(p.end_user_price || p.price),
-                      img: getImageUrl(p.image),
-                    })}
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* ── COMPLEMENTARY PRODUCTS ── */}
+        <ProductStrip
+          title="Complementary Products"
+          products={complementary}
+          stripRef={complementaryRef}
+          onScroll={dir => scroll(complementaryRef, dir)}
+          addToCart={addToCart}
+        />
 
       </div>
     </>

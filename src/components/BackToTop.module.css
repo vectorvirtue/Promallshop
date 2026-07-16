@@ -26,3 +26,8 @@
   color: #fff;
   stroke: #fff;
 }
+
+/* ── touch: mirror hover states as :active ── */
+@media (hover: none) {
+  .btn:active { opacity: 0.85; transform: scale(0.95); }
+}

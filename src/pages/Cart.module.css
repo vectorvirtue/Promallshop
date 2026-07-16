@@ -424,3 +424,12 @@
     padding-left: 90px;
   }
 }
+
+/* ── touch: mirror hover states as :active ── */
+@media (hover: none) {
+  .link:active { color: #F18E1A; }
+  .backlink:active { color: #0b0b0b; }
+  .stepBtn:active { color: #f18e1a; }
+  .removeBtn:active { color: #e55; }
+  .shopBtn:active { opacity: 0.88; }
+}

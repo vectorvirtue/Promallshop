@@ -1,13 +1,14 @@
 .section {
-  background-image: url("src/assets/Today's Deals.svg");
-  background-size: cover;
+ background-size: cover;
   background-repeat: no-repeat;
+  background-position: top left;
   width: 100%;
   min-height: 450px;
   padding: 2em var(--page-x);
   box-sizing: border-box;
   display: flex;
   align-items: center;
+  transition: background-image 0.4s ease;
 }
 .blogs{
    padding: 2em var(--page-x);
@@ -31,8 +32,11 @@
 }
 .image{
   width: 100%;
+  object-fit: cover;
+  height: 180px;
   border-top-left-radius: 0.6em;
-    border-top-right-radius: 0.6em
+  border-top-right-radius: 0.6em;
+  display: block;
 }
 
 .discover {
@@ -202,4 +206,12 @@
   margin-top: 1em;
   margin-left: auto;
 }
+}
+
+/* ── touch: mirror hover states as :active ── */
+@media (hover: none) {
+  .buyBtn:active { opacity: 0.88; }
+  .wishlist:active { transform: scale(1.2); }
+  .dealAddBtn:active { background: #F18E1A; color: white; }
+  .carouselBtn:active { background: rgba(255,255,255,0.35); }
 }

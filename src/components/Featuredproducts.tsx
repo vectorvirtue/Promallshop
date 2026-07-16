@@ -4,9 +4,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import styles from './Featured.module.css'
 import { useCart } from '../context/CartContext'
-import { productsApi } from '../lib/api'
-
-const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
+import { productsApi, getImageUrl } from '../lib/api'
 
 interface ApiProduct {
   id: number
@@ -16,18 +14,13 @@ interface ApiProduct {
   image: string
   discount: number
   availability: number
+  qty?: string | number
 }
 
 interface ApiCategory {
   category_id: number
   category_name: string
   products: ApiProduct[]
-}
-
-function getImageUrl(path: string) {
-  if (!path) return ''
-  if (path.startsWith('http')) return path
-  return `${IMAGE_BASE}/${path.replace(/^\/+/, '')}`
 }
 
 function Stars({ count }: { count: number }) {
@@ -69,7 +62,11 @@ export default function FeaturedProducts() {
         const r = res as { success: boolean; data: ApiCategory[] }
         const cats = Array.isArray(r.data) ? r.data : []
         setCategories(cats)
-        setAllProducts(cats.flatMap(c => c.products))
+        // only show in-stock products
+        const inStock = cats.flatMap(c => c.products).filter(
+          p => p.availability !== 0 && (p.qty === undefined || Number(p.qty) > 0)
+        )
+        setAllProducts(inStock)
       })
       .catch(() => {
         setCategories([])
@@ -81,7 +78,10 @@ export default function FeaturedProducts() {
   const filtered = (() => {
     if (active === 'All') return allProducts.slice(0, LIMIT)
     const cat = categories.find(c => c.category_name === active)
-    return (cat?.products ?? []).slice(0, LIMIT)
+    const inStock = (cat?.products ?? []).filter(
+      p => p.availability !== 0 && (p.qty === undefined || Number(p.qty) > 0)
+    )
+    return inStock.slice(0, LIMIT)
   })()
 
   // build filter tabs: All + ALL category names that have products (no limit)
@@ -169,16 +169,20 @@ export default function FeaturedProducts() {
 
                 <button
                   className={styles.addToCart}
-                  onClick={() => addToCart({
-                    product_id: p.id,
-                    name: p.name,
-                    price: Number(p.end_user_price || p.price) === 0
-                      ? 'Price on request'
-                      : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
-                    img: getImageUrl(p.image),
-                  })}
+                  disabled={p.qty !== undefined && Number(p.qty) <= 0 || p.availability === 0}
+                  onClick={() => {
+                    if ((p.qty !== undefined && Number(p.qty) <= 0) || p.availability === 0) return
+                    addToCart({
+                      product_id: p.id,
+                      name: p.name,
+                      price: Number(p.end_user_price || p.price) === 0
+                        ? 'Price on request'
+                        : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
+                      img: getImageUrl(p.image),
+                    })
+                  }}
                 >
-                  Add to Cart
+                  {(p.qty !== undefined && Number(p.qty) <= 0) || p.availability === 0 ? 'Out of Stock' : 'Add to Cart'}
                 </button>
               </motion.div>
             ))}

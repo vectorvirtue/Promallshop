@@ -756,3 +756,12 @@
     margin-left: 2em;
   }
 }
+
+/* ── touch: mirror hover states as :active ── */
+@media (hover: none) {
+  .link:active { color: #f18e1a; }
+  .editLink:active { text-decoration: underline; }
+  .backBtn:active { border-color: #f18e1a; color: #f18e1a; }
+  .nextBtn:active { opacity: 0.88; }
+  .confirmBtn:active { opacity: 0.88; }
+}

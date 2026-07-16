@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom'
 import { Pagination } from 'antd'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { productsApi } from '../lib/api'
+import { productsApi, getImageUrl } from '../lib/api'
 interface ApiProduct {
   id: number
   name: string
@@ -417,7 +417,7 @@ export default function Shop(){
           >
           <div className={styles.imgWrap}>
               <img
-                src={p.image ? `${import.meta.env.VITE_PUBLIC_API_URL?.replace('/api', '')}/${p.image}` : ''}
+                src={getImageUrl(p.image)}
                 alt={p.name}
                 className={styles.productImg}
               />
@@ -445,14 +445,20 @@ export default function Shop(){
 
             <button
               className={styles.addToCart}
-              onClick={() => addToCart({
-                product_id: p.id,
-                name: p.name,
-                price: `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
-                img: p.image ? `${import.meta.env.VITE_PUBLIC_API_URL?.replace('/api', '')}/${p.image}` : '',
-              })}
+              disabled={Number(p.qty) <= 0 || p.availability === 0}
+              onClick={() => {
+                if (Number(p.qty) <= 0 || p.availability === 0) return
+                addToCart({
+                  product_id: p.id,
+                  name: p.name,
+                  price: Number(p.end_user_price || p.price) === 0
+                    ? 'Price on request'
+                    : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
+                  img: getImageUrl(p.image),
+                })
+              }}
             >
-              Add to Cart
+              {Number(p.qty) <= 0 || p.availability === 0 ? 'Out of Stock' : 'Add to Cart'}
             </button>
           </motion.div>
         ))}

@@ -3,15 +3,7 @@ import styles from "./Hero.module.css";
 import { useNavigate } from "react-router-dom";
 import slider1 from "../assets/Sliders (1).svg";
 import slider2 from "../assets/Sliders.svg";
-import { productsApi } from "../lib/api";
-
-const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
-
-function getImageUrl(path: string) {
-  if (!path) return ''
-  if (path.startsWith('http')) return path
-  return `${IMAGE_BASE}/${path.replace(/^\/+/, '')}`
-}
+import { productsApi, getImageUrl } from "../lib/api";
 
 interface ApiProduct {
   id: number

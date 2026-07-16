@@ -849,11 +849,13 @@
 .similarGrid {
   display: flex;
   gap: 1.5em;
-  overflow-x: auto;
+  overflow-x: scroll;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding-bottom: 4px;
+  /* ensure the strip is always scrollable if content overflows */
+  -webkit-overflow-scrolling: touch;
 }
 
 .similarGrid::-webkit-scrollbar {
@@ -1015,4 +1017,67 @@
   .similarCard {
     width: 100%;
   }
+}
+
+/* ── touch: mirror hover states as :active ── */
+@media (hover: none) {
+  .breadLink:active { color: #f18e1a; }
+  .availLink:active { text-decoration: underline; }
+  .heartBtn:active { color: #f18e1a; transform: scale(1.15); }
+  .qtyCtrl button:active { background: #f18e1a; color: #fff; }
+  .addBtn:active { opacity: 0.85; }
+  .buyBtn:active { border-color: #f18e1a; color: #f18e1a; }
+  .wishlistInline:active { transform: scale(1.15); }
+  .similarNavBtn:active { background: #F18E1A; color: #fff; }
+  .similarNameLink:active { color: #f18e1a; }
+  .similarWishlist:active { transform: scale(1.2); }
+  .similarAddToCart:active { border-color: #f18e1a; color: #f18e1a; }
+  .readMoreBtn:active { text-decoration: underline; }
+  .faqQ:active { background: #fff8f0; }
+  .tab:active { color: #f18e1a; }
+}
+
+/* ── returning customer loyalty banner ── */
+.loyaltyBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  background: linear-gradient(135deg, #fff8f0 0%, #fff3e0 100%);
+  border: 1.5px solid #f18e1a40;
+  border-radius: 10px;
+  padding: 1em;
+}
+
+.loyaltyTitle {
+  font-size: 1em;
+  font-weight: 800;
+  color: #0b0b0b;
+  margin: 0;
+}
+
+.loyaltyText {
+  font-size: 0.78em;
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.loyaltyLink {
+  font-size: 0.8em;
+  font-weight: 700;
+  color: #f18e1a;
+  text-decoration: none;
+  margin-top: 0.25em;
+}
+
+.loyaltyLink:hover {
+  text-decoration: underline;
+}
+
+/* ── disabled / out of stock buttons ── */
+.addBtn:disabled,
+.buyBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
 }

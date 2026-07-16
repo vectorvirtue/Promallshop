@@ -1,3 +1,30 @@
+export const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
+
+/**
+ * Converts a relative image path from the API into a full URL.
+ * Appends ?ngrok-skip-browser-warning=true so ngrok doesn't intercept image requests.
+ */
+export function getImageUrl(path: string): string {
+  if (!path) return ''
+  if (path.startsWith('http')) {
+    // only append ngrok bypass param if it's actually a ngrok URL
+    if (path.includes('ngrok')) {
+      const url = new URL(path)
+      url.searchParams.set('ngrok-skip-browser-warning', 'true')
+      return url.toString()
+    }
+    return path
+  }
+  const clean = path.replace(/^\/+/, '')
+  const base = IMAGE_BASE.replace(/\/+$/, '') // strip trailing slash
+  const url = `${base}/${clean}`
+  // only append ngrok param if the base URL is ngrok
+  if (IMAGE_BASE.includes('ngrok')) {
+    return `${url}?ngrok-skip-browser-warning=true`
+  }
+  return url
+}
+
 const BASE_URL = import.meta.env.VITE_PUBLIC_API_URL as string
 
 /* ── token helpers ── */
@@ -30,6 +57,58 @@ export const clearAuth = () => {
   })
 }
 
+/* ── first-time buyer check ── */
+export const markAsOrdered = (): void =>
+  localStorage.setItem('has_ordered', 'true')
+
+/**
+ * Returns true if the user has placed orders before.
+ * Checks the API if logged in, falls back to localStorage flag.
+ */
+export async function checkHasOrderedBefore(): Promise<boolean> {
+  if (localStorage.getItem('has_ordered') === 'true') {
+    console.log('checkHasOrderedBefore: fast path — already flagged in localStorage')
+    return true
+  }
+
+  const token = getToken()
+  if (!token) {
+    console.log('checkHasOrderedBefore: no token found — treating as first-time buyer')
+    return false
+  }
+
+  console.log('checkHasOrderedBefore: token found, checking orders API...')
+
+  try {
+    // fetch directly so we can handle 401 without throwing
+    const res = await fetch(`${BASE_URL}/orders/my-orders`, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        'Authorization': `Bearer ${token}`,
+      }
+    })
+
+    // 401 = token invalid/expired — clear it and treat as not logged in
+    if (res.status === 401) {
+      clearAuth()
+      return false
+    }
+
+    const data = await res.json()
+    console.log('Orders response — full:', data)
+    console.log('Orders count:', data.count, '| data length:', Array.isArray(data.data) ? data.data.length : 'N/A')
+
+    const hasOrders = (data.count ?? (Array.isArray(data.data) ? data.data.length : 0)) > 0
+    if (hasOrders) localStorage.setItem('has_ordered', 'true')
+    return hasOrders
+  } catch (err) {
+    console.error('checkHasOrderedBefore error:', err)
+    return false
+  }
+}
+
 /* ── base headers ── */
 const baseHeaders = (auth = false): HeadersInit => ({
   'Content-Type': 'application/json',
@@ -56,7 +135,8 @@ async function request<T>(
   console.log('API response:', res.status, data)
 
   if (!res.ok) {
-    // surface the most useful error message
+    // clear stale token on 401
+    if (res.status === 401) clearAuth()
     if (data?.errors) {
       const first = Object.values(data.errors as Record<string, string[]>)[0]
       throw new Error(first[0])
@@ -71,11 +151,19 @@ async function request<T>(
 export interface LoginResponse {
   success: boolean
   message: string
-  token: string
-  user: {
-    name: string
-    email: string
-    
+  // API returns token nested under data
+  data: {
+    token: string
+    token_type: string
+    user: {
+      id: number
+      name: string
+      email: string
+      phone: string
+      company: string
+      status: string
+      verified: number
+    }
   }
 }
 
@@ -120,12 +208,23 @@ export const authApi = {
 }
 
 /* ── products ── */
+
+// in-memory cache — persists for the lifetime of the browser session
+const _cache = new Map<string, unknown>()
+
+async function cachedRequest<T>(path: string): Promise<T> {
+  if (_cache.has(path)) return _cache.get(path) as T
+  const result = await request<T>(path)
+  _cache.set(path, result)
+  return result
+}
+
 export const productsApi = {
-  getAll: () => request('/products/grouped'),
+  getAll: () => cachedRequest('/products/grouped'),
   getOne: (id: number | string) => request(`/products/${id}`),
-  getFeatured: () => request('/products/featured'),
-  getDiscounted: () => request('/products/discounted'),
-  getAvailable: () => request('/products/available'),
+  getFeatured: () => cachedRequest('/products/featured'),
+  getDiscounted: () => cachedRequest('/products/discounted'),
+  getAvailable: () => cachedRequest('/products/available'),
   getByCategory: (categoryId: number | string) => request(`/products/category/${categoryId}`),
   getByBrand: (brandId: number | string) => request(`/products/brand/${brandId}`),
 }
@@ -137,7 +236,7 @@ export const cartApi = {
     request('/cart/add', {
       method: 'POST',
       auth: true,
-      body: JSON.stringify({ product_id, quantity, attributes }),
+      body: JSON.stringify({ product_id: String(product_id), quantity, attributes }),
     }),
   clear: () => request('/cart/clear', { method: 'DELETE', auth: true }),
 }

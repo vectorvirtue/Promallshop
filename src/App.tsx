@@ -5,6 +5,7 @@ import ScrollToTop from "./components/ScrolltoTop";
 import BacktoTop from "./components/BacktoTop";
 import Chatbox from "./components/Chatbox";
 import PageLoader from "./components/PageLoader";
+import { Toaster } from "sonner";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
 import Footer from "./components/Footer";
@@ -29,6 +30,13 @@ export default function App() {
       <BrowserRouter>
         <PageLoader />
         <ScrollToTop />
+        <Toaster
+          position="bottom-right"
+          richColors
+          toastOptions={{
+            style: { fontFamily: 'inherit' },
+          }}
+        />
         <Topnav/>
         <Navbar/>
         <Routes>

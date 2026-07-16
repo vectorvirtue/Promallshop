@@ -1,8 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useCart } from '../context/CartContext'
 import styles from './Cart.module.css'
 import { TriangleAlert } from 'lucide-react'
-import { getToken } from '../lib/api'
+import { getToken, checkHasOrderedBefore } from '../lib/api'
+
+const FIRST_ORDER_DISCOUNT = 0.15
 
 /* ── helpers ── */
 const parsePrice = (str: string): number =>
@@ -37,18 +40,25 @@ const EmptyCartIcon = () => (
 export default function Cart() {
 const { items, removeFromCart, updateQuantity } = useCart()
 const navigate = useNavigate()
+const [isFirstTimeBuyer, setIsFirstTimeBuyer] = useState(false)
+
+useEffect(() => {
+  checkHasOrderedBefore().then(hasOrdered => setIsFirstTimeBuyer(!hasOrdered))
+}, [])
 
 /* derived totals */
 const subtotal = items.reduce(
-(sum, item) => sum + parsePrice(item.price) * item.quantity,
-0
+  (sum, item) => sum + parsePrice(item.price) * item.quantity,
+  0
 )
 const originalTotal = items.reduce(
-(sum, item) =>
+  (sum, item) =>
     sum + (item.oldPrice ? parsePrice(item.oldPrice) : parsePrice(item.price)) * item.quantity,
-0
+  0
 )
-const discount = originalTotal - subtotal
+const productDiscount = originalTotal - subtotal
+const firstOrderDiscount = isFirstTimeBuyer ? subtotal * FIRST_ORDER_DISCOUNT : 0
+const totalAfterDiscount = subtotal - firstOrderDiscount
 const totalItems = items.reduce((sum, i) => sum + i.quantity, 0)
 
 return (
@@ -172,10 +182,18 @@ return (
             {/* discount — always visible, shows ₦ 0 when no old prices */}
             <div className={styles.summaryRow}>
               <span>Discount on Product</span>
-              <span className={discount > 0 ? styles.discount : styles.discountZero}>
-                {discount > 0 ? `-${formatNaira(discount)}` : formatNaira(0)}
+              <span className={productDiscount > 0 ? styles.discount : styles.discountZero}>
+                {productDiscount > 0 ? `-${formatNaira(productDiscount)}` : formatNaira(0)}
               </span>
             </div>
+
+            {/* 15% first-order discount */}
+            {isFirstTimeBuyer && (
+              <div className={styles.summaryRow}>
+                <span style={{ color: '#f18e1a', fontWeight: 700 }}>🎉 First Order 15% OFF</span>
+                <span className={styles.discount}>-{formatNaira(firstOrderDiscount)}</span>
+              </div>
+            )}
 
             <div className={styles.summaryRow}>
             <span>Coupon Discount</span>
@@ -188,7 +206,7 @@ return (
 
             <div className={styles.totalRow}>
             <span>Total Amount</span>
-            <span>{formatNaira(subtotal)}</span>
+            <span>{formatNaira(isFirstTimeBuyer ? totalAfterDiscount : subtotal)}</span>
             </div>
         </div>
 

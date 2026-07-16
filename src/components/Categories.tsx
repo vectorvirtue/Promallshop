@@ -23,10 +23,7 @@ const categories = [
   { img: businessTech,      label: 'Business Technology' },
   { img: videoConf,         label: 'Video Conferencing' },
   { img: videoAcc,          label: 'Video Conferencing Accessories' },
-  { img: codingRobotics,    label: 'Coding & Robotics Kits' },
-  { img: computerPeripherals, label: 'Computer Peripherals' },
-  { img: headsets,          label: 'Headsets' },
-  { img: ipPhones,          label: 'IP Phones' },
+
 ]
 
 // split into rows of 7

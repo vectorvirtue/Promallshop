@@ -16,21 +16,15 @@ function QuoteForm({ onBack }: { onBack: () => void }) {
     };
   }, []); 
 
-  const handleSubmit = (e: React.SyntheticEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // Get form data
     const formData = new FormData(e.currentTarget);
     const data = {
       name: formData.get("name"),
       email: formData.get("email"),
       message: formData.get("message"),
     };
-
-    // Here you would typically send the data to your backend
     console.log(data);
-
-    // Reset form
     e.currentTarget.reset();
   };
 
@@ -63,10 +57,10 @@ export default function Navbar() {
   const [showForm, setShowForm] = useState(false);
 
   const navLinks = [
-    { label: "Home", href: '/' },
-    { label: "Shop", href: '/shop' }, 
-    { label: "Blog", href: '/blog' },
-    { label: "Rentals", href: '/rentals' },   
+    { label: "Home", href: '/', external: false },
+    { label: "Shop", href: '/shop', external: false },
+    { label: "Blog", href: 'https://www.promallshop.com/blog/', external: true },
+    { label: "Rentals", href: '/rentals', external: false },
   ];
 
   return (
@@ -87,15 +81,27 @@ export default function Navbar() {
         {/* nav links — desktop only */}
         <div className={styles.linksContainer}>
           {navLinks.map((link) => (
-            <NavLink 
-              key={link.href} 
-              to={link.href} 
-              className={({ isActive }) => 
-                `${styles.link} ${isActive ? styles.linkActive : ''}`
-              }
-            >
-              {link.label}
-            </NavLink>
+            link.external ? (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.link}
+              >
+                {link.label}
+              </a>
+            ) : (
+              <NavLink
+                key={link.href}
+                to={link.href}
+                className={({ isActive }) =>
+                  `${styles.link} ${isActive ? styles.linkActive : ''}`
+                }
+              >
+                {link.label}
+              </NavLink>
+            )
           ))}
         </div>
 
@@ -166,19 +172,32 @@ export default function Navbar() {
       {menuOpen && (
         <div className={styles.mobileMenu}>
           {navLinks.map((link) => (
-            <NavLink
-              key={link.href}
-              to={link.href}
-              className={({ isActive }) =>
-                `${styles.mobileLink} ${isActive ? styles.linkActive : ''}`
-              }
-              onClick={() => setMenuOpen(false)}
-            >
-              {link.label}
-            </NavLink>
+            link.external ? (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.mobileLink}
+                onClick={() => setMenuOpen(false)}
+              >
+                {link.label}
+              </a>
+            ) : (
+              <NavLink
+                key={link.href}
+                to={link.href}
+                className={({ isActive }) =>
+                  `${styles.mobileLink} ${isActive ? styles.linkActive : ''}`
+                }
+                onClick={() => setMenuOpen(false)}
+              >
+                {link.label}
+              </NavLink>
+            )
           ))}
         </div>
-    )}
+      )}
     </>
   );
 }

@@ -4,10 +4,8 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import styles from './FlashSales.module.css'
 import { useCart } from '../context/CartContext'
-import { productsApi } from '../lib/api'
+import { productsApi, getImageUrl } from '../lib/api'
 import sharp from '../assets/sharp.gif'
-
-const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
 
 interface ApiProduct {
   id: number
@@ -17,18 +15,13 @@ interface ApiProduct {
   image: string
   discount: number
   availability: number
+  qty?: string | number
 }
 
 interface ApiCategory {
   category_id: number
   category_name: string
   products: ApiProduct[]
-}
-
-function getImageUrl(path: string) {
-  if (!path) return ''
-  if (path.startsWith('http')) return path
-  return `${IMAGE_BASE}/${path.replace(/^\/+/, '')}`
 }
 
 function Stars({ count }: { count: number }) {
@@ -62,9 +55,11 @@ export default function FlashSales() {
       .then((res: unknown) => {
         const r = res as { success: boolean; data: ApiCategory[] }
         const all = (Array.isArray(r.data) ? r.data : []).flatMap(c => c.products)
-        // prefer discounted products, fall back to first N
-        const discounted = all.filter(p => p.discount > 0)
-        const source = discounted.length >= LIMIT ? discounted : all
+        // only in-stock products
+        const inStock = all.filter(p => p.availability !== 0 && (p.qty === undefined || Number(p.qty) > 0))
+        // prefer discounted, fall back to all in-stock
+        const discounted = inStock.filter(p => p.discount > 0)
+        const source = discounted.length >= LIMIT ? discounted : inStock
         setProducts(source.slice(0, LIMIT))
       })
       .catch(() => setProducts([]))
@@ -73,6 +68,7 @@ export default function FlashSales() {
 
   return (
     <section className={styles.section}>
+      
       <div className={styles.topBar}>
         <div className={styles.topLeft}>
           <span className={styles.ongoingBadge}>
@@ -132,16 +128,20 @@ export default function FlashSales() {
 
                 <button
                   className={styles.addToCart}
-                  onClick={() => addToCart({
-                    product_id: p.id,
-                    name: p.name,
-                    price: Number(p.end_user_price || p.price) === 0
-                      ? 'Price on request'
-                      : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
-                    img: getImageUrl(p.image),
-                  })}
+                  disabled={p.qty !== undefined && Number(p.qty) <= 0 || p.availability === 0}
+                  onClick={() => {
+                    if ((p.qty !== undefined && Number(p.qty) <= 0) || p.availability === 0) return
+                    addToCart({
+                      product_id: p.id,
+                      name: p.name,
+                      price: Number(p.end_user_price || p.price) === 0
+                        ? 'Price on request'
+                        : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
+                      img: getImageUrl(p.image),
+                    })
+                  }}
                 >
-                  Add to Cart
+                  {(p.qty !== undefined && Number(p.qty) <= 0) || p.availability === 0 ? 'Out of Stock' : 'Add to Cart'}
                 </button>
               </motion.div>
             ))}

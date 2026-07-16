@@ -225,3 +225,8 @@ hr{
     width: 95%;
   }
 }
+
+/* ── touch: mirror hover states as :active ── */
+@media (hover: none) {
+  a:active { color: #F18E1A; }
+}

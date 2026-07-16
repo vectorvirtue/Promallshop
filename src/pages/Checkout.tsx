@@ -4,7 +4,7 @@ import { useCart } from '../context/CartContext'
 import { TriangleAlert, CheckCircle2 } from 'lucide-react'
 import styles from './Checkout.module.css'
 import frame from '../assets/Frame 312.svg'
-import { billingApi, ordersApi } from '../lib/api'
+import { billingApi, ordersApi, markAsOrdered } from '../lib/api'
 
 /* ── Paystack inline SDK type ── */
 declare global {
@@ -222,6 +222,7 @@ export default function Checkout() {
             console.log('Payment successful, ref:', response.reference)
             const orderRes = await ordersApi.create({ ...orderPayload, payment_ref: response.reference }) as { data?: { bill_no?: string } }
             console.log('Order created:', orderRes)
+            markAsOrdered()
             navigate(`/order-success?ref=${response.reference}&bill=${orderRes?.data?.bill_no ?? ''}`)
           },
           onClose() {
@@ -233,6 +234,7 @@ export default function Checkout() {
         // bank transfer or cheque — create order immediately
         const orderRes = await ordersApi.create(orderPayload) as { data?: { bill_no?: string } }
         console.log('Order created:', orderRes)
+        markAsOrdered()
         navigate(`/order-success?bill=${orderRes?.data?.bill_no ?? ''}`)
       }
     } catch (err) {

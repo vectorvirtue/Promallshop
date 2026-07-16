@@ -140,3 +140,9 @@
     height: 40px;
   }
 }
+
+/* ── touch: mirror hover states as :active ── */
+@media (hover: none) {
+  .link:active { color: #F18E1A; }
+  .socialLink:active { opacity: 0.75; }
+}
