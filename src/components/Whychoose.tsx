@@ -1,4 +1,5 @@
 import styles from './Whychoose.module.css'
+import { Helmet } from 'react-helmet-async'
 
 const sections = [
   {
@@ -65,43 +66,115 @@ const sections = [
   },
 ]
 
+const SEO_TITLE = "Nigeria's No.1 Tech Store — IT Equipment & Computer Accessories | Promallshop"
+const SEO_DESC = "Promallshop is Nigeria and Ghana's leading tech store for IT equipment, video conferencing systems, computer accessories, coding kits, IP phones, screens, and more. Trusted brands: Logitech, Yealink, MAXHUB, Huawei, Samsung, LG, Sharp."
+const SEO_KEYWORDS = "Promallshop, IT equipment Nigeria, computer accessories Ghana, video conferencing Nigeria, Logitech Nigeria, Yealink Nigeria, MAXHUB, coding kits Nigeria, robotics kits, IP phones Nigeria, interactive displays Nigeria, headsets Nigeria, tech store Lagos"
+
 export default function Choose() {
   return (
-    <div className={styles.container}>
-      <h2>Promallshop — No. 1 Shopping Destination For IT Solutions</h2>
-      <p className={styles.intro}>
-        Welcome to <strong>Promallshop</strong>, a trusted <strong>tech store for IT equipment and computer accessories in Nigeria and Ghana</strong>.
-        We provide advanced technology solutions designed for businesses, schools, government organizations, and individuals
-        who need reliable digital tools for productivity and communication.
-      </p>
+    <>
+      <Helmet>
+        <title>{SEO_TITLE}</title>
+        <meta name="description" content={SEO_DESC} />
+        <meta name="keywords" content={SEO_KEYWORDS} />
+        <meta name="robots" content="index, follow" />
 
-      {sections.map((s) => (
-        <div key={s.heading} className={styles.choices}>
-          <h3 className={styles.header}>{s.heading}</h3>
-          <ul className={styles.margin}>
-            {s.bullets.map((b) => (
-              <li key={b}>{b}</li>
-            ))}
-          </ul>
-          <p>{s.text}</p>
-        </div>
-      ))}
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://promallshop.com" />
+        <meta property="og:title" content={SEO_TITLE} />
+        <meta property="og:description" content={SEO_DESC} />
+        <meta property="og:image" content="https://promallshop.com/og-image.jpg" />
+        <meta property="og:locale" content="en_NG" />
+        <meta property="og:site_name" content="Promallshop" />
 
-      <div className={styles.choices}>
-        <h3 className={styles.header}>Enjoy 15% Off Your First Order</h3>
-        <p>
-          New customers can enjoy an exclusive <strong>15% discount on their first purchase at Promallshop</strong> — 
-          on video conferencing systems, interactive displays, robotics kits, computer accessories, networking equipment, and more.
-          Promallshop offers premium technology products at competitive prices for businesses, schools, and professionals across Nigeria and Ghana.
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={SEO_TITLE} />
+        <meta name="twitter:description" content={SEO_DESC} />
+
+        {/* Canonical */}
+        <link rel="canonical" href="https://promallshop.com" />
+
+        {/* Structured data — Organization */}
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "Promallshop",
+          "url": "https://promallshop.com",
+          "logo": "https://promallshop.com/logo.png",
+          "description": SEO_DESC,
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "5B Adedeji Close, Opebi Ikeja",
+            "addressLocality": "Lagos",
+            "addressCountry": "NG"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+234-703-264-7755",
+            "contactType": "customer service",
+            "email": "sales@promallshop.com"
+          },
+          "sameAs": [
+            "https://www.facebook.com/promallshop",
+            "https://www.instagram.com/promallshop"
+          ]
+        })}</script>
+
+        {/* Structured data — WebSite with SearchAction */}
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "Promallshop",
+          "url": "https://promallshop.com",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://promallshop.com/shop?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        })}</script>
+      </Helmet>
+
+      <article className={styles.container} aria-label="About Promallshop">
+        <h2>Promallshop — No. 1 Shopping Destination For IT Solutions</h2>
+        <p className={styles.intro}>
+          Welcome to <strong>Promallshop</strong>, a trusted <strong>tech store for IT equipment and computer accessories in Nigeria and Ghana</strong>.
+          We provide advanced technology solutions designed for businesses, schools, government organizations, and individuals
+          who need reliable digital tools for productivity and communication.
         </p>
-      </div>
 
-      <div className={styles.choices} style={{ marginBottom: '2em' }}>
-        <h3 className={styles.header}>Our Trusted Technology Partners</h3>
-        <p>
-          Promallshop collaborates with leading global technology brands including <strong>MAXHUB, Huawei, Logitech, Yealink, Samsung, LG, Sharp, Bosch, Polycom, Sennheiser, Absen, Hikvision, Twin Robotics, Makeblock, and Arduino</strong> to ensure customers receive genuine IT equipment and high-quality computer accessories backed by global quality standards and trusted manufacturer support.
-        </p>
-      </div>
-    </div>
+        {sections.map((s) => (
+          <section key={s.heading} className={styles.choices}>
+            <h3 className={styles.header}>{s.heading}</h3>
+            <ul className={styles.margin}>
+              {s.bullets.map((b) => (
+                <li key={b}>{b}</li>
+              ))}
+            </ul>
+            <p>{s.text}</p>
+          </section>
+        ))}
+
+        <section className={styles.choices}>
+          <h3 className={styles.header}>Enjoy 15% Off Your First Order</h3>
+          <p>
+            New customers can enjoy an exclusive <strong>15% discount on their first purchase at Promallshop</strong> —
+            on video conferencing systems, interactive displays, robotics kits, computer accessories, networking equipment, and more.
+            Promallshop offers premium technology products at competitive prices for businesses, schools, and professionals across Nigeria and Ghana.
+          </p>
+        </section>
+
+        <section className={styles.choices} style={{ marginBottom: '2em' }}>
+          <h3 className={styles.header}>Our Trusted Technology Partners</h3>
+          <p>
+            Promallshop collaborates with leading global technology brands including{' '}
+            <strong>MAXHUB, Huawei, Logitech, Yealink, Samsung, LG, Sharp, Bosch, Polycom, Sennheiser, Absen, Hikvision, Twin Robotics, Makeblock, and Arduino</strong>{' '}
+            to ensure customers receive genuine IT equipment and high-quality computer accessories backed by global quality standards and trusted manufacturer support.
+          </p>
+        </section>
+      </article>
+    </>
   )
 }
+

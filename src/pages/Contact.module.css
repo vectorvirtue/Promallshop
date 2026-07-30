@@ -203,6 +203,30 @@ width: 100%;
   .image{
     width: 19em;
   }
+  .center{
+    text-align: center;
+  }
+  .formfield{
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+  }
+  .top{
+    margin-top: 1em;
+  }
+  .map{
+    height: 150px;
+  }
+  .map iframe{
+     height: 100px;
+    width: 95%;
+  }
+  .textfield{
+    width: 79%;
+  }
+    .h2{
+        font-size: 1.3em;
+    }
 }
 
 /* ── touch: mirror hover states as :active ── */

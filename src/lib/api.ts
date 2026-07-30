@@ -263,14 +263,35 @@ export const wishlistApi = {
   clear: () => request('/wishlist/clear', { method: 'DELETE', auth: true }),
 }
 
-/* ── billing / orders ── */
-export const billingApi = {
-  getAddresses: () => request('/billing-address/my-addresses', { auth: true }),
-  addAddress: (payload: Record<string, string>) =>
-    request('/billing-address', { method: 'POST', auth: true, body: JSON.stringify(payload) }),
+/* ── delivery costs ── */
+export interface DeliveryCost {
+  cost_id: number
+  name: string
+  amount: string
+  state: string
+  country: string
+  company_id: string
+  category: string
+  quantity_from: number
+  quantity_to: number
+  extra_unit_charge: number
+  min_delivery_period: number
+  max_delivery_period: number
 }
 
-export const ordersApi = {
+export const deliveryCostApi = {
+  get: (state?: string, country?: string) => {
+    const params = new URLSearchParams()
+    if (state) params.set('state', state)
+    if (country) params.set('country', country)
+    const qs = params.toString()
+    return request<{ success: boolean; data: DeliveryCost[]; count: number }>(
+      `/delivery-cost${qs ? `?${qs}` : ''}`
+    )
+  },
+}
+
+/* ── orders ── */export const ordersApi = {
   create: (payload: Record<string, unknown>) =>
     request('/orders', { method: 'POST', auth: true, body: JSON.stringify(payload) }),
   getAll: () => request('/orders/my-orders', { auth: true }),

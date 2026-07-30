@@ -1081,3 +1081,8 @@
   cursor: not-allowed;
   pointer-events: none;
 }
+
+/* ── delivery cost spinner ── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

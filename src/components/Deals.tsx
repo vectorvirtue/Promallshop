@@ -4,7 +4,7 @@ import styles from './Deal.module.css'
 import { getMonthEndTarget, getTimeLeft } from '../lib/countdown'
 import { useNavigate } from 'react-router-dom'
 import { productsApi, getImageUrl } from '../lib/api'
-import { useCart } from '../context/CartContext'
+import { useWishlist } from '../lib/useWishlist'
 
 const DEAL_PRODUCT_ID = 943
 
@@ -20,7 +20,7 @@ interface DealProduct {
 
 export default function Deals() {
   const navigate = useNavigate()
-  const { addToCart } = useCart()
+  const { addToWishlist } = useWishlist()
 
   const [time, setTime] = useState(() => getTimeLeft(getMonthEndTarget()))
   const [product, setProduct] = useState<DealProduct | null>(null)
@@ -58,7 +58,7 @@ export default function Deals() {
       className={styles.section}
       style={product ? {
         backgroundImage: `linear-gradient(135deg, rgba(13,29,85,0.92) 0%, rgba(13,29,85,0.75) 40%, rgba(241, 141, 26, 0.77) 75%, rgba(241,142,26,0.85) 100%), url(${getImageUrl(product.image)})`,
-        backgroundSize: 'contain',
+        backgroundSize: '100% 700px',
         backgroundPosition: 'center right',
         backgroundRepeat: 'no-repeat',
       } : {
@@ -66,6 +66,7 @@ export default function Deals() {
       }}
     >
       <div className={styles.container}>
+
 
         {/* ── LEFT: deal info + countdown ── */}
         <div className={styles.topLeft}>
@@ -107,8 +108,8 @@ export default function Deals() {
             <button
               className={styles.wishlist}
               aria-label="Add to wishlist"
-              onClick={() => product && addToCart({
-                product_id: product.id,
+              onClick={() => product && addToWishlist({
+                id: product.id,
                 name: product.name,
                 price: formatPrice(product),
                 img: getImageUrl(product.image),

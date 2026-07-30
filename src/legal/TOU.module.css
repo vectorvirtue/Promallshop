@@ -200,6 +200,9 @@ hr{
 
 
 @media (max-width:1024px) {
+  hr {
+    width: 100%;
+}
   .h1{
     text-align: center;
   }

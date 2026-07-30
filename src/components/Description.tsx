@@ -1,9 +1,14 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import styles from '../components/Description.module.css'
-export default function Description (){
-    const [activeSolution, setActiveSolution] = useState("description");
 
-const productInfo = {
+type TabItem = { heading?: string; subheading?: string; text: string }
+type TabData  = { title: string; leftColumn: TabItem[]; rightColumn: TabItem[] }
+type ProductInfo = Record<string, TabData>
+
+export default function Description() {
+  const [activeSolution, setActiveSolution] = useState("description")
+
+  const productInfo: ProductInfo = {
     description: {
       title: 'Description',
       leftColumn: [

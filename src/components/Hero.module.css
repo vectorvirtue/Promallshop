@@ -143,6 +143,10 @@
 .dealItem {
   display: flex;
   align-items: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0.3em 0.4em;
+  margin: 0 -0.4em;
   gap: 0.7em;
 }
 
@@ -231,4 +235,38 @@
     padding: 0.5em 1.2em;
     font-size: 0.85em;
   }
+}
+
+/* ── deal item hover ── */
+.dealItem:hover .dealName,
+.dealItem:active .dealName {
+  color: #F18E1A;
+  transition: color 0.2s;
+}
+
+.dealItem:hover {
+  background: #f9f9f9;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+@media (hover: none) {
+  .dealItem:active .dealName { color: #F18E1A; }
+  .dealItem:active { background: #f9f9f9; border-radius: 8px; }
+}
+
+/* ── deal item as link hover ── */
+a.dealItem:hover .dealName,
+a.dealItem:focus .dealName {
+  color: #F18E1A;
+}
+
+a.dealItem:hover {
+  background: rgba(241, 142, 26, 0.06);
+  border-radius: 8px;
+}
+
+@media (hover: none) {
+  a.dealItem:active .dealName { color: #F18E1A; }
+  a.dealItem:active { background: rgba(241, 142, 26, 0.06); border-radius: 8px; }
 }

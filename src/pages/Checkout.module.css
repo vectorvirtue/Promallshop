@@ -429,6 +429,25 @@
   margin-top: 2px;
 }
 
+.gatewayLogo {
+  height: 28px;
+  width: auto;
+  max-width: 100px;
+  object-fit: contain;
+}
+
+/* ── spinner for delivery cost loading ── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinIcon {
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  color: #f18e1a;
+}
+
 /* ── step navigation ── */
 .stepNav {
   display: flex;
@@ -764,4 +783,200 @@
   .backBtn:active { border-color: #f18e1a; color: #f18e1a; }
   .nextBtn:active { opacity: 0.88; }
   .confirmBtn:active { opacity: 0.88; }
+}
+
+/* ── Order Confirmed Popup ── */
+.popupOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1em;
+}
+
+.popup {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2em;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2em;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.popupClose {
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.popupClose:hover { color: #0b0b0b; }
+
+.popupHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5em;
+}
+
+.popupTitle {
+  font-size: 1.4em;
+  font-weight: 800;
+  color: #0b0b0b;
+  margin: 0;
+}
+
+.popupSubtitle {
+  font-size: 0.85em;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* order detail rows */
+.popupDetails {
+  background: #fafafa;
+  border-radius: 10px;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+
+.popupRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.83em;
+  color: #555;
+}
+
+.popupValue {
+  font-weight: 700;
+  color: #0b0b0b;
+}
+
+/* bank details */
+.popupBank {
+  background: #fff8f0;
+  border: 1.5px solid #f18e1a40;
+  border-radius: 10px;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.popupBankTitle {
+  font-size: 0.78em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #f18e1a;
+  margin: 0 0 0.25em;
+}
+
+.popupBankRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.83em;
+  color: #555;
+}
+
+.popupBankRow strong {
+  color: #0b0b0b;
+}
+
+.popupAccNum {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-weight: 700;
+  color: #0b0b0b;
+}
+
+.copyBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.copyBtn:hover { color: #f18e1a; }
+
+/* instructions */
+.popupNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6em;
+  background: #f0fff4;
+  border: 1px solid #b2dfdb;
+  border-radius: 8px;
+  padding: 0.9em 1em;
+  font-size: 0.8em;
+  color: #2d6a4f;
+  line-height: 1.6;
+}
+
+.popupNote svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #2ecc71;
+}
+
+.popupNote p {
+  margin: 0;
+}
+
+.popupPhone {
+  color: #f18e1a;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.popupPhone:hover { text-decoration: underline; }
+
+.popupDoneBtn {
+  width: 100%;
+  background: #f18e1a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8em;
+  font-family: inherit;
+  font-size: 0.9em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.popupDoneBtn:hover { opacity: 0.88; }
+
+@media (max-width: 480px) {
+  .popup {
+    padding: 1.5em 1.2em;
+  }
+  .popupTitle {
+    font-size: 1.15em;
+  }
 }

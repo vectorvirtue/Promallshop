@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
-import { TriangleAlert, CheckCircle2 } from 'lucide-react'
+import { TriangleAlert, CheckCircle2, X, Phone, Copy, Loader2 } from 'lucide-react'
 import styles from './Checkout.module.css'
-import frame from '../assets/Frame 312.svg'
-import { billingApi, ordersApi, markAsOrdered } from '../lib/api'
+import paystackLogo from '../assets/download (1).png'
+import flutterwaveLogo from '../assets/download.png'
+import { ordersApi, markAsOrdered, cartApi, deliveryCostApi, type DeliveryCost } from '../lib/api'
 
 /* ── Paystack inline SDK type ── */
 declare global {
@@ -21,6 +22,27 @@ declare global {
         onClose: () => void
       }) => { openIframe: () => void }
     }
+    /* ── Flutterwave inline SDK type ── */
+    FlutterwaveCheckout: (options: {
+      public_key: string
+      tx_ref: string
+      amount: number
+      currency: string
+      payment_options?: string
+      customer: {
+        email: string
+        phone_number?: string
+        name?: string
+      }
+      customizations?: {
+        title?: string
+        description?: string
+        logo?: string
+      }
+      meta?: Record<string, unknown>
+      callback: (response: { transaction_id: number; tx_ref: string; flw_ref: string; status: string }) => void
+      onclose: () => void
+    }) => void
   }
 }
 /* ── helpers ── */
@@ -43,15 +65,8 @@ interface AddressForm {
 }
 
 type DeliveryType = 'pickup' | 'door'
-type PaymentMethod = 'bank' | 'cheque' | 'online'
+type PaymentMethod = 'bank' | 'cheque' | 'paystack' | 'flutterwave'
 
-const COUNTRIES: { value: string; label: string }[] = [
-  { value: 'Nigeria', label: 'Nigeria' },
-  { value: 'Ghana', label: 'Ghana' },
-  { value: 'Kenya', label: 'Kenya' },
-  { value: "Côte d'Ivoire", label: "Côte d'Ivoire" },
-
-]
 
 const REGIONS: Record<string, string[]> = {
   Nigeria: [
@@ -61,24 +76,6 @@ const REGIONS: Record<string, string[]> = {
     'Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba','Yobe','Zamfara',
     'FCT (Abuja)',
   ],
-  Ghana: [
-    'Ahafo','Ashanti','Bono','Bono East','Central','Eastern','Greater Accra',
-    'North East','Northern','Oti','Savannah','Upper East','Upper West','Volta','Western','Western North',
-  ],
-  Kenya: [
-    'Baringo','Bomet','Bungoma','Busia','Elgeyo-Marakwet','Embu','Garissa',
-    'Homa Bay','Isiolo','Kajiado','Kakamega','Kericho','Kiambu','Kilifi',
-    'Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu','Machakos',
-    'Makueni','Mandera','Marsabit','Meru','Migori','Mombasa',"Murang'a",
-    'Nairobi','Nakuru','Nandi','Narok','Nyamira','Nyandarua','Nyeri','Samburu',
-    'Siaya','Taita-Taveta','Tana River','Tharaka-Nithi','Trans Nzoia','Turkana',
-    'Uasin Gishu','Vihiga','Wajir','West Pokot',
-  ],
-  "Côte d'Ivoire": [
-    'Abidjan','Bas-Sassandra','Comoé','Denguélé','Gôh-Djiboua','Lacs',
-    'Lagunes','Montagnes','Sassandra-Marahoué','Savanes','Vallée du Bandama',
-    'Woroba','Yamoussoukro','Zanzan',
-  ]
 }
 
 const STEPS = [
@@ -88,23 +85,63 @@ const STEPS = [
 ]
 
 export default function Checkout() {
-  const { items } = useCart()
+  const { items: allItems, clearCart } = useCart()
   const navigate = useNavigate()
+
+  /* ── filter to only selected items from Cart (falls back to all if none stored) ── */
+  const items = (() => {
+    try {
+      const raw = sessionStorage.getItem('checkout_selected')
+      if (!raw) return allItems
+      const selected: string[] = JSON.parse(raw)
+      if (!selected.length) return allItems
+      return allItems.filter(i => selected.includes(i.name))
+    } catch {
+      return allItems
+    }
+  })()
 
   const [step, setStep] = useState(1)
 
-  /* load Paystack script only when user reaches payment step */
+  /* load Paystack script as soon as checkout mounts — ready before step 3 */
   useEffect(() => {
-    if (step === 3) {
-      const existing = document.querySelector('script[src*="paystack"]')
-      if (!existing) {
-        const script = document.createElement('script')
-        script.src = 'https://js.paystack.co/v1/inline.js'
-        script.async = true
-        document.body.appendChild(script)
-      }
+    if (!document.querySelector('script[src*="paystack"]')) {
+      const s = document.createElement('script')
+      s.src = 'https://js.paystack.co/v1/inline.js'
+      s.async = true
+      document.body.appendChild(s)
     }
-  }, [step])
+    if (!document.querySelector('script[src*="flutterwave"]')) {
+      const s = document.createElement('script')
+      s.src = 'https://checkout.flutterwave.com/v3.js'
+      s.async = true
+      document.body.appendChild(s)
+    }
+  }, [])
+
+  /* helper: wait until window.PaystackPop is available (max ~5 s) */
+  const waitForPaystack = (): Promise<void> =>
+    new Promise((resolve, reject) => {
+      if (window.PaystackPop) { resolve(); return }
+      let attempts = 0
+      const iv = setInterval(() => {
+        attempts++
+        if (window.PaystackPop) { clearInterval(iv); resolve() }
+        else if (attempts > 50) { clearInterval(iv); reject(new Error('Paystack SDK failed to load')) }
+      }, 100)
+    })
+
+  /* helper: wait until window.FlutterwaveCheckout is available (max ~5 s) */
+  const waitForFlutterwave = (): Promise<void> =>
+    new Promise((resolve, reject) => {
+      if ((window as unknown as Record<string, unknown>).FlutterwaveCheckout) { resolve(); return }
+      let attempts = 0
+      const iv = setInterval(() => {
+        attempts++
+        if ((window as unknown as Record<string, unknown>).FlutterwaveCheckout) { clearInterval(iv); resolve() }
+        else if (attempts > 50) { clearInterval(iv); reject(new Error('Flutterwave SDK failed to load')) }
+      }, 100)
+    })
 
   /* address state */
   const [address, setAddress] = useState<AddressForm>({
@@ -125,6 +162,103 @@ export default function Checkout() {
   /* payment state */
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('bank')
 
+  /* ── delivery cost state ── */
+  const [allDeliveryCosts, setAllDeliveryCosts] = useState<DeliveryCost[]>([])
+  const [deliveryCostData, setDeliveryCostData] = useState<DeliveryCost | null>(null)
+  const [deliveryCostLoading, setDeliveryCostLoading] = useState(false)
+
+  /* fetch all delivery cost records once on mount */
+  useEffect(() => {
+    setDeliveryCostLoading(true)
+    deliveryCostApi
+      .get()
+      .then((res) => setAllDeliveryCosts(res.data ?? []))
+      .catch(() => setAllDeliveryCosts([]))
+      .finally(() => setDeliveryCostLoading(false))
+  }, [])
+
+  /* ── pick the best delivery cost record based on state + cart item names ──
+     Matching strategy (uses record `name` field):
+     1. Determine zone: "LAGOS" if state is Lagos, "OUTSIDE LAGOS" otherwise
+     2. Filter records by zone keyword in name
+     3. Try to match a category keyword from item names
+     4. Fall back to DEFAULT if nothing matches                              */
+  useEffect(() => {
+    if (!allDeliveryCosts.length) return   // wait for fetch to complete
+
+    // no state selected yet — use DEFAULT as placeholder
+    if (!address.state) {
+      const def =
+        allDeliveryCosts.find(d => d.name.toUpperCase() === 'DEFAULT') ??
+        allDeliveryCosts[0]
+      setDeliveryCostData(def)
+      return
+    }
+
+    const upper = (n: string) => n.toUpperCase()
+    const isLagos = address.state.toLowerCase() === 'lagos'
+
+    // records that match the delivery zone
+    const zoneRecords = allDeliveryCosts.filter(d => {
+      const n = upper(d.name)
+      return isLagos
+        ? n.includes('LAGOS') && !n.includes('OUTSIDE LAGOS')
+        : n.includes('OUTSIDE LAGOS')
+    })
+
+    // keywords extracted from cart item names (joined, uppercased)
+    const cartText = items.map(i => i.name.toUpperCase()).join(' ')
+
+    // category keyword priority order — most specific first
+    const categoryKeywords: [string, string][] = [
+      ['SCREEN', 'SCREEN'],
+      ['VIDEO WALL', 'VIDEO WALL'],
+      ['VIDEO-CONF', 'VIDEO-CONF'],
+      ['HEADSET', 'MOUSE,KEYBOARD,HEADSET'],
+      ['WEBCAM', 'MOUSE,KEYBOARD,HEADSET'],
+      ['KEYBOARD', 'MOUSE,KEYBOARD,HEADSET'],
+      ['MOUSE', 'MOUSE,KEYBOARD,HEADSET'],
+      ['PHONE', 'MOUSE,KEYBOARD,HEADSET'],
+      ['KIT', 'KITS'],
+      ['ROBOTIC', 'VIDEO-CONF'],
+      ['ACCESSORIES', 'ACCESSORIES'],
+      ['ACCESSORY', 'ACCESSORIES'],
+    ]
+
+    let matched: DeliveryCost | null = null
+
+    for (const [cartKeyword, deliveryKeyword] of categoryKeywords) {
+      if (cartText.includes(cartKeyword)) {
+        matched = zoneRecords.find(d => upper(d.name).includes(deliveryKeyword)) ?? null
+        if (matched) break
+      }
+    }
+
+    // fall back: first zone record → DEFAULT → first record overall
+    if (!matched) {
+      matched =
+        zoneRecords[0] ??
+        allDeliveryCosts.find(d => upper(d.name) === 'DEFAULT') ??
+        allDeliveryCosts[0]
+    }
+
+    setDeliveryCostData(matched ?? null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allDeliveryCosts, address.state, address.country])
+
+  /* compute actual delivery fee:
+     - 0 for pickup
+     - base amount covers up to quantity_to items
+     - extra_unit_charge applies per item beyond quantity_to */
+  const totalItemQty = items.reduce((s, i) => s + i.quantity, 0)
+  const deliveryFee = (() => {
+    if (deliveryType === 'pickup') return 0
+    if (!deliveryCostData) return 0
+    const base = parseFloat(deliveryCostData.amount) || 0
+    const extra = Math.max(0, totalItemQty - (deliveryCostData.quantity_to || 1)) * (deliveryCostData.extra_unit_charge || 0)
+    return base + extra
+  })()
+
   /* derived totals */
   const subtotal = items.reduce(
     (sum, item) => sum + parsePrice(item.price) * item.quantity,
@@ -139,9 +273,24 @@ export default function Checkout() {
   const VAT_RATE = 7.5
   const vatCharge = parseFloat(((subtotal * VAT_RATE) / 100).toFixed(2))
   const netAmount = parseFloat((subtotal + vatCharge).toFixed(2))
+  /* grand total charged to the payment gateway = products + VAT + delivery */
+  const grandTotal = parseFloat((netAmount + deliveryFee).toFixed(2))
 
   const [orderLoading, setOrderLoading] = useState(false)
   const [orderError, setOrderError] = useState('')
+  const [orderConfirmed, setOrderConfirmed] = useState<{
+    billNo: string
+    paymentMethod: string
+    amount: string
+    phone: string
+  } | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const copyAccNumber = () => {
+    navigator.clipboard.writeText('2178278911')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const handleAddressChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -168,48 +317,43 @@ export default function Checkout() {
     setOrderLoading(true)
 
     try {
-      // 1. save billing address
-      const billingPayload = {
-        name: `${address.firstName} ${address.lastName}`,
-        billing_address1: address.address,
-        billing_address2: address.additionalInfo || '',
-        country: address.country,
-        city: address.state,
-        state: address.state,
-        zipcode: '',
-        phone: address.phone,
-        email: address.email,
-        delivery_method: deliveryType === 'door' ? 'home_delivery' : 'pickup',
-      }
-      await billingApi.addAddress(billingPayload)
-
-      // 2. create order
+      // build billing address string for the order
       const billingAddressStr = deliveryType === 'door'
         ? `${address.address}, ${address.state}, ${address.country}`
         : pickupLocation
 
       const orderPayload = {
         billing_address: billingAddressStr,
+        billing_address1: address.address,
+        billing_address2: address.additionalInfo || '',
+        city: address.state,
+        state: address.state,
+        country: address.country,
+        zipcode: '',
+        delivery_method: deliveryType === 'door' ? 'home_delivery' : 'pickup',
         gross_amount: String(subtotal),
         payment_type: paymentMethod === 'bank' ? 'bank_transfer'
           : paymentMethod === 'cheque' ? 'cheque'
-          : 'card',
+          : paymentMethod === 'paystack' ? 'paystack'
+          : 'flutterwave',
         vat_charge_rate: String(VAT_RATE),
         vat_charge: String(vatCharge),
-        net_amount: String(netAmount),
+        net_amount: String(grandTotal),
         discount: String(discount),
         name: `${address.firstName} ${address.lastName}`,
         phone: address.phone,
         email: address.email,
-        delivery_cost: deliveryType === 'door' ? 2000 : 0,
+        delivery_cost: deliveryFee,
       }
 
-      if (paymentMethod === 'online') {
-        // open Paystack — create order after successful payment
+      if (paymentMethod === 'paystack') {
+        // ── Paystack ──
+        await waitForPaystack()
+
         const handler = window.PaystackPop.setup({
           key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string,
           email: address.email,
-          amount: netAmount * 100, // kobo
+          amount: grandTotal * 100, // kobo
           currency: 'NGN',
           ref: `promallshop-${Date.now()}`,
           metadata: {
@@ -218,24 +362,92 @@ export default function Checkout() {
               { display_name: 'Delivery', variable_name: 'delivery', value: billingAddressStr },
             ],
           },
-          async callback(response) {
-            console.log('Payment successful, ref:', response.reference)
-            const orderRes = await ordersApi.create({ ...orderPayload, payment_ref: response.reference }) as { data?: { bill_no?: string } }
-            console.log('Order created:', orderRes)
-            markAsOrdered()
-            navigate(`/order-success?ref=${response.reference}&bill=${orderRes?.data?.bill_no ?? ''}`)
+          callback(response) {
+            ordersApi
+              .create({ ...orderPayload, payment_ref: response.reference })
+              .then((orderRes) => {
+                const res = orderRes as { data?: { bill_no?: string } }
+                markAsOrdered()
+                clearCart()
+                sessionStorage.removeItem('checkout_selected')
+                cartApi.clear().catch(() => { /* ignore */ })
+                navigate(`/order-success?ref=${response.reference}&bill=${res?.data?.bill_no ?? ''}`)
+              })
+              .catch((err) => {
+                setOrderError(err instanceof Error ? err.message : 'Order creation failed after payment.')
+                setOrderLoading(false)
+              })
           },
           onClose() {
             setOrderLoading(false)
           },
         })
         handler.openIframe()
+
+      } else if (paymentMethod === 'flutterwave') {
+        // ── Flutterwave ──
+        await waitForFlutterwave()
+
+        const txRef = `promallshop-flw-${Date.now()}`
+
+        window.FlutterwaveCheckout({
+          public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY as string,
+          tx_ref: txRef,
+          amount: grandTotal,
+          currency: 'NGN',
+          payment_options: 'card, banktransfer, ussd, mobilemoneyghana, mobilemoneyuganda',
+          customer: {
+            email: address.email,
+            phone_number: address.phone,
+            name: `${address.firstName} ${address.lastName}`,
+          },
+          customizations: {
+            title: 'Promallshop',
+            description: 'Order payment',
+          },
+          meta: {
+            delivery: billingAddressStr,
+          },
+          callback(response) {
+            if (response.status === 'successful' || response.status === 'completed') {
+              ordersApi
+                .create({ ...orderPayload, payment_ref: response.tx_ref })
+                .then((orderRes) => {
+                  const res = orderRes as { data?: { bill_no?: string } }
+                  markAsOrdered()
+                  clearCart()
+                  sessionStorage.removeItem('checkout_selected')
+                  cartApi.clear().catch(() => { /* ignore */ })
+                  navigate(`/order-success?ref=${response.tx_ref}&bill=${res?.data?.bill_no ?? ''}`)
+                })
+                .catch((err) => {
+                  setOrderError(err instanceof Error ? err.message : 'Order creation failed after payment.')
+                  setOrderLoading(false)
+                })
+            } else {
+              setOrderError('Payment was not completed. Please try again.')
+              setOrderLoading(false)
+            }
+          },
+          onclose() {
+            setOrderLoading(false)
+          },
+        })
       } else {
-        // bank transfer or cheque — create order immediately
+        // bank transfer or cheque — create order and show confirmation popup
         const orderRes = await ordersApi.create(orderPayload) as { data?: { bill_no?: string } }
         console.log('Order created:', orderRes)
         markAsOrdered()
-        navigate(`/order-success?bill=${orderRes?.data?.bill_no ?? ''}`)
+        clearCart()
+        sessionStorage.removeItem('checkout_selected')
+        // also clear backend cart
+        try { await cartApi.clear() } catch { /* ignore */ }
+        setOrderConfirmed({
+          billNo: orderRes?.data?.bill_no ?? 'N/A',
+          paymentMethod,
+          amount: formatNaira(grandTotal),
+          phone: address.phone,
+        })
       }
     } catch (err) {
       setOrderError(err instanceof Error ? err.message : 'Failed to place order. Please try again.')
@@ -305,11 +517,39 @@ export default function Checkout() {
           <span className={styles.couponText}>Apply Coupon</span>
         </div>
 
+        <div className={styles.summaryRow}>
+          <span>Delivery Fee</span>
+          <span>
+            {deliveryCostLoading
+              ? <Loader2 size={13} className={styles.spinIcon} />
+              : deliveryType === 'pickup'
+                ? <span style={{ color: '#41e693', fontWeight: 700 }}>Free (Pickup)</span>
+                : deliveryCostData
+                  ? formatNaira(deliveryFee)
+                  : address.state
+                    ? <span style={{ color: '#e07b00', fontSize: '0.9em' }}>Contact us for delivery fee</span>
+                    : <span style={{ color: '#aaa' }}>Select state first</span>
+            }
+          </span>
+        </div>
+
+        {deliveryType === 'door' && deliveryCostData && (
+          <div className={styles.summaryRow} style={{ fontSize: '0.72em', color: '#888' }}>
+            <span>Est. delivery</span>
+            <span>{deliveryCostData.min_delivery_period}–{deliveryCostData.max_delivery_period} days</span>
+          </div>
+        )}
+        {deliveryType === 'door' && deliveryCostData && (
+          <div className={styles.summaryRow} style={{ fontSize: '0.68em', color: '#aaa' }}>
+            <span style={{ fontStyle: 'italic' }}>{deliveryCostData.name}</span>
+          </div>
+        )}
+
         <hr className={styles.divide} style={{ marginBlock: '1em' }} />
 
         <div className={styles.totalRow}>
           <span>Total Amount</span>
-          <span>{formatNaira(subtotal)}</span>
+          <span>{formatNaira(grandTotal)}</span>
         </div>
       </div>
 
@@ -334,7 +574,7 @@ export default function Checkout() {
 
       <div className={styles.deliveryNote}>
         <TriangleAlert size={22} fill="#7f7f7f" color="#fff" strokeWidth={2} />
-        <span>Delivery fees not included yet</span>
+        <span>VAT ({VAT_RATE}%) included in total</span>
       </div>
     </div>
   )
@@ -373,7 +613,7 @@ export default function Checkout() {
                       name="firstName"
                       value={address.firstName}
                       onChange={handleAddressChange}
-                      placeholder="John"
+                      placeholder="Faith"
                     />
                   </div>
                   <div className={styles.formGroup}>
@@ -383,7 +623,7 @@ export default function Checkout() {
                       name="lastName"
                       value={address.lastName}
                       onChange={handleAddressChange}
-                      placeholder="Doe"
+                      placeholder="Amaugo"
                     />
                   </div>
                   <div className={styles.formGroup}>
@@ -405,7 +645,7 @@ export default function Checkout() {
                       type="email"
                       value={address.email}
                       onChange={handleAddressChange}
-                      placeholder="john@example.com"
+                      placeholder="faith@example.com"
                     />
                   </div>
                   <div className={`${styles.formGroup} ${styles.fullWidth}`}>
@@ -415,21 +655,17 @@ export default function Checkout() {
                       name="address"
                       value={address.address}
                       onChange={handleAddressChange}
-                      placeholder="147 Pro Address, Off Example Road"
+                      placeholder="5B Adedeji Close, Opebi Ikeja, Lagos."
                     />
                   </div>
                   <div className={styles.formGroup}>
                     <label className={styles.label}>Country</label>
-                    <select
+                    <input
                       className={styles.input}
-                      name="country"
-                      value={address.country}
-                      onChange={handleAddressChange}
-                    >
-                      {COUNTRIES.map((c) => (
-                        <option key={c.value} value={c.value}>{c.label}</option>
-                      ))}
-                    </select>
+                      value="Nigeria"
+                      readOnly
+                      style={{ background: '#f5f5f5', color: '#888', cursor: 'default' }}
+                    />
                   </div>
                   <div className={styles.formGroup}>
                     <label className={styles.label}>State / Region</label>
@@ -645,20 +881,39 @@ export default function Checkout() {
                     </div>
                   </label>
 
-                  {/* Pay Online */}
-                  <label className={`${styles.paymentCard} ${paymentMethod === 'online' ? styles.paymentCardActive : ''}`}>
+                  {/* Paystack */}
+                  <label className={`${styles.paymentCard} ${paymentMethod === 'paystack' ? styles.paymentCardActive : ''}`}>
                     <input
                       type="radio"
                       name="payment"
-                      value="online"
-                      checked={paymentMethod === 'online'}
-                      onChange={() => setPaymentMethod('online')}
+                      value="paystack"
+                      checked={paymentMethod === 'paystack'}
+                      onChange={() => setPaymentMethod('paystack')}
                     />
                     <div className={styles.paymentInfo}>
-                      <span className={styles.paymentLabel}>Pay Online</span>
+                      <span className={styles.paymentLabel}>Pay with Paystack</span>
+                      <span className={styles.paymentDetail}>Cards, bank transfer & USSD</span>
                     </div>
                     <div className={styles.cardLogos}>
-                     <img src={frame} alt="" />
+                      <img src={paystackLogo} alt="Paystack" className={styles.gatewayLogo} />
+                    </div>
+                  </label>
+
+                  {/* Flutterwave */}
+                  <label className={`${styles.paymentCard} ${paymentMethod === 'flutterwave' ? styles.paymentCardActive : ''}`}>
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="flutterwave"
+                      checked={paymentMethod === 'flutterwave'}
+                      onChange={() => setPaymentMethod('flutterwave')}
+                    />
+                    <div className={styles.paymentInfo}>
+                      <span className={styles.paymentLabel}>Pay with Flutterwave</span>
+                      <span className={styles.paymentDetail}>Cards, mobile money & more</span>
+                    </div>
+                    <div className={styles.cardLogos}>
+                      <img src={flutterwaveLogo} alt="Flutterwave" className={styles.gatewayLogo} />
                     </div>
                   </label>
                 </div>
@@ -684,6 +939,85 @@ export default function Checkout() {
           <OrderSummary />
         </div>
       </div>
+      {/* ── ORDER CONFIRMED POPUP ── */}
+      {orderConfirmed && (
+        <div className={styles.popupOverlay}>
+          <div className={styles.popup}>
+            <button className={styles.popupClose} onClick={() => navigate('/')} aria-label="Close">
+              <X size={20} />
+            </button>
+
+            {/* header */}
+            <div className={styles.popupHeader}>
+              <CheckCircle2 size={48} color="#2ecc71" strokeWidth={1.5} />
+              <h2 className={styles.popupTitle}>Order Confirmed!</h2>
+              <p className={styles.popupSubtitle}>
+                Your order has been received and is <strong>pending payment confirmation</strong>.
+              </p>
+            </div>
+
+            {/* order details */}
+            <div className={styles.popupDetails}>
+              <div className={styles.popupRow}>
+                <span>Order Number</span>
+                <span className={styles.popupValue}>{orderConfirmed.billNo}</span>
+              </div>
+              <div className={styles.popupRow}>
+                <span>Amount Due</span>
+                <span className={styles.popupValue}>{orderConfirmed.amount}</span>
+              </div>
+              <div className={styles.popupRow}>
+                <span>Payment Method</span>
+                <span className={styles.popupValue}>
+                  {orderConfirmed.paymentMethod === 'bank' ? 'Direct Bank Transfer' : 'Cheque Payment'}
+                </span>
+              </div>
+              <div className={styles.popupRow}>
+                <span>Your Phone</span>
+                <span className={styles.popupValue}>{orderConfirmed.phone}</span>
+              </div>
+            </div>
+
+            {/* bank details */}
+            <div className={styles.popupBank}>
+              <p className={styles.popupBankTitle}>Transfer to:</p>
+              <div className={styles.popupBankRow}>
+                <span>Account Name</span>
+                <strong>Promallshop</strong>
+              </div>
+              <div className={styles.popupBankRow}>
+                <span>Account Number</span>
+                <span className={styles.popupAccNum}>
+                  2178278911
+                  <button className={styles.copyBtn} onClick={copyAccNumber} title="Copy">
+                    {copied ? <CheckCircle2 size={14} color="#2ecc71" /> : <Copy size={14} />}
+                  </button>
+                </span>
+              </div>
+              <div className={styles.popupBankRow}>
+                <span>Bank</span>
+                <strong>Zenith Bank PLC</strong>
+              </div>
+            </div>
+
+            {/* instructions */}
+            <div className={styles.popupNote}>
+              <Phone size={15} />
+              <p>
+                After making the transfer, please call or WhatsApp us at{' '}
+                <a href="tel:+2347032647755" className={styles.popupPhone}>+234 703 264 7755</a>{' '}
+                with your phone number <strong>{orderConfirmed.phone}</strong> and order number{' '}
+                <strong>{orderConfirmed.billNo}</strong> to confirm your payment.
+                Your order status will be updated to <strong>Paid</strong> once confirmed.
+              </p>
+            </div>
+
+            <button className={styles.popupDoneBtn} onClick={() => { clearCart(); navigate('/') }}>
+              Done — Back to Home
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

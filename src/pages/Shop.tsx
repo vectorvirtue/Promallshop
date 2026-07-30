@@ -8,6 +8,8 @@ import { Pagination } from 'antd'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { productsApi, getImageUrl } from '../lib/api'
+import { useWishlist } from '../lib/useWishlist'
+import { useSearchParams } from 'react-router-dom'
 interface ApiProduct {
   id: number
   name: string
@@ -53,6 +55,8 @@ const cardVariants = {
 
 export default function Shop(){
  const { addToCart } = useCart()
+ const { addToWishlist } = useWishlist()
+ const [searchParams] = useSearchParams()
  const [currentPage, setCurrentPage] = useState(1)
  const [openCat, setOpenCat] = useState<string | null>(null)
  const [activeCat, setActiveCat] = useState<string | null>(null)
@@ -96,6 +100,20 @@ export default function Shop(){
    }
    setCurrentPage(1)
  }, [selectedCategory, categories])
+
+ /* pre-select category from URL param ?category=slug */
+ useEffect(() => {
+   const slug = searchParams.get('category')
+   if (!slug || categories.length === 0) return
+   const matched = categories.find(c =>
+     c.category_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') === slug ||
+     c.category_slug === slug
+   )
+   if (matched) {
+     setSelectedCategory(matched.category_id)
+     setActiveCat(matched.category_name)
+   }
+ }, [searchParams, categories])
 
  /* price range state */
  const MIN_PRICE = 0
@@ -438,7 +456,18 @@ export default function Shop(){
                 )}
                 <Stars count={4} />
               </div>
-              <button className={styles.wishlist} aria-label="Add to wishlist">
+              <button
+                className={styles.wishlist}
+                aria-label="Add to wishlist"
+                onClick={() => addToWishlist({
+                  id: p.id,
+                  name: p.name,
+                  price: Number(p.end_user_price || p.price) === 0
+                    ? 'Price on request'
+                    : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
+                  img: getImageUrl(p.image),
+                })}
+              >
                 <Heart size={20} />
               </button>
             </div>

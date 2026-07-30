@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import styles from './FlashSales.module.css'
 import { useCart } from '../context/CartContext'
 import { productsApi, getImageUrl } from '../lib/api'
+import { useWishlist } from '../lib/useWishlist'
 import sharp from '../assets/sharp.gif'
 
 interface ApiProduct {
@@ -47,6 +48,7 @@ const LIMIT = 6
 
 export default function FlashSales() {
   const { addToCart } = useCart()
+  const { addToWishlist } = useWishlist()
   const [products, setProducts] = useState<ApiProduct[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -121,7 +123,18 @@ export default function FlashSales() {
                     )}
                     <Stars count={4} />
                   </div>
-                  <button className={styles.wishlist} aria-label="Add to wishlist">
+                  <button
+                    className={styles.wishlist}
+                    aria-label="Add to wishlist"
+                    onClick={() => addToWishlist({
+                      id: p.id,
+                      name: p.name,
+                      price: Number(p.end_user_price || p.price) === 0
+                        ? 'Price on request'
+                        : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
+                      img: getImageUrl(p.image),
+                    })}
+                  >
                     <Heart size={20} />
                   </button>
                 </div>

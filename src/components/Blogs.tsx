@@ -63,7 +63,7 @@ export default function Blogs() {
           })
         )
 
-        console.log('Media map:', mediaMap)
+       
 
         const result: BlogCard[] = posts.map(p => ({
           id: p.id,

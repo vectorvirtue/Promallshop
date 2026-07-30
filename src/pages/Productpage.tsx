@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { Heart, Star, ChevronDown, ChevronUp, ShoppingCart, ShieldCheck, Truck, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Heart, Star, ChevronDown, ChevronUp, ShoppingCart, ShieldCheck, Truck, CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { useCart } from '../context/CartContext'
+import { useWishlist } from '../lib/useWishlist'
 import styles from './Productpage.module.css'
 import { getMonthEndTarget, getTimeLeft as getCountdownTimeLeft } from '../lib/countdown'
-import { getImageUrl, checkHasOrderedBefore } from '../lib/api'
+import { getImageUrl, checkHasOrderedBefore, deliveryCostApi, type DeliveryCost } from '../lib/api'
 
 const API = import.meta.env.VITE_PUBLIC_API_URL as string
 
@@ -99,12 +100,13 @@ async function fetchProductsByIds(ids: string): Promise<SimilarProduct[]> {
 interface ProductStripProps {
   title: string
   products: SimilarProduct[]
-  stripRef: React.RefObject<HTMLDivElement>
+  stripRef: React.RefObject<HTMLDivElement | null>
   onScroll: (dir: 'left' | 'right') => void
   addToCart: (item: { product_id: number; name: string; price: string; img: string }) => void
+  addToWishlist: (item: { id: number; name: string; price: string; img: string }) => void
 }
 
-function ProductStrip({ title, products, stripRef, onScroll, addToCart }: ProductStripProps) {
+function ProductStrip({ title, products, stripRef, onScroll, addToCart, addToWishlist }: ProductStripProps) {
   return (
     <div className={styles.similarSection}>
       <div className={styles.similarHeader}>
@@ -145,7 +147,11 @@ function ProductStrip({ title, products, stripRef, onScroll, addToCart }: Produc
                     <p className={styles.similarPrice}>{price}</p>
                     <span className={styles.similarStars}>★★★★★</span>
                   </div>
-                  <button className={styles.similarWishlist} aria-label="Add to wishlist">
+                  <button
+                    className={styles.similarWishlist}
+                    aria-label="Add to wishlist"
+                    onClick={() => addToWishlist({ id: p.id, name: p.name, price, img: getImageUrl(p.image) })}
+                  >
                     <Heart size={18} />
                   </button>
                 </div>
@@ -167,6 +173,7 @@ function ProductStrip({ title, products, stripRef, onScroll, addToCart }: Produc
 export default function Productpage() {
   const { id } = useParams<{ id: string }>()
   const { addToCart } = useCart()
+  const { addToWishlist } = useWishlist()
   const navigate = useNavigate()
 
   const [product, setProduct] = useState<Product | null>(null)
@@ -186,13 +193,34 @@ export default function Productpage() {
   const alternativeRef = useRef<HTMLDivElement>(null)
   const complementaryRef = useRef<HTMLDivElement>(null)
 
-  const scroll = useCallback((ref: React.RefObject<HTMLDivElement>, dir: 'left' | 'right') => {
+  /* ── delivery cost for right panel (defaults to Lagos, Nigeria) ── */
+  const [shippingData, setShippingData] = useState<DeliveryCost | null>(null)
+  const [shippingLoading, setShippingLoading] = useState(true)
+
+  const scroll = useCallback((ref: React.RefObject<HTMLDivElement | null>, dir: 'left' | 'right') => {
     ref.current?.scrollBy({ left: dir === 'left' ? -280 : 280, behavior: 'smooth' })
   }, [])
 
   /* check first-time buyer via API */
   useEffect(() => {
     checkHasOrderedBefore().then(hasOrdered => setIsFirstTimeBuyer(!hasOrdered))
+  }, [])
+
+  /* fetch default delivery cost — use DEFAULT record as general estimate */
+  useEffect(() => {
+    setShippingLoading(true)
+    deliveryCostApi
+      .get()
+      .then((res) => {
+        const defaultRecord =
+          res.data?.find(d => d.name.toUpperCase() === 'DEFAULT') ??
+          res.data?.find(d => !d.state) ??
+          res.data?.[0] ??
+          null
+        setShippingData(defaultRecord)
+      })
+      .catch(() => setShippingData(null))
+      .finally(() => setShippingLoading(false))
   }, [])
 
   /* countdown tick */
@@ -268,8 +296,10 @@ export default function Productpage() {
   const hasDiscount = product.discount > 0
   const originalPriceNum = hasDiscount ? Math.round(priceNum / (1 - product.discount / 100)) : 0
   const originalPrice = hasDiscount ? formatPrice(originalPriceNum) : null
-  const shipping = 5000
+  const shipping = shippingData ? parseFloat(shippingData.amount) || 0 : 0
   const total = priceNum > 0 ? priceNum + shipping : 0
+  const minDays = shippingData?.min_delivery_period ?? 3
+  const maxDays = shippingData?.max_delivery_period ?? 5
   const catLabel = categoryName
     ? categoryName.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
     : 'Promallshop'
@@ -356,7 +386,11 @@ export default function Productpage() {
             {/* stars + wishlist */}
             <div className={styles.ratingRow}>
               <Stars count={4} size={18} />
-              <button className={styles.heartBtn} aria-label="Add to wishlist">
+              <button
+                className={styles.heartBtn}
+                aria-label="Add to wishlist"
+                onClick={() => addToWishlist({ id: product.id, name: product.name, price, img: getImageUrl(product.image) })}
+              >
                 <Heart size={18} />
               </button>
             </div>
@@ -488,7 +522,7 @@ export default function Productpage() {
             {priceNum > 0 && (
               <>
                 <p className={styles.panelSummaryTitle}>
-                  Payment summary for delivery to <span className={styles.panelLocation}>Lagos, NG</span>
+                  Estimated delivery fee <span className={styles.panelLocation}>(standard rate)</span>
                 </p>
                 <table className={styles.summaryTable}>
                   <tbody>
@@ -498,11 +532,23 @@ export default function Productpage() {
                     </tr>
                     <tr>
                       <td>Shipping Fees</td>
-                      <td>{formatPrice(shipping)}</td>
+                      <td>
+                        {shippingLoading
+                          ? <Loader2 size={13} style={{ animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+                          : shippingData
+                            ? formatPrice(shipping)
+                            : '—'
+                        }
+                      </td>
                     </tr>
                     <tr className={styles.summaryTotal}>
                       <td>Total Costs</td>
-                      <td>{formatPrice(total)}</td>
+                      <td>
+                        {shippingLoading
+                          ? <Loader2 size={13} style={{ animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+                          : formatPrice(total)
+                        }
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -510,9 +556,9 @@ export default function Productpage() {
                 <p className={styles.deliveryDate}>
                   Estimated delivery date{' '}
                   <strong>
-                    {new Date(Date.now() + 3 * 86400000).toLocaleDateString('en-NG', { month: 'long', day: 'numeric' })}
+                    {new Date(Date.now() + minDays * 86400000).toLocaleDateString('en-NG', { month: 'long', day: 'numeric' })}
                     {' – '}
-                    {new Date(Date.now() + 5 * 86400000).toLocaleDateString('en-NG', { month: 'long', day: 'numeric' })}
+                    {new Date(Date.now() + maxDays * 86400000).toLocaleDateString('en-NG', { month: 'long', day: 'numeric' })}
                   </strong>
                 </p>
 
@@ -590,6 +636,7 @@ export default function Productpage() {
           stripRef={alternativeRef}
           onScroll={dir => scroll(alternativeRef, dir)}
           addToCart={addToCart}
+          addToWishlist={addToWishlist}
         />
 
         {/* ── COMPLEMENTARY PRODUCTS ── */}
@@ -599,6 +646,7 @@ export default function Productpage() {
           stripRef={complementaryRef}
           onScroll={dir => scroll(complementaryRef, dir)}
           addToCart={addToCart}
+          addToWishlist={addToWishlist}
         />
 
       </div>

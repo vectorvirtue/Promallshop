@@ -56,8 +56,8 @@ export default function Contact() {
       </div>
 
       <form  className={styles.form}>
-        <h2>Get In Touch</h2>
-        <h5>
+        <h2 className={styles.top}>Get In Touch</h2>
+        <h5 className={styles.center}>
           We would Love to hear From You, Enquiries, Observations, Place an
           order.
         </h5>
@@ -116,7 +116,7 @@ src="https://maps.google.com/maps?q=5B%20Adedeji%20Close,%20Opebi%20Ikeja,%20Lag
     </div>
 
        <div className={style.container}>
-      <h2> Subscribe to our Newsletter</h2>
+      <h2 className={styles.h2}> Subscribe to our Newsletter</h2>
       <hr className={style.hr} />
       <form  className={style.form}>
         <input

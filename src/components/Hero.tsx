@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import slider1 from "../assets/Sliders (1).svg";
 import slider2 from "../assets/Sliders.svg";
 import { productsApi, getImageUrl } from "../lib/api";
-
+import { Link } from "react-router-dom";
 interface ApiProduct {
   id: number
   name: string
@@ -140,7 +140,7 @@ export default function Hero() {
               </div>
             ))
           : weeklyDeals.map((deal) => (
-              <div key={deal.id} className={styles.dealItem}>
+              <Link key={deal.id} to={`/product/${deal.id}`} className={styles.dealItem} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <img
                   src={getImageUrl(deal.image)}
                   alt={deal.name}
@@ -154,7 +154,7 @@ export default function Hero() {
                   )}
                   <p className={styles.dealStars}>★★★★★</p>
                 </div>
-              </div>
+              </Link>
             ))
         }
       </div>
