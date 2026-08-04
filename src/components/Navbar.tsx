@@ -129,7 +129,7 @@ export default function Navbar() {
     { label: "Home", href: '/', external: false },
     { label: "Shop", href: '/shop', external: false },
     { label: "Blog", href: 'https://www.promallshop.com/blog/', external: true },
-    { label: "Rentals", href: '/rentals', external: false },
+    { label: "Events", href: '/events', external: false },
   ];
 
   return (

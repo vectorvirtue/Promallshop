@@ -7,6 +7,10 @@ const usefulLinks = [
     link: 'About Us',
     path: '/about-us'
   },
+    {
+    link: 'News',
+    path: '/news'
+  },
   {
     link: 'Contact Us',
     path: '/contact'
