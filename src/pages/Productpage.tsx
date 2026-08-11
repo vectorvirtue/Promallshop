@@ -245,9 +245,17 @@ export default function Productpage() {
         const json = await res.json()
         console.log('Product response:', res.status, json)
         if (!json.success || !json.data) throw new Error(json.message || 'Product not found')
-        const prod: Product = json.data
+        const rawProd: Product = json.data
+        // parse comma-separated image field into images array for gallery
+        const imageList = rawProd.image
+          ? rawProd.image.split(',').map(s => getImageUrl(s.trim())).filter(Boolean)
+          : []
+        const prod: Product = {
+          ...rawProd,
+          images: imageList.length > 0 ? imageList : undefined,
+        }
         setProduct(prod)
-        setActiveImg(getImageUrl(prod.image))
+        setActiveImg(imageList[0] ?? getImageUrl(rawProd.image))
 
         // fetch alternative and complementary in parallel
         const [altProducts, compProducts] = await Promise.all([

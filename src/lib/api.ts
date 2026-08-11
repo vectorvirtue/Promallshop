@@ -6,19 +6,19 @@ export const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
  */
 export function getImageUrl(path: string): string {
   if (!path) return ''
-  if (path.startsWith('http')) {
-    // only append ngrok bypass param if it's actually a ngrok URL
-    if (path.includes('ngrok')) {
-      const url = new URL(path)
+  // some products have comma-separated multiple images — use the first one only
+  const firstPath = path.split(',')[0].trim()
+  if (firstPath.startsWith('http')) {
+    if (firstPath.includes('ngrok')) {
+      const url = new URL(firstPath)
       url.searchParams.set('ngrok-skip-browser-warning', 'true')
       return url.toString()
     }
-    return path
+    return firstPath
   }
-  const clean = path.replace(/^\/+/, '')
-  const base = IMAGE_BASE.replace(/\/+$/, '') // strip trailing slash
+  const clean = firstPath.replace(/^\/+/, '')
+  const base = IMAGE_BASE.replace(/\/+$/, '')
   const url = `${base}/${clean}`
-  // only append ngrok param if the base URL is ngrok
   if (IMAGE_BASE.includes('ngrok')) {
     return `${url}?ngrok-skip-browser-warning=true`
   }
