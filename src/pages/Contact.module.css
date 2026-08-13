@@ -10,7 +10,7 @@
 }
 
 .hero {
-    background-image: url('src/assets/Frame 265.svg');
+    background-image: url('../assets/Frame 265.svg');
     background-position: center;
     height: 250px;
     display: flex;

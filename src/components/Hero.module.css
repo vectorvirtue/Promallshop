@@ -1,6 +1,6 @@
 /* outer section — Hero.svg is the dark hex background */
 .hero {
-  background-image: url('src/assets/Hero.svg');
+  background-image: url('../assets/Hero.svg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
