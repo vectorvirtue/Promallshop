@@ -436,6 +436,18 @@
   object-fit: contain;
 }
 
+.cardLogo {
+  height: 26px;
+  width: auto;
+  flex-shrink: 0;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+
+.paymentCardActive .cardLogo {
+  opacity: 1;
+}
+
 /* ── spinner for delivery cost loading ── */
 @keyframes spin {
   to { transform: rotate(360deg); }

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { ShoppingCart, Heart } from 'lucide-react'
+import { ShoppingCart, Heart, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import styles from './Featured.module.css'
 import { useCart } from '../context/CartContext'
 import { productsApi, getImageUrl } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
+import resellerGif from '../assets/reseller.gif'
 
 interface ApiProduct {
   id: number
@@ -96,6 +97,9 @@ export default function FeaturedProducts() {
 
   return (
     <section className={styles.section}>
+      {/* ── top GIF ── */}
+      <img src={resellerGif} alt="Reseller Program" className={styles.topGif} />
+
       {/* ── top bar ── */}
       <div className={styles.topBar}>
         <div className={styles.topLeft}>
@@ -106,16 +110,24 @@ export default function FeaturedProducts() {
           <p className={styles.subtitle}>Every listed new product from our trusted sellers</p>
         </div>
 
-        <div className={styles.filters}>
-          {filterTabs.map((f) => (
-            <button
-              key={f}
-              className={`${styles.filterBtn} ${active === f ? styles.filterActive : ''}`}
-              onClick={() => setActive(f)}
-            >
-              {f === 'All' ? 'All' : toTitleCase(f.length > 20 ? f.slice(0, 18) + '…' : f)}
-            </button>
-          ))}
+        <div>
+          <div className={styles.filters}>
+            {filterTabs.map((f) => (
+              <button
+                key={f}
+                className={`${styles.filterBtn} ${active === f ? styles.filterActive : ''}`}
+                onClick={() => setActive(f)}
+              >
+                {f === 'All' ? 'All' : toTitleCase(f.length > 20 ? f.slice(0, 18) + '…' : f)}
+              </button>
+            ))}
+          </div>
+          {/* ── swipe indicator ── */}
+          <div className={styles.swipeIndicator}>
+            <ChevronLeft size={16} />
+            <span>Swipe to see more categories</span>
+            <ChevronRight size={16} />
+          </div>
         </div>
       </div>
 

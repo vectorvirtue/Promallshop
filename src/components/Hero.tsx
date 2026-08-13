@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import styles from "./Hero.module.css";
 import { useNavigate } from "react-router-dom";
 import slider1 from "../assets/Sliders (1).svg";
@@ -107,18 +108,38 @@ export default function Hero() {
       {/* ── left: slider card ── */}
       <div className={`${styles.sliderCard} ${visible ? styles.fadeIn : styles.fadeOut}`}>
         <img src={slide.contentpicture} alt={slide.title} className={styles.slideImage} />
-        <div className={styles.textBlock}>
+        <motion.div 
+          className={styles.textBlock}
+          key={current}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
           <h2 className={styles.subtitle}>
             {slide.subtitle}{" "}
             <span style={{ fontWeight: "800" }}>{slide.span}</span>
           </h2>
-          <h1 className={styles.title}>{slide.title}</h1>
-          <button onClick={goToPage} className={styles.button}>Shop Now</button>
-        </div>
+          <h1 className={styles.title}>
+            {slide.title}
+          </h1>
+          <motion.button 
+            onClick={goToPage} 
+            className={styles.button}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Shop Now
+          </motion.button>
+        </motion.div>
       </div>
 
       {/* ── right: weekly deals panel ── */}
-      <div className={styles.dealsPanel}>
+      <motion.div 
+        className={styles.dealsPanel}
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8 }}
+      >
         <p className={styles.dealsLabel}>Weekly sales deals</p>
         <h2 className={styles.dealsTitle}>Save UP to 20%</h2>
         <p className={styles.dealsSubtext}>
@@ -139,25 +160,32 @@ export default function Hero() {
                 </div>
               </div>
             ))
-          : weeklyDeals.map((deal) => (
-              <Link key={deal.id} to={`/product/${deal.id}`} className={styles.dealItem} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <img
-                  src={getImageUrl(deal.image)}
-                  alt={deal.name}
-                  className={styles.dealImage}
-                />
-                <div className={styles.dealInfo}>
-                  <p className={styles.dealName}>{deal.name}</p>
-                  <p className={styles.dealPrice}>{formatPrice(deal)}</p>
-                  {deal.discount > 0 && (
-                    <p className={styles.dealOldPrice}>{deal.discount}% OFF</p>
-                  )}
-                  <p className={styles.dealStars}>★★★★★</p>
-                </div>
-              </Link>
+          : weeklyDeals.map((deal, index) => (
+              <motion.div
+                key={deal.id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
+              >
+                <Link to={`/product/${deal.id}`} className={styles.dealItem} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <img
+                    src={getImageUrl(deal.image)}
+                    alt={deal.name}
+                    className={styles.dealImage}
+                  />
+                  <div className={styles.dealInfo}>
+                    <p className={styles.dealName}>{deal.name}</p>
+                    <p className={styles.dealPrice}>{formatPrice(deal)}</p>
+                    {deal.discount > 0 && (
+                      <p className={styles.dealOldPrice}>{deal.discount}% OFF</p>
+                    )}
+                    <p className={styles.dealStars}>★★★★★</p>
+                  </div>
+                </Link>
+              </motion.div>
             ))
         }
-      </div>
+      </motion.div>
 
     </div>
   );

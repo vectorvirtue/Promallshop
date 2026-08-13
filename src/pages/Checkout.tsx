@@ -5,6 +5,8 @@ import { TriangleAlert, CheckCircle2, X, Phone, Copy, Loader2 } from 'lucide-rea
 import styles from './Checkout.module.css'
 import paystackLogo from '../assets/download (1).png'
 import flutterwaveLogo from '../assets/download.png'
+import visaLogo from '../assets/visa.png'
+import mastercardLogo from '../assets/mastercard.png'
 import { ordersApi, markAsOrdered, cartApi, deliveryCostApi, type DeliveryCost } from '../lib/api'
 
 /* ── Paystack inline SDK type ── */
@@ -896,6 +898,8 @@ export default function Checkout() {
                     </div>
                     <div className={styles.cardLogos}>
                       <img src={paystackLogo} alt="Paystack" className={styles.gatewayLogo} />
+                      <img src={visaLogo} alt="Visa" className={styles.cardLogo} />
+                      <img src={mastercardLogo} alt="Mastercard" className={styles.cardLogo} />
                     </div>
                   </label>
 
@@ -914,6 +918,8 @@ export default function Checkout() {
                     </div>
                     <div className={styles.cardLogos}>
                       <img src={flutterwaveLogo} alt="Flutterwave" className={styles.gatewayLogo} />
+                      <img src={visaLogo} alt="Visa" className={styles.cardLogo} />
+                      <img src={mastercardLogo} alt="Mastercard" className={styles.cardLogo} />
                     </div>
                   </label>
                 </div>

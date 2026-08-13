@@ -67,5 +67,6 @@
 
 /* Logitech logo needs more width */
 .logo[alt="Logitech"] {
-  max-width: 160px;
+  max-width: 200px;
+  height: 40px;
 }

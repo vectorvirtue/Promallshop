@@ -8,7 +8,9 @@ import Whybuy from "../components/Whybuy"
 import Partners from "../components/Partners"
 import Newsletter from "../components/Newsletter"
 import Blogs from "../components/Blogs"
-  import Gif from "../components/Gif"
+import Gif from "../components/Gif"
+import Awards from "../components/Awards"
+
 export default function Home() {
   return (
     <>
@@ -23,7 +25,9 @@ export default function Home() {
       <Choose/>
       <Whybuy/>
       <Partners/>
+     
       <Newsletter/>
+       <Awards/>
     </>
   )
 }

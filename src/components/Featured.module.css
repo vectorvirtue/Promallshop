@@ -1,8 +1,15 @@
 .section {
   padding: 2em var(--page-x);
   background: #f5f5f5;
-    border-bottom: 1px solid #F18E1A;
+  border-bottom: 1px solid #F18E1A;
+}
 
+/* ── top GIF ── */
+.topGif {
+   width: 100%;
+  max-height: 80px;
+  margin-bottom: 1.5em;
+  display: block;
 }
 
 /* ── top bar ── */
@@ -51,31 +58,6 @@
   gap: 0.4em;
   min-width: 0;
   max-width: 620px;
-  position: relative;
-}
-
-/* swipe indicator */
-.filtersWrap::after {
-  content: '⟵ Swipe ⟶';
-  position: absolute;
-  right: -8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.7em;
-  color: #F18E1A;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 0.3em 0.6em;
-  border-radius: 12px;
-  pointer-events: none;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  animation: swipeHint 2s ease-in-out infinite;
-}
-
-@keyframes swipeHint {
-  0%, 100% { opacity: 0.7; transform: translateY(-50%) translateX(0); }
-  50% { opacity: 1; transform: translateY(-50%) translateX(4px); }
 }
 
 .filterNavBtn {
@@ -117,6 +99,24 @@
   display: none;
 }
 
+/* swipe indicator below filters */
+.swipeIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  font-size: 0.75em;
+  color: #F18E1A;
+  font-weight: 600;
+  margin-top: 0.5em;
+  animation: swipeHint 2s ease-in-out infinite;
+}
+
+@keyframes swipeHint {
+  0%, 100% { opacity: 0.7; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(4px); }
+}
+
 .filterBtn {
   padding: 0.45em 1.1em;
   border: 1.5px solid #F18E1A;
@@ -144,12 +144,14 @@
 .grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 3em;
+  gap: 2em;
+  justify-content: space-between;
 }
 
 /* ── card ── */
 .card {
-  width: 280px;
+  width: calc(25% - 1.5em);
+  min-width: 260px;
   height: 420px;
   background: #fff;
   border: 1.5px solid #F18E1A;
@@ -202,7 +204,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 0.6em 0.8em 0.4em;
+  padding: 0.5em 0.8em 0.3em;
   gap: 0.3em;
   flex: 1;
 }
@@ -268,8 +270,8 @@
 
 /* add to cart */
 .addToCart {
-  margin: 0 0.8em 0.8em;
-  padding: 0.55em;
+  margin: 0 0.8em 0.6em;
+  padding: 0.5em;
   background: #fff;
   border: 1.5px solid #333;
   border-radius: 0.4em;
@@ -289,11 +291,16 @@
 
 /* ── responsive ── */
 @media (max-width: 1024px) {
+  .topGif {
+    max-width: 360px;
+    max-height: 40px;
+  }
   .grid {
     gap: 1.5em;
   }
   .card {
     width: calc(50% - 0.75em);
+    min-width: unset;
     height: auto;
   }
   .imgWrap {
@@ -306,11 +313,15 @@
   .filtersWrap {
     max-width: 100%;
   }
-  .filtersWrap::after {
-    display: none;
+  .swipeIndicator {
+    display: flex;
   }
 }
 @media (max-width: 768px) {
+  .topGif {
+    max-width: 360px;
+    max-height: 40px;
+  }
   .topBar {
     flex-direction: column;
     align-items: flex-start;
@@ -320,12 +331,12 @@
     max-width: 100%;
     width: 100%;
   }
-  .filtersWrap::after {
-    display: block;
-    right: 4px;
+  .swipeIndicator {
+    display: flex;
   }
   .card {
     width: 100%;
+    min-width: unset;
     height: auto;
   }
   .imgWrap {

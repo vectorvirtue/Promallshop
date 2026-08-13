@@ -44,7 +44,7 @@ const cardVariants = {
   }),
 }
 
-const LIMIT = 6
+const LIMIT = 8
 
 export default function FlashSales() {
   const { addToCart } = useCart()

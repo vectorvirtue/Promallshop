@@ -1,4 +1,5 @@
 import styles from './Whychoose.module.css'
+import { motion } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 
 const sections = [
@@ -136,16 +137,43 @@ export default function Choose() {
         })}</script>
       </Helmet>
 
-      <article className={styles.container} aria-label="About Promallshop">
-        <h2>Promallshop — No. 1 Shopping Destination For IT Solutions</h2>
-        <p className={styles.intro}>
-          Welcome to <strong>Promallshop</strong>, a trusted <strong>tech store for IT equipment and computer accessories in Nigeria and Ghana</strong>.
+      <motion.article 
+        className={styles.container} 
+        aria-label="About Promallshop"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+      >
+        <motion.h2
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          Promallshop — No. 1 Shopping Destination For IT Solutions
+        </motion.h2>
+        <motion.p 
+          className={styles.intro}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          Welcome to <strong>Promallshop</strong>, a trusted <strong>tech store for IT equipment and computer accessories in West Africa.</strong>.
           We provide advanced technology solutions designed for businesses, schools, government organizations, and individuals
           who need reliable digital tools for productivity and communication.
-        </p>
+        </motion.p>
 
-        {sections.map((s) => (
-          <section key={s.heading} className={styles.choices}>
+        {sections.map((s, index) => (
+          <motion.section 
+            key={s.heading} 
+            className={styles.choices}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+          >
             <h3 className={styles.header}>{s.heading}</h3>
             <ul className={styles.margin}>
               {s.bullets.map((b) => (
@@ -153,27 +181,40 @@ export default function Choose() {
               ))}
             </ul>
             <p>{s.text}</p>
-          </section>
+          </motion.section>
         ))}
 
-        <section className={styles.choices}>
+        <motion.section 
+          className={styles.choices}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
           <h3 className={styles.header}>Enjoy 15% Off Your First Order</h3>
           <p>
             New customers can enjoy an exclusive <strong>15% discount on their first purchase at Promallshop</strong> —
             on video conferencing systems, interactive displays, robotics kits, computer accessories, networking equipment, and more.
             Promallshop offers premium technology products at competitive prices for businesses, schools, and professionals across Nigeria and Ghana.
           </p>
-        </section>
+        </motion.section>
 
-        <section className={styles.choices} style={{ marginBottom: '2em' }}>
+        <motion.section 
+          className={styles.choices} 
+          style={{ marginBottom: '2em' }}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
           <h3 className={styles.header}>Our Trusted Technology Partners</h3>
           <p>
             Promallshop collaborates with leading global technology brands including{' '}
             <strong>MAXHUB, Huawei, Logitech, Yealink, Samsung, LG, Sharp, Bosch, Polycom, Sennheiser, Absen, Hikvision, Twin Robotics, Makeblock, and Arduino</strong>{' '}
             to ensure customers receive genuine IT equipment and high-quality computer accessories backed by global quality standards and trusted manufacturer support.
           </p>
-        </section>
-      </article>
+        </motion.section>
+      </motion.article>
     </>
   )
 }
