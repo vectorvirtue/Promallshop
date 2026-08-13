@@ -4,8 +4,9 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import styles from './FlashSales.module.css'
 import { useCart } from '../context/CartContext'
-import { productsApi, getImageUrl } from '../lib/api'
+import { productsApi, getImageUrl, quoteApi } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
+import RequestQuoteModal from './RequestQuoteModal'
 import sharp from '../assets/sharp.gif'
 
 interface ApiProduct {
@@ -51,8 +52,16 @@ export default function FlashSales() {
   const { addToWishlist } = useWishlist()
   const [products, setProducts] = useState<ApiProduct[]>([])
   const [loading, setLoading] = useState(true)
+  const [quoteThreshold, setQuoteThreshold] = useState(2000000)
+  const [quoteModalOpen, setQuoteModalOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<ApiProduct | null>(null)
 
   useEffect(() => {
+    // Fetch quote threshold
+    quoteApi.getThreshold()
+      .then(res => setQuoteThreshold(res.threshold))
+      .catch(() => setQuoteThreshold(2000000))
+
     productsApi.getAll()
       .then((res: unknown) => {
         const r = res as { success: boolean; data: ApiCategory[] }
@@ -67,6 +76,13 @@ export default function FlashSales() {
       .catch(() => setProducts([]))
       .finally(() => setLoading(false))
   }, [])
+
+  const handleRequestQuote = (product: ApiProduct) => {
+    setSelectedProduct(product)
+    setQuoteModalOpen(true)
+  }
+
+  const isHighValue = (price: number) => price >= quoteThreshold
 
   return (
     <section className={styles.section}>
@@ -144,21 +160,49 @@ export default function FlashSales() {
                   disabled={p.qty !== undefined && Number(p.qty) <= 0 || p.availability === 0}
                   onClick={() => {
                     if ((p.qty !== undefined && Number(p.qty) <= 0) || p.availability === 0) return
-                    addToCart({
-                      product_id: p.id,
-                      name: p.name,
-                      price: Number(p.end_user_price || p.price) === 0
-                        ? 'Price on request'
-                        : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
-                      img: getImageUrl(p.image),
-                    })
+                    
+                    const price = Number(p.end_user_price || p.price)
+                    if (price > 0 && isHighValue(price)) {
+                      handleRequestQuote(p)
+                    } else {
+                      addToCart({
+                        product_id: p.id,
+                        name: p.name,
+                        price: price === 0
+                          ? 'Price on request'
+                          : `₦ ${price.toLocaleString('en-NG')}`,
+                        img: getImageUrl(p.image),
+                      })
+                    }
                   }}
                 >
-                  {(p.qty !== undefined && Number(p.qty) <= 0) || p.availability === 0 ? 'Out of Stock' : 'Add to Cart'}
+                  {(p.qty !== undefined && Number(p.qty) <= 0) || p.availability === 0 
+                    ? 'Out of Stock' 
+                    : (Number(p.end_user_price || p.price) > 0 && isHighValue(Number(p.end_user_price || p.price)))
+                    ? 'Request for Quote'
+                    : 'Add to Cart'}
                 </button>
               </motion.div>
             ))}
       </div>
+
+      {/* Request Quote Modal */}
+      {selectedProduct && (
+        <RequestQuoteModal
+          isOpen={quoteModalOpen}
+          onClose={() => {
+            setQuoteModalOpen(false)
+            setSelectedProduct(null)
+          }}
+          productName={selectedProduct.name}
+          productId={selectedProduct.id}
+          productPrice={
+            Number(selectedProduct.end_user_price || selectedProduct.price) === 0
+              ? 'Price on request'
+              : `₦ ${Number(selectedProduct.end_user_price || selectedProduct.price).toLocaleString('en-NG')}`
+          }
+        />
+      )}
     </section>
   )
 }

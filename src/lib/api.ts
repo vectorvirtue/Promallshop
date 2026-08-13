@@ -300,3 +300,37 @@ export const deliveryCostApi = {
   markPaid: (id: number | string) =>
     request(`/orders/${id}/mark-paid`, { method: 'PATCH', auth: true }),
 }
+
+/* ── quote requests ── */
+export interface QuoteRequest {
+  full_name: string
+  company_name: string
+  email: string
+  phone: string
+  product_name: string
+  product_id: number | string
+  quantity: number
+  message?: string
+}
+
+export const quoteApi = {
+  // Get the current quote threshold (default: 2000000 if not configured)
+  getThreshold: () =>
+    request<{ success: boolean; threshold: number }>('/settings/quote-threshold')
+      .catch(() => ({ success: true, threshold: 2000000 })), // fallback to 2M if endpoint doesn't exist yet
+
+  // Update quote threshold (admin only)
+  updateThreshold: (threshold: number) =>
+    request('/settings/quote-threshold', {
+      method: 'POST',
+      auth: true,
+      body: JSON.stringify({ threshold }),
+    }),
+
+  // Submit a quote request
+  submit: (payload: QuoteRequest) =>
+    request('/quote-requests', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+}

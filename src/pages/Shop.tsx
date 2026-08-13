@@ -7,9 +7,10 @@ import { Link } from 'react-router-dom'
 import { Pagination } from 'antd'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { productsApi, getImageUrl } from '../lib/api'
+import { productsApi, getImageUrl, quoteApi } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
 import { useSearchParams } from 'react-router-dom'
+import RequestQuoteModal from '../components/RequestQuoteModal'
 interface ApiProduct {
   id: number
   name: string
@@ -69,8 +70,16 @@ export default function Shop(){
  const [loadingProducts, setLoadingProducts] = useState(true)
  const [fetchError, setFetchError] = useState('')
  const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
+ const [quoteThreshold, setQuoteThreshold] = useState(2000000)
+ const [quoteModalOpen, setQuoteModalOpen] = useState(false)
+ const [selectedProduct, setSelectedProduct] = useState<ApiProduct | null>(null)
 
  useEffect(() => {
+   // Fetch quote threshold
+   quoteApi.getThreshold()
+     .then(res => setQuoteThreshold(res.threshold))
+     .catch(() => setQuoteThreshold(2000000))
+
    setLoadingProducts(true)
    productsApi.getAll()
      .then((res: unknown) => {
@@ -143,6 +152,13 @@ export default function Shop(){
   }
 
   const formatPrice = (n: number) => '₦ ' + n.toLocaleString('en-NG')
+
+  const handleRequestQuote = (product: ApiProduct) => {
+    setSelectedProduct(product)
+    setQuoteModalOpen(true)
+  }
+
+  const isHighValue = (price: number) => price >= quoteThreshold
 
   /* ── custom pointer-based dual slider ── */
   const trackRef = useRef<HTMLDivElement>(null)
@@ -477,17 +493,27 @@ export default function Shop(){
               disabled={Number(p.qty) <= 0 || p.availability === 0}
               onClick={() => {
                 if (Number(p.qty) <= 0 || p.availability === 0) return
-                addToCart({
-                  product_id: p.id,
-                  name: p.name,
-                  price: Number(p.end_user_price || p.price) === 0
-                    ? 'Price on request'
-                    : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
-                  img: getImageUrl(p.image),
-                })
+                
+                const priceNum = Number(p.end_user_price || p.price)
+                if (priceNum > 0 && isHighValue(priceNum)) {
+                  handleRequestQuote(p)
+                } else {
+                  addToCart({
+                    product_id: p.id,
+                    name: p.name,
+                    price: priceNum === 0
+                      ? 'Price on request'
+                      : `₦ ${priceNum.toLocaleString('en-NG')}`,
+                    img: getImageUrl(p.image),
+                  })
+                }
               }}
             >
-              {Number(p.qty) <= 0 || p.availability === 0 ? 'Out of Stock' : 'Add to Cart'}
+              {Number(p.qty) <= 0 || p.availability === 0 
+                ? 'Out of Stock' 
+                : (Number(p.end_user_price || p.price) > 0 && isHighValue(Number(p.end_user_price || p.price)))
+                ? 'Request for Quote'
+                : 'Add to Cart'}
             </button>
           </motion.div>
         ))}
@@ -505,6 +531,24 @@ export default function Shop(){
      )}
    </div>
        </div>
+
+       {/* Request Quote Modal */}
+       {selectedProduct && (
+         <RequestQuoteModal
+           isOpen={quoteModalOpen}
+           onClose={() => {
+             setQuoteModalOpen(false)
+             setSelectedProduct(null)
+           }}
+           productName={selectedProduct.name}
+           productId={selectedProduct.id}
+           productPrice={
+             Number(selectedProduct.end_user_price || selectedProduct.price) === 0
+               ? 'Price on request'
+               : `₦ ${Number(selectedProduct.end_user_price || selectedProduct.price).toLocaleString('en-NG')}`
+           }
+         />
+       )}
         </>
     )
 }

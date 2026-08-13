@@ -3,9 +3,10 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Heart, Star, ChevronDown, ChevronUp, ShoppingCart, ShieldCheck, Truck, CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../lib/useWishlist'
+import RequestQuoteModal from '../components/RequestQuoteModal'
 import styles from './Productpage.module.css'
 import { getMonthEndTarget, getTimeLeft as getCountdownTimeLeft } from '../lib/countdown'
-import { getImageUrl, checkHasOrderedBefore, deliveryCostApi, type DeliveryCost } from '../lib/api'
+import { getImageUrl, checkHasOrderedBefore, deliveryCostApi, quoteApi, type DeliveryCost } from '../lib/api'
 
 const API = import.meta.env.VITE_PUBLIC_API_URL as string
 
@@ -189,6 +190,8 @@ export default function Productpage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [isFirstTimeBuyer, setIsFirstTimeBuyer] = useState(false)
   const [countdown, setCountdown] = useState(() => getCountdownTimeLeft(getMonthEndTarget()))
+  const [quoteThreshold, setQuoteThreshold] = useState(2000000)
+  const [quoteModalOpen, setQuoteModalOpen] = useState(false)
 
   const alternativeRef = useRef<HTMLDivElement>(null)
   const complementaryRef = useRef<HTMLDivElement>(null)
@@ -204,6 +207,13 @@ export default function Productpage() {
   /* check first-time buyer via API */
   useEffect(() => {
     checkHasOrderedBefore().then(hasOrdered => setIsFirstTimeBuyer(!hasOrdered))
+  }, [])
+
+  /* fetch quote threshold */
+  useEffect(() => {
+    quoteApi.getThreshold()
+      .then(res => setQuoteThreshold(res.threshold))
+      .catch(() => setQuoteThreshold(2000000))
   }, [])
 
   /* fetch default delivery cost — use DEFAULT record as general estimate */
@@ -301,6 +311,7 @@ export default function Productpage() {
   const faqs = parseFaq(product.faq)
   const price = formatPrice(product.end_user_price || product.price)
   const priceNum = Number(product.end_user_price || product.price)
+  const isHighValue = priceNum >= quoteThreshold
   const hasDiscount = product.discount > 0
   const originalPriceNum = hasDiscount ? Math.round(priceNum / (1 - product.discount / 100)) : 0
   const originalPrice = hasDiscount ? formatPrice(originalPriceNum) : null
@@ -460,21 +471,29 @@ export default function Productpage() {
                 disabled={product.qty <= 0}
                 onClick={() => {
                   if (product.qty <= 0) return
-                  addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
+                  if (priceNum > 0 && isHighValue) {
+                    setQuoteModalOpen(true)
+                  } else {
+                    addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
+                  }
                 }}
               >
-                {product.qty <= 0 ? 'Out of Stock' : 'Add to Cart'}
+                {product.qty <= 0 ? 'Out of Stock' : (priceNum > 0 && isHighValue) ? 'Request for Quote' : 'Add to Cart'}
               </button>
               <button
                 className={styles.buyBtn}
                 disabled={product.qty <= 0}
                 onClick={() => {
                   if (product.qty <= 0) return
-                  addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
-                  navigate('/checkout')
+                  if (priceNum > 0 && isHighValue) {
+                    setQuoteModalOpen(true)
+                  } else {
+                    addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
+                    navigate('/checkout')
+                  }
                 }}
               >
-                Buy Now
+                {(priceNum > 0 && isHighValue) ? 'Request for Quote' : 'Buy Now'}
               </button>
             </div>
 
@@ -658,6 +677,17 @@ export default function Productpage() {
         />
 
       </div>
+
+      {/* Request Quote Modal */}
+      {product && (
+        <RequestQuoteModal
+          isOpen={quoteModalOpen}
+          onClose={() => setQuoteModalOpen(false)}
+          productName={product.name}
+          productId={product.id}
+          productPrice={price}
+        />
+      )}
     </>
   )
 }
