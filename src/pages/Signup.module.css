@@ -20,7 +20,7 @@
 
 .darkenBackground {
   background-image: linear-gradient(rgba(0, 0, 0, 0.217), rgba(0, 0, 0, 0.304)), 
-                    url('src/assets/Container.svg');
+                    url('../assets/Container.svg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
