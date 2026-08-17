@@ -1,89 +1,82 @@
 import styles from "../legal/TOU.module.css";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { useState } from "react";
 
-const faqs = [
-  {
-    q: 'How do I place an order?',
-    a: 'Click on ADD TO CART to add this product to your cart, Click on Cart in the top right corner, Click on PROCEED TO CHECKOUT',
-  },
-  {
-    q: 'Are there any hidden costs or charges if I order from Promallshop?',
-    a: 'There are no hidden costs or charges when you order from Promallshop. All costs are 100% visible before and at the end of the checkout process.',
-  },
-  {
-    q: 'How do I know if my order has been confirmed?',
-    a: "We'll send you an email and SMS notifications once your order has been confirmed.",
-  },
-  {
-    q: 'What are the conditions for returning a product and what is the procedure?',
-    a: 'When you shop on Promallshop, you can be rest assured that you can return your product if your product is eligible for return. To learn more about our return policy, please read our Terms and Conditions.',
-  },
-  {
-    q: 'Which Payment methods do you support?',
-    a: 'We currenly support online payment, Bank transfer and Cheque payment',
-  },
-  {
-    q: 'I missed the delivery. What happens now?',
-    a: 'Not to worry, we will try to reschedule your order the next business day. We will make a total of 2 attempt to deliver the package, before canceling your order. We will also notify you about the status of your delivery via email ans SMS You can check the status of your order anytime.'
-  },
-  {
-    q: 'Can I use two payment methods when ordering online?',
-    a: 'Sorry, we only accept one payment method per order',
-  },
-  {
-    q: 'To where do you ship? How long does it take you to process an order before it is dispatched?',
-    a: 'Delivery is available in most locations across the country. Ordered goods are delivered within 2 to 4 days within across the Country',
-  },
-  {
-    q: 'Will somebody contact me before delivering the package to my location?',
-    a: 'Yes, our delivery agent will contact you to confirm your availability and exact location. Also, we will send you an email with details of the delivery agent when your package is out for delivery.',
-  },
-]
-export default function About(){
-      const [open, setOpen] = useState<number | null>(null)
+export default function About() {
+  return (
+    <>
+      <Helmet>
+        <title>About Us — Promallshop</title>
+      </Helmet>
 
-    return(
-        
-        <>
-              <Helmet><title>About Us — Promallshop </title></Helmet>
-
-       <nav className={styles.breadcrumb}>
-        <Link className={styles.link}  to="/">
+      <nav className={styles.breadcrumb}>
+        <Link className={styles.link} to="/">
           Home
         </Link>
         <span>→</span>
         <span>About Us</span>
-        </nav>
-             <div className={styles.hero}>
-<h3>Frequently Asked Questions </h3>
-<h1 className={styles.h1}>Here is How we <span className={styles.span}>Help You</span></h1>
+      </nav>
+
+      <div className={styles.hero}>
+        <h3>About Us</h3>
       </div>
 
       <div className={styles.container}>
-<h2>
-    General questions
-</h2>
+        {/* Introduction */}
+        <section className={styles.section}>
+          <p className={styles.paragraph}>
+            Welcome to Promallshop, Nigeria's leading online store for cutting-edge technology solutions in video conferencing, computer peripherals, lifestyle products, robotics, coding kits, and more. We offer businesses and individuals easy access to the latest innovations, partnering with top brands like Maxhub, Belkin, Vbet, Yango, Norden, Photon, Makeblock, D-Link, Canon, Hikvision, Datapath, Panasonic, Huawei, Yealink, Logitech, Sharp, Samsung, and LG to deliver both quality and innovation.
+          </p>
+        </section>
 
-<div className={styles.faqContainer}>
-<div className={styles.faqlist}>
-    
- {faqs.map((faq, i) => (
-            <div key={i} className={styles.faqItem}>
-              <button className={styles.faqQuestion} onClick={() => setOpen(open === i ? null : i)}>
-                 <span style={{ fontSize: 22, color: '#0B0B0B', flexShrink: 0 }}>{open === i ? '−' : '+'}</span>
-                <span>{faq.q}</span>
-               
-              </button>
-              <hr className={styles.hr} />
-              {open === i && <div className={styles.faqAnswer}><p>{faq.a}</p></div>}
-            </div>
-          ))}
+        {/* Our Mission */}
+        <section className={styles.section}>
+          <h2 className={styles.heading}>Our Mission</h2>
+          <p className={styles.paragraph}>
+            At Promallshop, our mission is to provide high-quality, cutting-edge technology solutions that enhance productivity and communication. We are dedicated to innovation, excellence, and delivering a seamless and enjoyable shopping experience from our online store.
+          </p>
+        </section>
 
-</div>
-</div>
+        {/* Our Commitment */}
+        <section className={styles.section}>
+          <h2 className={styles.heading}>Our Commitment</h2>
+          <p className={styles.paragraph}>
+            We are dedicated to delivering value to every customer through:
+          </p>
+          <ul className={styles.list}>
+            <li>
+              <strong>Quality Products:</strong> Explore a range of products, from cutting-edge technology solutions in video conferencing and interactive displays to coding kits and essential peripherals like headsets, webcams, and keyboards.
+            </li>
+            <li>
+              <strong>Customer Satisfaction:</strong> Our online store is designed to offer a smooth, enjoyable shopping experience, with exceptional customer support.
+            </li>
+            <li>
+              <strong>Innovation:</strong> We consistently update our offerings with the latest technology and cutting-edge solutions to meet your evolving needs.
+            </li>
+            <li>
+              <strong>Value:</strong> Enjoy competitive pricing and exclusive online deals to get the best value for your money.
+            </li>
+            <li>
+              <strong>Reliable Delivery:</strong> Benefit from fast, secure, and dependable delivery, directly to your doorstep anywhere in Nigeria.
+            </li>
+          </ul>
+        </section>
+
+        {/* Our Trusted Partners */}
+        <section className={styles.section}>
+          <h2 className={styles.heading}>Our Trusted Partners</h2>
+          <p className={styles.paragraph}>
+            At Promallshop, we collaborate with top technology brands like Maxhub, Belkin, Vbet, Yango, Norden, Photon, Makeblock, D-Link, Canon, Hikvision, Datapath, Panasonic, Huawei, Yealink, Logitech, Sharp, Samsung, and LG, and more to guarantee that every product you purchase from our online store offers premium quality and cutting-edge technology solutions.
+          </p>
+        </section>
+
+        {/* Our Slogan */}
+        <section className={styles.section}>
+          <h2 className={styles.heading}>Our Slogan</h2>
+          <p className={styles.paragraph}>
+            <strong>Your one-stop shop for IT products and services.</strong>
+          </p>
+        </section>
       </div>
-
-  </>
-    )}
+    </>
+  )}

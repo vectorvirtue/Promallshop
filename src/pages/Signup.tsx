@@ -56,15 +56,10 @@ export default function SignUp() {
 
   return (
     <>
-      <nav className={styles.breadcrumb}>
-        <Link className={styles.link} to="/">Home</Link>
-        <span>→</span>
-        <span>Create Account</span>
-      </nav>
-
       <div className={styles.darkenBackground}>
         <div className={styles.formContainer}>
           <h2 className={styles.header}>Create an Account</h2>
+          <p className={styles.subtitle}>Unlock a faster, smarter and more personalized shopping experience.</p>
 
           <form className={styles.container} onSubmit={handleSubmit} noValidate>
             <div className={styles.divider}>

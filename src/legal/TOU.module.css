@@ -111,6 +111,24 @@ font-size: 0.83em;
    line-height: 1.6;
 }
 
+.section {
+  margin-bottom: 2.5em;
+}
+
+.heading {
+  font-size: 1.5em;
+  font-weight: 700;
+  color: #0B0B0B;
+  margin-bottom: 1em;
+}
+
+.paragraph {
+  font-size: 0.9em;
+  line-height: 1.8;
+  color: #0B0B0B;
+  margin-bottom: 1em;
+}
+
 .hero{
     background-image: url('../assets/Frame 265.svg');
     background-position: center;

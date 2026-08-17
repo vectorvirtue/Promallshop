@@ -57,8 +57,8 @@ export default function Deals() {
     <section
       className={styles.section}
       style={product ? {
-        backgroundImage: `linear-gradient(135deg, rgba(13,29,85,0.92) 0%, rgba(13,29,85,0.75) 40%, rgba(241, 141, 26, 0.77) 75%, rgba(241,142,26,0.85) 100%), url(${getImageUrl(product.image)})`,
-        backgroundSize: '100% 700px',
+        backgroundImage: `linear-gradient(135deg, rgba(13,29,85,0.95) 0%, rgba(13,29,85,0.85) 40%, rgba(13,29,85,0.3) 70%, transparent 100%), url(${getImageUrl(product.image)})`,
+        backgroundSize: 'contain',
         backgroundPosition: 'center right',
         backgroundRepeat: 'no-repeat',
       } : {

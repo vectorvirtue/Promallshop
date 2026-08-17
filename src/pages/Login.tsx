@@ -43,12 +43,6 @@ export default function Login() {
 
   return (
     <>
-      <nav className={styles.breadcrumb}>
-        <Link className={styles.link} to="/">Home</Link>
-        <span>→</span>
-        <span>Login</span>
-      </nav>
-
       <div className={styles.darkenBackground}>
         <div className={styles.formContainer}>
           <h2 className={styles.header}>Sign in to Your Account</h2>
