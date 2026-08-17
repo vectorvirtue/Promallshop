@@ -4,11 +4,34 @@ import visaLogo from '../assets/visa.png'
 import mastercardLogo from '../assets/mastercard.png'
 import paystackLogo from '../assets/download (1).png'
 import flutterwaveLogo from '../assets/download.png'
-import certifiedStamp from '../assets/certified-removebg-preview (1).png'
-
+import verifiedStamp from '../assets/images-removebg-preview (4).png'
+import guaranteedStamp from '../assets/images-removebg-preview (3).png'
 export default function Awards() {
   return (
-    <div className={styles.container}>
+    <div style={{ position: 'relative', overflow: 'hidden' }}>
+      {/* Verified Stamp - Top Left */}
+      <motion.div 
+        className={styles.stampTopLeft}
+        initial={{ scale: 0, rotate: -180 }}
+        whileInView={{ scale: 1, rotate: -15 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
+      >
+        <img src={verifiedStamp} alt="Verified" className={styles.stamp} />
+      </motion.div>
+
+      {/* Guaranteed Stamp - Bottom Right */}
+      <motion.div 
+        className={styles.stampBottomRight}
+        initial={{ scale: 0, rotate: 180 }}
+        whileInView={{ scale: 1, rotate: 15 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, delay: 0.4, type: "spring" }}
+      >
+        <img src={guaranteedStamp} alt="Guaranteed" className={styles.stamp} />
+      </motion.div>
+
+      <div className={styles.container}>
       {/* Awards Section */}
       <motion.div 
         className={styles.section}
@@ -19,16 +42,7 @@ export default function Awards() {
       >
         <h3 className={styles.title}>Our Awards</h3>
         
-        {/* Certified Stamp - Centered on Top */}
-        <motion.div 
-          className={styles.stampWrapper}
-          initial={{ scale: 0, rotate: -180 }}
-          whileInView={{ scale: 1, rotate: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
-        >
-          <img src={certifiedStamp} alt="Certified" className={styles.certifiedStamp} />
-        </motion.div>
+       
 
         {/* Awards Row - Horizontal Layout */}
         <div className={styles.awards}>
@@ -46,7 +60,7 @@ export default function Awards() {
               </svg>
             </div>
             <div className={styles.awardContent}>
-              <span className={styles.awardTitle}>Trusted Tech Store</span>
+              <span className={styles.awardTitle}>Trusted Technology Store</span>
               <span className={styles.awardSubtitle}>in West Africa</span>
             </div>
           </motion.div>
@@ -67,8 +81,8 @@ export default function Awards() {
               </svg>
             </div>
             <div className={styles.awardContent}>
-              <span className={styles.awardTitle}>No. 1 Destination</span>
-              <span className={styles.awardSubtitle}>For IT Solutions</span>
+              <span className={styles.awardTitle}>Best Technology E-Commerce  </span>
+              <span className={styles.awardSubtitle}>Platform in Africa</span>
             </div>
           </motion.div>
 
@@ -160,6 +174,7 @@ export default function Awards() {
           </motion.div>
         </div>
       </motion.div>
+      </div>
     </div>
   )
 }

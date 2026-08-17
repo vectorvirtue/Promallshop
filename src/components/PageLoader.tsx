@@ -13,12 +13,19 @@ export default function PageLoader() {
     setVisible(true)
     setHidden(false)
 
+    // Prevent body overflow when loader is visible
+    document.body.style.overflow = 'hidden'
+
     const hideTimer = setTimeout(() => setHidden(true), 1600)
-    const removeTimer = setTimeout(() => setVisible(false), 2000)
+    const removeTimer = setTimeout(() => {
+      setVisible(false)
+      document.body.style.overflow = 'unset'
+    }, 2000)
 
     return () => {
       clearTimeout(hideTimer)
       clearTimeout(removeTimer)
+      document.body.style.overflow = 'unset'
     }
   }, [pathname])
 

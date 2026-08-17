@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { HelmetProvider } from "react-helmet-async";
 import { CartProvider } from "./context/CartContext";
+import { QuoteFormProvider } from "./context/QuoteFormContext";
 import ScrollToTop from "./components/ScrolltoTop";
 import BacktoTop from "./components/BacktoTop";
 import Chatbox from "./components/Chatbox";
@@ -24,7 +25,7 @@ import Cart from "./pages/Cart"
 import Checkout from "./pages/Checkout";
 import ForgotPassword from "./pages/Forgot";
 import Product from "./pages/Productpage";
-
+import Events from "./components/Events";
 // Wrapper component for animated routes
 function AnimatedRoutes() {
   const location = useLocation();
@@ -132,6 +133,18 @@ function AnimatedRoutes() {
             <Contact />
           </motion.div>
         } />
+
+        <Route
+        path="/events" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Events />
+          </motion.div>
+        }/>
         <Route path="/cart" element={
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -181,6 +194,7 @@ export default function App() {
   return (
     <HelmetProvider>
     <CartProvider>
+    <QuoteFormProvider>
       <BrowserRouter>
         <PageLoader />
         <ScrollToTop />
@@ -198,6 +212,7 @@ export default function App() {
         <BacktoTop />
         <Footer />
       </BrowserRouter>
+    </QuoteFormProvider>
     </CartProvider>
     </HelmetProvider>
   )

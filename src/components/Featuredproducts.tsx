@@ -6,9 +6,9 @@ import styles from './Featured.module.css'
 import { useCart } from '../context/CartContext'
 import { productsApi, getImageUrl, quoteApi } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
-import RequestQuoteModal from './RequestQuoteModal'
+import { useQuoteForm } from '../context/QuoteFormContext'
 import resellerGif from '../assets/reseller.gif'
-
+import sales from '../assets/deliver.gif'
 interface ApiProduct {
   id: number
   name: string
@@ -55,13 +55,12 @@ const currentMonth = new Date().toLocaleString('default', { month: 'long' })
 export default function FeaturedProducts() {
   const { addToCart } = useCart()
   const { addToWishlist } = useWishlist()
+  const { openQuoteForm } = useQuoteForm()
   const [allProducts, setAllProducts] = useState<ApiProduct[]>([])
   const [categories, setCategories] = useState<ApiCategory[]>([])
   const [active, setActive] = useState('All')
   const [loading, setLoading] = useState(true)
   const [quoteThreshold, setQuoteThreshold] = useState(2000000)
-  const [quoteModalOpen, setQuoteModalOpen] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<ApiProduct | null>(null)
 
   useEffect(() => {
     // Fetch quote threshold
@@ -88,8 +87,13 @@ export default function FeaturedProducts() {
   }, [])
 
   const handleRequestQuote = (product: ApiProduct) => {
-    setSelectedProduct(product)
-    setQuoteModalOpen(true)
+    const priceNum = Number(product.end_user_price || product.price)
+    const priceStr = priceNum === 0 ? 'Price on request' : `₦ ${priceNum.toLocaleString('en-NG')}`
+    openQuoteForm({
+      id: product.id,
+      name: product.name,
+      price: priceStr
+    })
   }
 
   const isHighValue = (price: number) => price >= quoteThreshold
@@ -238,24 +242,10 @@ export default function FeaturedProducts() {
               </motion.div>
             ))}
       </div>
-
-      {/* Request Quote Modal */}
-      {selectedProduct && (
-        <RequestQuoteModal
-          isOpen={quoteModalOpen}
-          onClose={() => {
-            setQuoteModalOpen(false)
-            setSelectedProduct(null)
-          }}
-          productName={selectedProduct.name}
-          productId={selectedProduct.id}
-          productPrice={
-            Number(selectedProduct.end_user_price || selectedProduct.price) === 0
-              ? 'Price on request'
-              : `₦ ${Number(selectedProduct.end_user_price || selectedProduct.price).toLocaleString('en-NG')}`
-          }
-        />
-      )}
+      <div className={styles.section} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        
+      <img src={sales} alt="Delivery gif" className={styles.gif}/>
+    </div>
     </section>
   )
 }

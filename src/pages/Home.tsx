@@ -9,6 +9,7 @@ import Partners from "../components/Partners"
 import Newsletter from "../components/Newsletter"
 import Blogs from "../components/Blogs"
 import Gif from "../components/Gif"
+
 import Awards from "../components/Awards"
 
 export default function Home() {
@@ -20,6 +21,8 @@ export default function Home() {
       <Gif/>
       <FlashSales />
       <FeaturedProducts />
+            
+
       <Deals/>
       <Blogs/>
       <Choose/>

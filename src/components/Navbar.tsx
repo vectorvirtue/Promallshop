@@ -6,6 +6,7 @@ import vector from "../assets/Vector (8).svg";
 import { UserCircle2, ShoppingCartIcon, Menu, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { productsApi, getImageUrl } from "../lib/api";
+import { useQuoteForm } from "../context/QuoteFormContext";
 
 interface SearchProduct {
   id: number
@@ -18,7 +19,7 @@ interface SearchProduct {
 interface ApiCategory {
   products: SearchProduct[]
 }
-function QuoteForm({ onBack }: { onBack: () => void }) {
+function QuoteForm({ onBack, productInfo }: { onBack: () => void; productInfo: { id: number; name: string; price: string } | null }) {
   useEffect(() => {
     // Disable scrolling on the main page when form is open
     document.body.style.overflow = 'hidden';
@@ -35,7 +36,10 @@ function QuoteForm({ onBack }: { onBack: () => void }) {
     const data = {
       name: formData.get("name"),
       email: formData.get("email"),
+      phone: formData.get("phone"),
       message: formData.get("message"),
+      quantity: formData.get("quantity"),
+      product: productInfo,
     };
     console.log(data);
     e.currentTarget.reset();
@@ -57,7 +61,15 @@ function QuoteForm({ onBack }: { onBack: () => void }) {
         <input className={styles.formInput} type="text" name="name" placeholder="Your Name" required />
         <input className={styles.formInput} type="email" name="email" placeholder="Your Email" required />
         <input type="tel" className={styles.formInput} name="phone" placeholder="Phone Number" required />
-        <textarea  className={styles.formInput} name="message" placeholder="Which item are you interested in?" required></textarea>
+                <input type="text" className={styles.formInput} name="company" placeholder="Company Name" required />
+
+        <textarea  
+          className={styles.formInput} 
+          name="message" 
+          placeholder="Which item are you interested in?" 
+          defaultValue={productInfo ? `I'm interested in: ${productInfo.name} (${productInfo.price})` : ''}
+          required
+        ></textarea>
         <input className={styles.formInput} type="number" name="quantity" id="" placeholder='Quantity' required />
         <button className={styles.quoteBtn} type="submit">Send Message</button>
       </form>
@@ -66,8 +78,8 @@ function QuoteForm({ onBack }: { onBack: () => void }) {
 }
 export default function Navbar() {
   const { totalItems } = useCart()
+  const { isOpen, productInfo, openQuoteForm, closeQuoteForm } = useQuoteForm()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [showForm, setShowForm] = useState(false)
   const navigate = useNavigate()
 
   // ── search state ──
@@ -134,10 +146,11 @@ export default function Navbar() {
 
   return (
     <>
-      {showForm ? (
+      {isOpen ? (
         /* --- FORM MODE --- */
         <QuoteForm
-          onBack={() => setShowForm(false)}
+          onBack={closeQuoteForm}
+          productInfo={productInfo}
         />
       ) : (
 /* --- NAV MODE --- */
@@ -175,7 +188,7 @@ export default function Navbar() {
         </div>
 
         {/* quote button — desktop only */}
-        <button onClick={() => setShowForm(true)} className={styles.quoteBtn}>Request Quote</button>
+        <button onClick={() => openQuoteForm()} className={styles.quoteBtn}>Request Quote</button>
 
         {/* search with live dropdown */}
         <div className={styles.searchContainer} ref={searchRef}>

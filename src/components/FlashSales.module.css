@@ -191,6 +191,8 @@
 }
  .gif{
 width: 100%;
+display: block;
+margin: 0 auto;
 }
 
 /* ── responsive ── */
@@ -198,7 +200,8 @@ width: 100%;
   .gif{
     max-width: 360px;
     height: 40px;
-
+    display: block;
+    margin: 0 auto;
 }
   .grid {
     gap: 1.5em;

@@ -1,5 +1,5 @@
 import styles from './Topnav.module.css'
-
+import gif from '../assets/top-nav.gif'
 const nigeriaFlag = (
   <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true">
     <rect width="7" height="14" fill="#008751" />
@@ -10,6 +10,8 @@ const nigeriaFlag = (
 
 export default function Topnav() {
   return (
+   <>
+   <img className={styles.width} src= {gif} alt="" />
     <nav className={styles.nav}>
       <a className={styles.phone} href="tel:+2347032647755">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -38,5 +40,6 @@ export default function Topnav() {
         <span>Nigeria</span>
       </div>
     </nav>
+    </>
   )
 }

@@ -10,7 +10,7 @@ import { Helmet } from 'react-helmet-async'
 import { productsApi, getImageUrl, quoteApi } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
 import { useSearchParams } from 'react-router-dom'
-import RequestQuoteModal from '../components/RequestQuoteModal'
+import { useQuoteForm } from '../context/QuoteFormContext'
 interface ApiProduct {
   id: number
   name: string
@@ -57,6 +57,7 @@ const cardVariants = {
 export default function Shop(){
  const { addToCart } = useCart()
  const { addToWishlist } = useWishlist()
+ const { openQuoteForm } = useQuoteForm()
  const [searchParams] = useSearchParams()
  const [currentPage, setCurrentPage] = useState(1)
  const [openCat, setOpenCat] = useState<string | null>(null)
@@ -71,8 +72,6 @@ export default function Shop(){
  const [fetchError, setFetchError] = useState('')
  const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
  const [quoteThreshold, setQuoteThreshold] = useState(2000000)
- const [quoteModalOpen, setQuoteModalOpen] = useState(false)
- const [selectedProduct, setSelectedProduct] = useState<ApiProduct | null>(null)
 
  useEffect(() => {
    // Fetch quote threshold
@@ -154,8 +153,13 @@ export default function Shop(){
   const formatPrice = (n: number) => '₦ ' + n.toLocaleString('en-NG')
 
   const handleRequestQuote = (product: ApiProduct) => {
-    setSelectedProduct(product)
-    setQuoteModalOpen(true)
+    const priceNum = Number(product.end_user_price || product.price)
+    const priceStr = priceNum === 0 ? 'Price on request' : `₦ ${priceNum.toLocaleString('en-NG')}`
+    openQuoteForm({
+      id: product.id,
+      name: product.name,
+      price: priceStr
+    })
   }
 
   const isHighValue = (price: number) => price >= quoteThreshold
@@ -531,24 +535,6 @@ export default function Shop(){
      )}
    </div>
        </div>
-
-       {/* Request Quote Modal */}
-       {selectedProduct && (
-         <RequestQuoteModal
-           isOpen={quoteModalOpen}
-           onClose={() => {
-             setQuoteModalOpen(false)
-             setSelectedProduct(null)
-           }}
-           productName={selectedProduct.name}
-           productId={selectedProduct.id}
-           productPrice={
-             Number(selectedProduct.end_user_price || selectedProduct.price) === 0
-               ? 'Price on request'
-               : `₦ ${Number(selectedProduct.end_user_price || selectedProduct.price).toLocaleString('en-NG')}`
-           }
-         />
-       )}
         </>
     )
 }

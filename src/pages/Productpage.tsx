@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Heart, Star, ChevronDown, ChevronUp, ShoppingCart, ShieldCheck, Truck, CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../lib/useWishlist'
-import RequestQuoteModal from '../components/RequestQuoteModal'
+import { useQuoteForm } from '../context/QuoteFormContext'
 import styles from './Productpage.module.css'
 import { getMonthEndTarget, getTimeLeft as getCountdownTimeLeft } from '../lib/countdown'
 import { getImageUrl, checkHasOrderedBefore, deliveryCostApi, quoteApi, type DeliveryCost } from '../lib/api'
@@ -175,6 +175,7 @@ export default function Productpage() {
   const { id } = useParams<{ id: string }>()
   const { addToCart } = useCart()
   const { addToWishlist } = useWishlist()
+  const { openQuoteForm } = useQuoteForm()
   const navigate = useNavigate()
 
   const [product, setProduct] = useState<Product | null>(null)
@@ -191,7 +192,6 @@ export default function Productpage() {
   const [isFirstTimeBuyer, setIsFirstTimeBuyer] = useState(false)
   const [countdown, setCountdown] = useState(() => getCountdownTimeLeft(getMonthEndTarget()))
   const [quoteThreshold, setQuoteThreshold] = useState(2000000)
-  const [quoteModalOpen, setQuoteModalOpen] = useState(false)
 
   const alternativeRef = useRef<HTMLDivElement>(null)
   const complementaryRef = useRef<HTMLDivElement>(null)
@@ -472,7 +472,7 @@ export default function Productpage() {
                 onClick={() => {
                   if (product.qty <= 0) return
                   if (priceNum > 0 && isHighValue) {
-                    setQuoteModalOpen(true)
+                    openQuoteForm({ id: product.id, name: product.name, price })
                   } else {
                     addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
                   }
@@ -486,7 +486,7 @@ export default function Productpage() {
                 onClick={() => {
                   if (product.qty <= 0) return
                   if (priceNum > 0 && isHighValue) {
-                    setQuoteModalOpen(true)
+                    openQuoteForm({ id: product.id, name: product.name, price })
                   } else {
                     addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
                     navigate('/checkout')
@@ -678,16 +678,6 @@ export default function Productpage() {
 
       </div>
 
-      {/* Request Quote Modal */}
-      {product && (
-        <RequestQuoteModal
-          isOpen={quoteModalOpen}
-          onClose={() => setQuoteModalOpen(false)}
-          productName={product.name}
-          productId={product.id}
-          productPrice={price}
-        />
-      )}
     </>
   )
 }

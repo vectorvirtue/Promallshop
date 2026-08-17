@@ -334,3 +334,16 @@ export const quoteApi = {
       body: JSON.stringify(payload),
     }),
 }
+
+
+// Events API
+export const eventsApi = {
+  // Get all events
+  getAll: () => request('/events'),
+  
+  // Get upcoming events only
+  getUpcoming: () => request('/events/upcoming'),
+  
+  // Get single event by ID
+  getById: (id: number) => request(`/events/${id}`),
+}

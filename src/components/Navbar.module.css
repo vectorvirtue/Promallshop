@@ -192,6 +192,25 @@
   backdrop-filter: blur(10px); /* Increased blur for better focus */
   overflow-y: auto; /* Allows the FORM to scroll if the screen is small */
   padding: 20px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 .end {
   display: flex;

@@ -8,6 +8,7 @@
   align-items: center;
   justify-content: center;
   gap: 2em;
+  overflow: hidden;
 
   /* fade out when done */
   transition: opacity 0.45s ease, visibility 0.45s ease;

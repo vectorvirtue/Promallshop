@@ -8,6 +8,7 @@
   position: relative;
   z-index: 1000;
   font-size: 0.8em;
+  margin-top: -0.8em;
 }
 
 .phone {
@@ -40,7 +41,9 @@
   font-weight: 700;
   text-decoration: none;
 }
-
+.width{
+  width: 100%;
+}
 .shopNow {
   color: white;
   font-weight: 700;

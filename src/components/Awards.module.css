@@ -86,6 +86,39 @@
   line-height: 1.3;
 }
 
+/* Diagonal Stamps */
+.stampTopLeft {
+  position: absolute;
+  top: 10px;
+  left: 5%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.stampBottomRight {
+  position: absolute;
+  bottom: 10px;
+  right: 5%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.stamp {
+  width: auto;
+  height: 160px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.stampTopLeft:hover .stamp {
+  transform: scale(1.1) rotate(-18deg);
+}
+
+.stampBottomRight:hover .stamp {
+  transform: scale(1.1) rotate(18deg);
+}
+
 /* Certified Stamp - Centered on Top */
 .stampWrapper {
   display: flex;
@@ -110,7 +143,6 @@
 /* Payment Methods */
 .payments {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2em;
@@ -167,6 +199,20 @@
     padding: 2.5em var(--page-x);
   }
 
+  .stampTopLeft {
+    top: 10px;
+    left: 3%;
+  }
+
+  .stampBottomRight {
+    bottom: 10px;
+    right: 3%;
+  }
+
+  .stamp {
+    height: 130px;
+  }
+
   .awards {
     gap: 1.5em;
   }
@@ -192,6 +238,20 @@
   .container {
     padding: 2em var(--page-x);
     gap: 2.5em;
+  }
+
+  .stampTopLeft {
+    top: 10px;
+    left: 2%;
+  }
+
+  .stampBottomRight {
+    bottom: 10px;
+    right: 2%;
+  }
+
+  .stamp {
+    height: 110px;
   }
 
   .title {
@@ -244,6 +304,20 @@
 @media (max-width: 480px) {
   .container {
     gap: 2em;
+  }
+
+  .stampTopLeft {
+    top: 10px;
+    left: 1%;
+  }
+
+  .stampBottomRight {
+    bottom: 10px;
+    right: 1%;
+  }
+
+  .stamp {
+    height: 90px;
   }
 
   .awards {
