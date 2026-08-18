@@ -11,6 +11,7 @@ import { productsApi, getImageUrl, quoteApi } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
 import { useSearchParams } from 'react-router-dom'
 import { useQuoteForm } from '../context/QuoteFormContext'
+import shop from '../assets/shop.gif'
 interface ApiProduct {
   id: number
   name: string
@@ -409,6 +410,8 @@ export default function Shop(){
    <img src={logitechgif} alt="" />
    </aside>
    <div className={styles.productContainer}>
+           
+
     <h5 className={styles.head}>
    Products
    </h5>
@@ -442,6 +445,7 @@ export default function Shop(){
 
      {!loadingProducts && !fetchError && filteredProducts.length > 0 && (
        <>
+       
      <div className={styles.grid}>
         {currentProducts.map((p, i) => (
           <motion.div
@@ -533,7 +537,9 @@ export default function Shop(){
           </div>
       </>
      )}
+      <img className={styles.gif} src={shop} alt="Belkin gif" />
    </div>
+   
        </div>
         </>
     )

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import styles from './Deal.module.css'
 import swiper from '../assets/Frame 20.svg'
+import { motion } from 'framer-motion'
 
 const WP_API = 'https://wp-internal.promallshop.com/wp-json/wp/v2'
 
@@ -85,24 +86,38 @@ export default function Blogs() {
     load()
   }, [])
 
+  // duplicate cards for seamless infinite loop
+  const blogTrack = loading ? [] : [...cards, ...cards]
+
   return (
+       <motion.div 
+      className={styles.container}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+    >
     <section className={styles.blogs}>
       <h2 className={styles.header}>Our Latest Blogs</h2>
 
-      <div className={styles.blogcontainer}>
-        {loading
-          ? Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className={styles.blogOne}>
-                <div style={{ width: '100%', height: 180, background: '#f0f0f0', animation: 'shimmer 1.5s infinite', borderTopLeftRadius: '0.6em', borderTopRightRadius: '0.6em' }} />
-                <div className={styles.padding}>
-                  <div style={{ height: 14, background: '#f0f0f0', borderRadius: 4, marginBottom: 8, animation: 'shimmer 1.5s infinite' }} />
-                  <div style={{ height: 10, background: '#f0f0f0', borderRadius: 4, width: '80%', animation: 'shimmer 1.5s infinite' }} />
-                </div>
+      {loading ? (
+        <div className={styles.blogcontainer}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className={styles.blogOne}>
+              <div style={{ width: '100%', height: 180, background: '#f0f0f0', animation: 'shimmer 1.5s infinite', borderTopLeftRadius: '0.6em', borderTopRightRadius: '0.6em' }} />
+              <div className={styles.padding}>
+                <div style={{ height: 14, background: '#f0f0f0', borderRadius: 4, marginBottom: 8, animation: 'shimmer 1.5s infinite' }} />
+                <div style={{ height: 10, background: '#f0f0f0', borderRadius: 4, width: '80%', animation: 'shimmer 1.5s infinite' }} />
               </div>
-            ))
-          : cards.map(card => (
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={styles.marqueeWrapper}>
+          <div className={styles.marqueeTrack}>
+            {blogTrack.map((card, i) => (
               <a
-                key={card.id}
+                key={`${card.id}-${i}`}
                 className={styles.blogOne}
                 href={card.link}
                 target="_blank"
@@ -115,8 +130,6 @@ export default function Blogs() {
                     src={card.imageUrl}
                     alt={card.title}
                     referrerPolicy="no-referrer"
-                    onLoad={() => console.log('✅ image loaded:', card.imageUrl)}
-                    onError={() => console.log('❌ image failed:', card.imageUrl)}
                   />
                 ) : (
                   <div style={{ width: '100%', height: 180, background: '#f0f0f0', borderTopLeftRadius: '0.6em', borderTopRightRadius: '0.6em', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontSize: '0.8em' }}>
@@ -129,11 +142,13 @@ export default function Blogs() {
                   <div className={styles.explore}>{card.excerpt}</div>
                 </div>
               </a>
-            ))
-        }
-      </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <img className={styles.swiper} src={swiper} alt="swiper" />
     </section>
+    </motion.div>
   )
 }

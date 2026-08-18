@@ -4,7 +4,9 @@
     justify-content: center;
     margin-block: 0.1em;
 }
-
+.gif{
+  width: 100%;
+}
 .container{
      padding: 5px var(--page-x);
      display: flex;

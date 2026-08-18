@@ -31,7 +31,7 @@ export default function Topnav() {
 
       <div className={styles.frame}>
         Bonanza sale for all stock and free express delivery on most items - OFF 15%
-        <a href="" className={styles.shopNow}>SHOP NOW</a>
+        <a href="/shop" className={styles.shopNow}>SHOP NOW</a>
       </div>
 
       {/* static Nigeria indicator — no dropdown needed */}
