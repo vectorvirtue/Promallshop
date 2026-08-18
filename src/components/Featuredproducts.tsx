@@ -130,7 +130,7 @@ export default function FeaturedProducts() {
           <p className={styles.subtitle}>Every listed new product from our trusted sellers</p>
         </div>
 
-        <div>
+        <div className={styles.filtersWrap}>
           <div className={styles.filters}>
             {filterTabs.map((f) => (
               <button
