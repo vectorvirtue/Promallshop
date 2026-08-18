@@ -48,7 +48,10 @@
 .filterBtnActive {
   background: #F18E1A;
   border-color: #F18E1A;
-  color: white;
+  color: #fff;
+}
+.filterBtnActive:hover{
+  color: #fff;
 }
 
 /* Grid */
