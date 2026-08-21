@@ -1,5 +1,7 @@
 export const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
-
+const PROMALL_PROXY_URL =
+  (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
+  'http://127.0.0.1:8001/proxy'
 /**
  * Converts a relative image path from the API into a full URL.
  * Appends ?ngrok-skip-browser-warning=true so ngrok doesn't intercept image requests.
@@ -346,4 +348,42 @@ export const eventsApi = {
   
   // Get single event by ID
   getById: (id: number) => request(`/events/${id}`),
+}
+
+// Promallshop banner API
+export interface PromallBanner {
+  id: number
+  title: string
+  text: string
+  link: string
+  image: string
+  display_order?: number
+}
+
+export interface PromallBannerResponse {
+  status: string
+  entity: string
+  slug: string
+  url: string
+  banners: PromallBanner[]
+}
+
+export const promallBannerApi = {
+  getAll: async (): Promise<PromallBannerResponse> => {
+    const url = `${PROMALL_PROXY_URL}/banner/promallshop/`
+    console.log('🌐 Banner API URL:', url)
+    
+    const response = await fetch(url)
+
+    console.log('📡 Response status:', response.status)
+    console.log('📡 Response ok:', response.ok)
+
+    if (!response.ok) {
+      throw new Error(`Banner request failed: ${response.status}`)
+    }
+
+    const data = await response.json()
+    console.log('📦 Parsed response data:', data)
+    return data
+  },
 }
