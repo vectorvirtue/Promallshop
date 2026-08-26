@@ -48,8 +48,6 @@ export default function Blogs() {
         // 1. fetch latest 6 posts
         const res = await fetch(`${WP_API}/posts?per_page=6&status=publish&_fields=id,title,excerpt,link,date,featured_media`)
         const posts: WPPost[] = await res.json()
-        console.log('WP posts:', posts)
-
         // 2. fetch media for each post that has a featured_media id
         const mediaIds = posts.map(p => p.featured_media).filter(Boolean)
         const mediaMap: Record<number, string> = {}

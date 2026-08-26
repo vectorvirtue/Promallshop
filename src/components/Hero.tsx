@@ -56,13 +56,9 @@ export default function Hero() {
 
   /* fetch banners assigned to Promallshop from Django */
   useEffect(() => {
-    console.log('🔍 Fetching Promallshop banners from Django...');
     promallBannerApi.getAll()
       .then((res) => {
-        console.log('✅ Django banner API response:', res);
         const banners = Array.isArray(res.banners) ? res.banners : [];
-        console.log('📦 Extracted banners array:', banners);
-        console.log('🔢 Number of banners:', banners.length);
         setPromallBanners(banners);
         setCurrent(0);
       })
@@ -126,14 +122,6 @@ export default function Hero() {
 
   const djangoBanner = promallBanners[current];
   const fallbackSlide = sliderContent[current % sliderContent.length];
-
-  // Log current state for debugging
-  useEffect(() => {
-    console.log('🎬 Current slide index:', current);
-    console.log('🎯 Django banner for this index:', djangoBanner);
-    console.log('🔄 Fallback slide:', fallbackSlide);
-    console.log('📊 Total Django banners:', promallBanners.length);
-  }, [current, djangoBanner, fallbackSlide, promallBanners.length]);
 
   const formatPrice = (p: ApiProduct) => {
     const n = Number(p.end_user_price || p.price)

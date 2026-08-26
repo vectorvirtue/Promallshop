@@ -69,17 +69,13 @@ export const markAsOrdered = (): void =>
  */
 export async function checkHasOrderedBefore(): Promise<boolean> {
   if (localStorage.getItem('has_ordered') === 'true') {
-    console.log('checkHasOrderedBefore: fast path — already flagged in localStorage')
     return true
   }
 
   const token = getToken()
   if (!token) {
-    console.log('checkHasOrderedBefore: no token found — treating as first-time buyer')
     return false
   }
-
-  console.log('checkHasOrderedBefore: token found, checking orders API...')
 
   try {
     // fetch directly so we can handle 401 without throwing
@@ -99,9 +95,6 @@ export async function checkHasOrderedBefore(): Promise<boolean> {
     }
 
     const data = await res.json()
-    console.log('Orders response — full:', data)
-    console.log('Orders count:', data.count, '| data length:', Array.isArray(data.data) ? data.data.length : 'N/A')
-
     const hasOrders = (data.count ?? (Array.isArray(data.data) ? data.data.length : 0)) > 0
     if (hasOrders) localStorage.setItem('has_ordered', 'true')
     return hasOrders
@@ -134,8 +127,6 @@ async function request<T>(
   })
 
   const data = await res.json()
-  console.log('API response:', res.status, data)
-
   if (!res.ok) {
     // clear stale token on 401
     if (res.status === 401) clearAuth()
@@ -371,19 +362,13 @@ export interface PromallBannerResponse {
 export const promallBannerApi = {
   getAll: async (): Promise<PromallBannerResponse> => {
     const url = `${PROMALL_PROXY_URL}/banner/promallshop/`
-    console.log('🌐 Banner API URL:', url)
-    
     const response = await fetch(url)
-
-    console.log('📡 Response status:', response.status)
-    console.log('📡 Response ok:', response.ok)
 
     if (!response.ok) {
       throw new Error(`Banner request failed: ${response.status}`)
     }
 
     const data = await response.json()
-    console.log('📦 Parsed response data:', data)
     return data
   },
 }

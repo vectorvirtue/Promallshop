@@ -253,7 +253,6 @@ export default function Productpage() {
           headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
         })
         const json = await res.json()
-        console.log('Product response:', res.status, json)
         if (!json.success || !json.data) throw new Error(json.message || 'Product not found')
         const rawProd: Product = json.data
         // parse comma-separated image field into images array for gallery

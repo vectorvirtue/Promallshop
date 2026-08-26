@@ -89,7 +89,6 @@ export default function Shop(){
        // flatten all products from all categories by default
        const allProducts = cats.flatMap(c => c.products)
        setProducts(allProducts)
-       console.log('Categories received:', cats.length, 'Total products:', allProducts.length)
      })
      .catch((err) => {
        console.error('Products fetch error:', err)

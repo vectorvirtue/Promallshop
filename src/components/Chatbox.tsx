@@ -31,7 +31,6 @@ export default function Chatbox() {
     if (window.Tawk_API && typeof window.Tawk_API.maximize === 'function') {
       window.Tawk_API.maximize();
     } else {
-      console.log("Tawk.to is still loading...");
     }
   };
 

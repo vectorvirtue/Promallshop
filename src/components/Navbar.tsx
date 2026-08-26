@@ -41,7 +41,6 @@ function QuoteForm({ onBack, productInfo }: { onBack: () => void; productInfo: {
       quantity: formData.get("quantity"),
       product: productInfo,
     };
-    console.log(data);
     e.currentTarget.reset();
   };
 

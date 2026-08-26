@@ -438,7 +438,6 @@ export default function Checkout() {
       } else {
         // bank transfer or cheque — create order and show confirmation popup
         const orderRes = await ordersApi.create(orderPayload) as { data?: { bill_no?: string } }
-        console.log('Order created:', orderRes)
         markAsOrdered()
         clearCart()
         sessionStorage.removeItem('checkout_selected')

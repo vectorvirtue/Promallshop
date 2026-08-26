@@ -42,7 +42,6 @@ export default function SignUp() {
         email: form.email,
         password: form.password,
       })
-      console.log('Registration response:', response)
       // store the success message from the API — login page will display it
       const msg = (response as { message?: string }).message || 'Account created! You can now log in.'
       localStorage.setItem('registration_msg', msg)
