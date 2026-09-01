@@ -171,6 +171,8 @@
 }
 
 /* active state for mobile links — matches desktop .linkActive */
+
+/* active state for mobile links — matches desktop .linkActive */
 .mobileLink.linkActive {
   color: #F18E1A;
   text-decoration: underline;
@@ -274,6 +276,9 @@ width: 50%;
     gap: 6px;
     padding: 8px var(--page-x);
     row-gap: 6px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
   }
 
   /* row 1: search — full width */
@@ -302,12 +307,8 @@ width: 50%;
     background: rgba(255,255,255,0.97);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    padding: 0.5em var(--page-x) 1em;
+    padding: 1em var(--page-x);
     border-bottom: 1px solid #eee;
-    top: 0;
-    z-index: 998;
-    max-height: 60vh;
-    overflow-y: auto;
   }
 }
 
