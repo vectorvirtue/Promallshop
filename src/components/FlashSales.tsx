@@ -7,7 +7,10 @@ import { useCart } from '../context/CartContext'
 import { productsApi, getImageUrl, quoteApi } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
-import sharp from '../assets/sharp.gif'
+
+const PROMALL_PROXY_URL =
+  (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
+  'http://127.0.0.1:8001/proxy'
 
 interface ApiProduct {
   id: number
@@ -24,6 +27,18 @@ interface ApiCategory {
   category_id: number
   category_name: string
   products: ApiProduct[]
+}
+
+interface FlashSaleData {
+  id: number
+  title: string
+  description: string
+  image: string
+  start_datetime: string
+  end_datetime: string
+  is_live: boolean
+  seconds_remaining: number
+  display_order: number
 }
 
 function Stars({ count }: { count: number }) {
@@ -54,8 +69,35 @@ export default function FlashSales() {
   const [products, setProducts] = useState<ApiProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [quoteThreshold, setQuoteThreshold] = useState(2000000)
+  const [flashSaleImage, setFlashSaleImage] = useState<string | null>(null)
+  // --- new states for countdown ---
+  const [flashSale, setFlashSale] = useState<FlashSaleData | null>(null)
+  const [secondsLeft, setSecondsLeft] = useState(0)
 
   useEffect(() => {
+    // Fetch flash sale image and data from combined endpoint
+    const url = import.meta.env.DEV
+      ? '/vite-proxy/combined/promallshop/'
+      : `${PROMALL_PROXY_URL}/combined/promallshop/`
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === 'success' && Array.isArray(data.flash_sales)) {
+          // Use first live entry, or first entry if none are explicitly live
+          const live = data.flash_sales.find((f: FlashSaleData) => f.is_live)
+            ?? data.flash_sales[0]
+          if (live) {
+            setFlashSaleImage(getImageUrl(live.image))
+            setFlashSale(live)
+            setSecondsLeft(live.seconds_remaining || 0)
+          }
+        }
+      })
+      .catch(() => {
+        // silently ignore — topBar renders without the image
+      })
+
     // Fetch quote threshold
     quoteApi.getThreshold()
       .then(res => setQuoteThreshold(res.threshold))
@@ -76,6 +118,15 @@ export default function FlashSales() {
       .finally(() => setLoading(false))
   }, [])
 
+  // --- countdown timer effect ---
+  useEffect(() => {
+    if (secondsLeft <= 0) return
+    const interval = setInterval(() => {
+      setSecondsLeft((prev) => Math.max(prev - 1, 0))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [secondsLeft])
+
   const handleRequestQuote = (product: ApiProduct) => {
     const priceNum = Number(product.end_user_price || product.price)
     const priceStr = priceNum === 0 ? 'Price on request' : `₦ ${priceNum.toLocaleString('en-NG')}`
@@ -88,6 +139,12 @@ export default function FlashSales() {
 
   const isHighValue = (price: number) => price >= quoteThreshold
 
+  // format countdown values
+  const days = Math.floor(secondsLeft / 86400)
+  const hours = Math.floor((secondsLeft % 86400) / 3600)
+  const minutes = Math.floor((secondsLeft % 3600) / 60)
+  const secs = secondsLeft % 60
+
   return (
     <section className={styles.section}>
       
@@ -98,8 +155,30 @@ export default function FlashSales() {
           </span>
           <h2 className={styles.title}>Flash Sales</h2>
           <p className={styles.subtitle}>Every listed new product from our trusted sellers</p>
+          {/* Countdown display */}
+          {flashSale && secondsLeft > 0 && (
+            <div className={styles.countdown}>
+              <div className={styles.timeBlock}>
+                <span>{days}</span> Days
+              </div>
+              <div className={styles.timeBlock}>
+                <span>{hours}</span> Hours
+              </div>
+              <div className={styles.timeBlock}>
+                <span>{minutes}</span> Minutes
+              </div>
+              <div className={styles.timeBlock}>
+                <span>{secs}</span> Seconds
+              </div>
+            </div>
+          )}
+          {flashSale && secondsLeft === 0 && (
+            <div className={styles.saleEnded}>Sale Ended</div>
+          )}
         </div>
-        <img src={sharp} alt="Sharp printer" className={styles.topGif} />
+        {flashSaleImage && (
+          <img src={flashSaleImage} alt="Flash sale" className={styles.topGif} />
+        )}
       </div>
 
       <div className={styles.grid}>

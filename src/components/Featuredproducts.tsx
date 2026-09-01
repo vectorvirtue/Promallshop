@@ -7,8 +7,21 @@ import { useCart } from '../context/CartContext'
 import { productsApi, getImageUrl, quoteApi } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
-import resellerGif from '../assets/reseller.gif'
-import sales from '../assets/deliver.gif'
+// import sales from '../assets/deliver.gif'
+
+const PROMALL_PROXY_URL =
+  (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
+  'http://127.0.0.1:8001/proxy'
+
+type AffiliateBanner = {
+  id: number
+  image?: string        // field name used by flash_sales model pattern
+  media_file?: string   // field name used by gifs model pattern
+  link?: string
+  display_order?: number
+  is_active?: boolean
+  is_live?: boolean
+}
 interface ApiProduct {
   id: number
   name: string
@@ -61,8 +74,40 @@ export default function FeaturedProducts() {
   const [active, setActive] = useState('All')
   const [loading, setLoading] = useState(true)
   const [quoteThreshold, setQuoteThreshold] = useState(2000000)
+  const [affiliateBanner, setAffiliateBanner] = useState<{ src: string; link: string } | null>(null)
 
   useEffect(() => {
+    // Fetch affiliate banner from combined endpoint — same pattern as Categories.tsx / FlashSales.tsx
+    const url = import.meta.env.DEV
+      ? '/vite-proxy/combined/promallshop/'
+      : `${PROMALL_PROXY_URL}/combined/promallshop/`
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === 'success' && Array.isArray(data.affiliate_banners) && data.affiliate_banners.length > 0) {
+          // Log the actual shape so field names are visible in the browser console
+          console.log('[affiliate_banners] first entry keys:', Object.keys(data.affiliate_banners[0]))
+          console.log('[affiliate_banners] first entry:', data.affiliate_banners[0])
+
+          const sorted: AffiliateBanner[] = [...data.affiliate_banners].sort(
+            (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
+          )
+          // Pick first active entry, or first entry if none are flagged active
+          const entry = sorted.find(b => b.is_active || b.is_live) ?? sorted[0]
+
+          // Resolve image: try "image" field first, then "media_file" (matches both backend patterns)
+          const rawSrc = entry.image ?? entry.media_file ?? ''
+          const src = getImageUrl(rawSrc)
+
+          if (src) {
+            setAffiliateBanner({ src, link: entry.link ?? '' })
+          }
+        }
+      })
+      .catch(() => {
+        // silently ignore — section renders without the banner
+      })
     // Fetch quote threshold
     quoteApi.getThreshold()
       .then(res => setQuoteThreshold(res.threshold))
@@ -117,8 +162,16 @@ export default function FeaturedProducts() {
 
   return (
     <section className={styles.section}>
-      {/* ── top GIF ── */}
-      <img src={resellerGif} alt="Reseller Program" className={styles.topGif} />
+      {/* ── affiliate banner (backend-driven) ── */}
+      {affiliateBanner && (
+        affiliateBanner.link ? (
+          <a href={affiliateBanner.link} target="_blank" rel="noopener noreferrer">
+            <img src={affiliateBanner.src} alt="Become a Promallshop Reseller" className={styles.topGif} />
+          </a>
+        ) : (
+          <img src={affiliateBanner.src} alt="Become a Promallshop Reseller" className={styles.topGif} />
+        )
+      )}
 
       {/* ── top bar ── */}
       <div className={styles.topBar}>
@@ -242,10 +295,10 @@ export default function FeaturedProducts() {
               </motion.div>
             ))}
       </div>
-      <div className={styles.section} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      {/* <div className={styles.section} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         
       <img src={sales} alt="Delivery gif" className={styles.gif}/>
-    </div>
+    </div> */}
     </section>
   )
 }

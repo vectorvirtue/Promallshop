@@ -39,6 +39,39 @@
   margin: 0;
 }
 
+/* ── countdown timer ── */
+.countdown {
+  display: flex;
+  gap: 1em;
+  margin-top: 0.5em;
+  flex-wrap: wrap;
+}
+
+.timeBlock {
+  background: #0B0B0B;
+  color: #fff;
+  padding: 0.3em 0.8em;
+  border-radius: 0.4em;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.timeBlock span {
+  font-size: 1.4em;
+  font-weight: 800;
+  color: #F18E1A;
+}
+
+.saleEnded {
+  font-weight: 700;
+  color: #e74c3c;
+  margin-top: 0.4em;
+  font-size: 1em;
+}
+
 .topGif {
   height: 100px;
   object-fit: contain;
@@ -247,6 +280,16 @@ margin: 0 auto;
   }
   .title {
     font-size: 1.3em;
+  }
+  .countdown {
+    gap: 0.6em;
+  }
+  .timeBlock {
+    font-size: 0.75em;
+    padding: 0.2em 0.5em;
+  }
+  .timeBlock span {
+    font-size: 1.1em;
   }
 }
 

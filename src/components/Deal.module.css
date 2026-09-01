@@ -1,36 +1,151 @@
+/* ── DEAL SECTION ── */
 .section {
- background-size: cover;
-  background-repeat: no-repeat;
-  background-position: top left;
+  background-color: #0D1D55;
   width: 100%;
-  min-height: 450px;
+  min-height: 350px;
   padding: 2em var(--page-x);
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  transition: background-image 0.4s ease;
+  position: relative;
+  overflow: hidden;
 }
-.blogs{
-   padding: 2em var(--page-x);
+
+.bgImage {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 55%;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+.bgOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(13, 29, 85, 1)   0%,
+    rgba(13, 29, 85, 0.9) 45%,
+    rgba(13, 29, 85, 0.3) 75%,
+    rgba(13, 29, 85, 0)   100%
+  );
+  pointer-events: none;
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.topLeft {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  justify-content: center;
+  min-height: 280px;
+}
+
+.ongoingBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  color: #F18E1A;
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.title {
+  font-size: 2.4em;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.subtitle {
+  font-size: 1.1em;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+.countdown {
+  font-size: 2.4em;
+  font-weight: 500;
+  color: white;
+  letter-spacing: 0.05em;
+  margin: 0.3em 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  margin-top: 0.5em;
+}
+
+.buyBtn {
+  background: #F18E1A;
+  color: white;
+  border: none;
+  border-radius: 0.4em;
+  padding: 0.7em 2.5em;
+  font-size: 1em;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.buyBtn:hover {
+  background: #d97d10;
+}
+
+.wishlist {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: white;
+  padding: 0;
+  transition: color 0.2s, transform 0.15s;
+}
+
+.wishlist:hover {
+  color: #F18E1A;
+  transform: scale(1.15);
+}
+
+/* ── BLOG CAROUSEL (fully restored) ── */
+.blogs {
+  padding: 2em var(--page-x);
   box-sizing: border-box;
   overflow: hidden;
-
-}
-.blogcontainer{
-    display: flex;
-   margin-top: 1em;
-   gap: 1em;
-   overflow-x: scroll;
-   scrollbar-width: none;
-   scroll-snap-type: x mandatory;
 }
 
-/* ── marquee wrapper for carousel ── */
+.blogcontainer {
+  display: flex;
+  margin-top: 1em;
+  gap: 1em;
+  overflow-x: scroll;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+
 .marqueeWrapper {
   width: 100%;
   overflow: hidden;
   margin-top: 1em;
-  /* fade edges */
   mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
 }
@@ -52,7 +167,7 @@
   100% { transform: translateX(-50%); }
 }
 
-.blogOne{
+.blogOne {
   width: 350px;
   flex-shrink: 0;
   border: 1px solid #F18E1A;
@@ -64,7 +179,8 @@
 .blogOne:hover {
   box-shadow: 0 4px 14px rgba(241, 142, 26, 0.2);
 }
-.image{
+
+.image {
   width: 100%;
   object-fit: cover;
   height: 180px;
@@ -80,12 +196,15 @@
   line-height: 1.4;
   margin-bottom: 0.5em;
 }
-.padding{
+
+.padding {
   padding: 1em;
 }
-.swiper{
+
+.swiper {
   display: none;
 }
+
 .explore {
   font-size: 0.7em;
   font-weight: 600;
@@ -93,157 +212,65 @@
   line-height: 1.5;
   margin-top: 0.5em;
 }
-.header{
-  .title {
+
+.header .title {
   font-size: 1.6em;
   font-weight: 800;
   color: #0B0B0B;
   margin: 0;
 }
 
-
-
-}
-.container {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.topLeft {
-  color: white;
-  width: 55%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6em;
-}
-
-.ongoingBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3em;
-  color: white;
-  font-size: 0.78em;
-  font-weight: 600;
-}
-
-.title {
-  font-size: 2em;
-  font-weight: 600;
-  line-height: 1.2;
-  margin: 0;
-}
-
-.subtitle {
-  font-weight: 300;
-  font-size: 1.1em;
-  color: rgba(255, 255, 255, 0.85);
-  margin: 0;
-}
-
-/* ── countdown ── */
-.countdown {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  margin-top: 0.5em;
-}
-
-.unit {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: white;
-  border-radius: 1em;
-  padding: 0.5em ;
-  min-width: 32px;
-}
-
-.unitLabel {
-  font-size: 0.7em;
-  font-weight: 500;
-  color: #333;
-}
-
-.unitValue {
-  font-size: 2em;
-  font-weight: 500;
-  color: #0B0B0B;
-  line-height: 1.1;
-}
-
-.colon {
-  font-size: 2em;
-  font-weight: 500;
-  color: white;
-  margin-bottom: 0.1em;
-}
-
-/* ── actions ── */
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 1em;
-  margin-top: 0.5em;
-}
-
-.buyBtn {
-  background: #0D1D55;
-  color: white;
-  border: none;
-  border-radius: 0.6em;
-  padding: 0.75em 3em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  letter-spacing: 0.05em;
-  transition: background 0.2s;
-}
-
-.buyBtn:hover {
-  background: #0d1a3a;
-}
-
-.wishlist {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #0D1D55;
-  padding: 0;
-  transition: color 0.2s, transform 0.15s;
-}
-
-.wishlist:hover {
-  color: #F18E1A;
-  transform: scale(1.15);
-}
-
-@media (max-width:1024px) {
-  .section{
-    background-image: 
-        linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5));
-    background-repeat: no-repeat;
-    background-size: 100% 200px;
-  }
-
-  .topLeft{
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .bgImage {
     width: 100%;
+    height: 60%;
+    top: auto;
+    bottom: 0;
+    object-position: center bottom;
+    opacity: 0.3;
   }
 
-  .blogOne{
+  .bgOverlay {
+    background: rgba(13, 29, 85, 0.9);
+  }
+
+  .topLeft {
+    width: 100%;
+    min-height: unset;
+  }
+
+  .title {
+    font-size: 2em;
+  }
+  .countdown {
+    font-size: 2em;
+  }
+
+  .blogOne {
     width: 300px;
   }
-  
   .marqueeTrack {
     animation: scrollBlogs 40s linear infinite;
   }
-  
-.swiper{
-  display: block;
-  margin-top: 1em;
-  margin-left: auto;
+  .swiper {
+    display: block;
+    margin-top: 1em;
+    margin-left: auto;
+  }
 }
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.6em;
+  }
+  .countdown {
+    font-size: 1.6em;
+  }
+  .buyBtn {
+    padding: 0.6em 1.5em;
+    font-size: 0.9em;
+  }
 }
 
 /* ── touch: mirror hover states as :active ── */
