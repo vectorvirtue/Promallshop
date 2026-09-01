@@ -196,6 +196,38 @@
 }
 
 /* ── responsive ── */
+
+/* 15.6" Laptops (1366×768) */
+@media (max-width: 1366px) {
+  .hero {
+    min-height: 400px;
+    padding: 1.5em var(--page-x);
+  }
+  
+  .sliderCard {
+    min-height: 340px;
+  }
+  
+  .textBlock {
+    padding: 1.5em;
+    gap: 0.8em;
+  }
+  
+  .title {
+    font-size: 1.6em;
+    max-width: 55%;
+  }
+  
+  .button {
+    padding: 0.6em 1.8em;
+    font-size: 0.9em;
+  }
+  
+  .dealsPanel {
+    flex: 0 0 260px;
+  }
+}
+
 @media (max-width: 1024px) {
   .dealsPanel {
     flex: 0 0 220px;
