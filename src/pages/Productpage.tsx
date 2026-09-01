@@ -249,33 +249,16 @@ export default function Productpage() {
 
     async function load() {
       try {
-        const res = await fetch(`http://127.0.0.1:8001/proxy/product/${id}/`, {
-  headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
-})
-const json = await res.json()
-console.log('Product response (Django):', res.status, json)
-if (!json.id) throw new Error('Product not found')
-const rawProd: Product = {
-  id: json.id,
-  name: json.name,
-  price: json.price || 0,
-  end_user_price: json.price || 0,
-  image: json.image || '',
-  discount: 0,
-  short_description: json.description || '',
-  description: json.description || '',
-  warranty: '',
-  model: '',
-  sku: '',
-  qty: 10,
-  faq: '',
-  video_url: '',
-  availability: 1,
-  brand_id: null,
-  category_id: '',
-  alternative_products: null,
-  complementary_products: null,
-}
+        const res = await fetch(`${API}/products/${id}`, {
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
+        })
+        const json = await res.json()
+        console.log('Product response:', res.status, json)
+        
+        // API wraps product in a data property
+        const productData = json.data || json
+        if (!productData.id) throw new Error('Product not found')
+        const rawProd: Product = productData
 
 
 
