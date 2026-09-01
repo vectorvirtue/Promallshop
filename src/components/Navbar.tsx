@@ -32,15 +32,6 @@ function QuoteForm({ onBack, productInfo }: { onBack: () => void; productInfo: {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      phone: formData.get("phone"),
-      message: formData.get("message"),
-      quantity: formData.get("quantity"),
-      product: productInfo,
-    };
     e.currentTarget.reset();
   };
 

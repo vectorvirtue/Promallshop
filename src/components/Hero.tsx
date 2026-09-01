@@ -4,12 +4,7 @@ import styles from "./Hero.module.css";
 import { useNavigate } from "react-router-dom";
 import slider1 from "../assets/Sliders (1).svg";
 import slider2 from "../assets/Sliders.svg";
-import {
-  productsApi,
-  getImageUrl,
-  promallBannerApi,
-  type PromallBanner,
-} from "../lib/api";
+import { productsApi, getImageUrl } from "../lib/api";
 import { Link } from "react-router-dom";
 interface ApiProduct {
   id: number
@@ -50,23 +45,8 @@ export default function Hero() {
   const [current, setCurrent] = useState(0);
   const [visible, setVisible] = useState(true);
   const [weeklyDeals, setWeeklyDeals] = useState<ApiProduct[]>([]);
-  const [promallBanners, setPromallBanners] = useState<PromallBanner[]>([]);
   const navigate = useNavigate();
   const goToPage = () => navigate("/shop");
-
-  /* fetch banners assigned to Promallshop from Django */
-  useEffect(() => {
-    promallBannerApi.getAll()
-      .then((res) => {
-        const banners = Array.isArray(res.banners) ? res.banners : [];
-        setPromallBanners(banners);
-        setCurrent(0);
-      })
-      .catch((error) => {
-        console.error("❌ Failed to load Promallshop banners:", error);
-        setPromallBanners([]);
-      });
-  }, []);
 
   /* fetch 1 product each from Robotics, Screens, and Video Conferencing */
   useEffect(() => {
@@ -105,23 +85,17 @@ export default function Hero() {
 
   /* slider auto-advance */
   useEffect(() => {
-    const slideCount = promallBanners.length > 0
-      ? promallBanners.length
-      : sliderContent.length;
-    if (slideCount <= 1) return;
-
     const interval = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
-        setCurrent((prev) => (prev + 1) % slideCount);
+        setCurrent((prev) => (prev + 1) % sliderContent.length);
         setVisible(true);
       }, 600);
     }, 4000);
     return () => clearInterval(interval);
-  }, [promallBanners.length]);
+  }, []);
 
-  const djangoBanner = promallBanners[current];
-  const fallbackSlide = sliderContent[current % sliderContent.length];
+  const slide = sliderContent[current];
 
   const formatPrice = (p: ApiProduct) => {
     const n = Number(p.end_user_price || p.price)
@@ -133,71 +107,30 @@ export default function Hero() {
 
       {/* ── left: slider card ── */}
       <div className={`${styles.sliderCard} ${visible ? styles.fadeIn : styles.fadeOut}`}>
-        {djangoBanner ? (
-          <>
-            <img
-              src={djangoBanner.image}
-              alt={djangoBanner.title}
-              className={styles.slideImage}
-            />
-            <motion.div
-              className={styles.textBlock}
-              key={djangoBanner.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              {djangoBanner.title && (
-                <h2 className={styles.subtitle}>
-                  {djangoBanner.title}
-                </h2>
-              )}
-              {djangoBanner.text && (
-                <h1 className={styles.title}>
-                  {djangoBanner.text}
-                </h1>
-              )}
-              {djangoBanner.link && (
-                <motion.a
-                  href={djangoBanner.link}
-                  className={styles.button}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  style={{ textDecoration: 'none', display: 'inline-block' }}
-                >
-                  Shop Now
-                </motion.a>
-              )}
-            </motion.div>
-          </>
-        ) : (
-          <>
-            <img src={fallbackSlide.contentpicture} alt={fallbackSlide.title} className={styles.slideImage} />
-            <motion.div 
-              className={styles.textBlock}
-              key={current}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <h2 className={styles.subtitle}>
-                {fallbackSlide.subtitle}{" "}
-                <span style={{ fontWeight: "800" }}>{fallbackSlide.span}</span>
-              </h2>
-              <h1 className={styles.title}>
-                {fallbackSlide.title}
-              </h1>
-              <motion.button 
-                onClick={goToPage} 
-                className={styles.button}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Shop Now
-              </motion.button>
-            </motion.div>
-          </>
-        )}
+        <img src={slide.contentpicture} alt={slide.title} className={styles.slideImage} />
+        <motion.div 
+          className={styles.textBlock}
+          key={current}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h2 className={styles.subtitle}>
+            {slide.subtitle}{" "}
+            <span style={{ fontWeight: "800" }}>{slide.span}</span>
+          </h2>
+          <h1 className={styles.title}>
+            {slide.title}
+          </h1>
+          <motion.button 
+            onClick={goToPage} 
+            className={styles.button}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Shop Now
+          </motion.button>
+        </motion.div>
       </div>
 
       {/* ── right: weekly deals panel ── */}

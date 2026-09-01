@@ -55,6 +55,69 @@ const cardVariants = {
   }),
 }
 
+interface PriceFilterProps {
+  trackRef: React.RefObject<HTMLDivElement | null>
+  minPct: number
+  maxPct: number
+  priceMin: number
+  priceMax: number
+  minPrice: number
+  maxPrice: number
+  formatPrice: (value: number) => string
+  startDrag: (thumb: 'min' | 'max') => (e: React.PointerEvent<HTMLDivElement>) => void
+  resetPrice: () => void
+}
+
+function PriceFilter({
+  trackRef,
+  minPct,
+  maxPct,
+  priceMin,
+  priceMax,
+  minPrice,
+  maxPrice,
+  formatPrice,
+  startDrag,
+  resetPrice,
+}: PriceFilterProps) {
+  return (
+    <div className={styles.priceFilterPanel}>
+      <p className={styles.priceFilterHint}>Drag handles to set price range</p>
+      <div className={styles.rangeTrack} ref={trackRef}>
+        <div className={styles.rangeBase} />
+        <div
+          className={styles.rangeHighlight}
+          style={{ left: `${minPct}%`, width: `${maxPct - minPct}%` }}
+        />
+        <div
+          className={styles.rangeThumb}
+          style={{ left: `${minPct}%` }}
+          onPointerDown={startDrag('min')}
+        />
+        <div
+          className={styles.rangeThumb}
+          style={{ left: `${maxPct}%` }}
+          onPointerDown={startDrag('max')}
+        />
+      </div>
+
+      <div className={styles.priceLabels}>
+        <span>{formatPrice(priceMin)}</span>
+        <span>{formatPrice(priceMax)}</span>
+      </div>
+
+      {(priceMin !== minPrice || priceMax !== maxPrice) && (
+        <button
+          style={{ width: '100%', marginTop: '0.75em', background: 'none', border: 'none', color: '#F18E1A', cursor: 'pointer', fontSize: '0.8em', fontFamily: 'inherit', fontWeight: 600 }}
+          onClick={resetPrice}
+        >
+          Clear filter
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function Shop(){
  const { addToCart } = useCart()
  const { addToWishlist } = useWishlist()
@@ -170,8 +233,11 @@ export default function Shop(){
   // keep latest values in refs so event listeners always see current state
   const priceMinRef = useRef(priceMin)
   const priceMaxRef = useRef(priceMax)
-  priceMinRef.current = priceMin
-  priceMaxRef.current = priceMax
+
+  useEffect(() => {
+    priceMinRef.current = priceMin
+    priceMaxRef.current = priceMax
+  }, [priceMin, priceMax])
 
   const getPct = (clientX: number) => {
     const rect = trackRef.current?.getBoundingClientRect()
@@ -192,11 +258,11 @@ export default function Shop(){
     }
   }, [])
 
-  const handlePointerUp = useCallback(() => {
+  function handlePointerUp() {
     dragging.current = null
     window.removeEventListener('pointermove', handlePointerMove)
     window.removeEventListener('pointerup', handlePointerUp)
-  }, [handlePointerMove])
+  }
 
   const startDrag = (thumb: 'min' | 'max') => (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -209,47 +275,18 @@ export default function Shop(){
   const minPct = ((priceMin - MIN_PRICE) / (MAX_PRICE - MIN_PRICE)) * 100
   const maxPct = ((priceMax - MIN_PRICE) / (MAX_PRICE - MIN_PRICE)) * 100
 
-  /* reusable price filter panel */
-  const PriceFilter = () => (
-    <div className={styles.priceFilterPanel}>
-      <p className={styles.priceFilterHint}>Drag handles to set price range</p>
-      <div className={styles.rangeTrack} ref={trackRef}>
-        {/* grey base */}
-        <div className={styles.rangeBase} />
-        {/* orange fill */}
-        <div
-          className={styles.rangeHighlight}
-          style={{ left: `${minPct}%`, width: `${maxPct - minPct}%` }}
-        />
-        {/* min thumb */}
-        <div
-          className={styles.rangeThumb}
-          style={{ left: `${minPct}%` }}
-          onPointerDown={startDrag('min')}
-        />
-        {/* max thumb */}
-        <div
-          className={styles.rangeThumb}
-          style={{ left: `${maxPct}%` }}
-          onPointerDown={startDrag('max')}
-        />
-      </div>
-
-      <div className={styles.priceLabels}>
-        <span>{formatPrice(priceMin)}</span>
-        <span>{formatPrice(priceMax)}</span>
-      </div>
-
-      {(priceMin !== MIN_PRICE || priceMax !== MAX_PRICE) && (
-        <button
-          style={{ width: '100%', marginTop: '0.75em', background: 'none', border: 'none', color: '#F18E1A', cursor: 'pointer', fontSize: '0.8em', fontFamily: 'inherit', fontWeight: 600 }}
-          onClick={() => { setPriceMin(MIN_PRICE); setPriceMax(MAX_PRICE) }}
-        >
-          Clear filter
-        </button>
-      )}
-    </div>
-  )
+  const priceFilterProps = {
+    trackRef,
+    minPct,
+    maxPct,
+    priceMin,
+    priceMax,
+    minPrice: MIN_PRICE,
+    maxPrice: MAX_PRICE,
+    formatPrice,
+    startDrag,
+    resetPrice: () => { setPriceMin(MIN_PRICE); setPriceMax(MAX_PRICE) },
+  }
     return(
         <>
         <Helmet>
@@ -339,7 +376,7 @@ export default function Shop(){
            >
              <div className={styles.dropdownPanel}>
                <p className={styles.dropdownPanelTitle}>Filter by Price</p>
-               <PriceFilter />
+               <PriceFilter {...priceFilterProps} />
              </div>
            </motion.div>
          )}
@@ -352,7 +389,7 @@ export default function Shop(){
     Price Filter
    </h5>
    <div className={styles.two}>
-     <PriceFilter />
+    <PriceFilter {...priceFilterProps} />
    </div>
    </div>
 
