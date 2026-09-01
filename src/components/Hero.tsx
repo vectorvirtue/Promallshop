@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import styles from "./Hero.module.css";
 import { useNavigate } from "react-router-dom";
-import slider1 from "../assets/Sliders (1).svg";
-import slider2 from "../assets/Sliders.svg";
-import { productsApi, getImageUrl } from "../lib/api";
+import { productsApi, getImageUrl, promallBannerApi } from "../lib/api";
+import type { PromallBanner } from "../lib/api";
 import { Link } from "react-router-dom";
 
 interface ApiProduct {
@@ -21,35 +20,37 @@ interface ApiCategory {
   products: ApiProduct[]
 }
 
-const sliderContent = [
-  {
-    contentpicture: slider1,
-    subtitle: "Bonanza Sale",
-    span: "15% OFF",
-    title: "Shop Complete Yealink Androids and Windows for Your Meetings",
-  },
-  {
-    contentpicture: slider2,
-    subtitle: "Bonanza Sale",
-    span: "15% OFF",
-    title: "Shop Quality Keyboards on Promallshop",
-  },
-  {
-    contentpicture: slider2,
-    subtitle: "Bonanza Sale",
-    span: "15% OFF",
-    title: "Shop Maxhub Interactive Displays on Promallshop",
-  },
-];
-
 export default function Hero() {
   const [current, setCurrent] = useState(0);
   const [visible, setVisible] = useState(true);
   const [weeklyDeals, setWeeklyDeals] = useState<ApiProduct[]>([]);
+  const [banners, setBanners] = useState<PromallBanner[]>([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
   const navigate = useNavigate();
   const goToPage = () => navigate("/shop");
 
-  /* fetch 1 product each from Robotics, Screens, and Video Conferencing */
+  /* ── fetch Django banners ── */
+  useEffect(() => {
+    promallBannerApi
+      .getAll()
+      .then((res) => {
+        const received = Array.isArray(res.banners)
+          ? [...res.banners].sort(
+              (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
+            )
+          : [];
+        setBanners(received);
+        setCurrent(0);
+      })
+      .catch(() => {
+        setBanners([]);
+      })
+      .finally(() => {
+        setBannersLoading(false);
+      });
+  }, []);
+
+  /* ── fetch weekly deal products ── */
   useEffect(() => {
     productsApi.getAll()
       .then((res: unknown) => {
@@ -69,7 +70,6 @@ export default function Hero() {
           pick(['video conferencing', 'video conf']),
         ].filter(Boolean) as ApiProduct[]
 
-        // fill up to 3 from any category if some weren't found
         if (deals.length < 3) {
           const all = cats.flatMap(c => c.products)
           const ids = new Set(deals.map(p => p.id))
@@ -84,58 +84,106 @@ export default function Hero() {
       .catch(() => {})
   }, [])
 
-  /* slider auto-advance */
+  /* ── slider auto-advance (only when Django banners are loaded) ── */
   useEffect(() => {
+    if (banners.length <= 1) return;
+
     const interval = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
-        setCurrent((prev) => (prev + 1) % sliderContent.length);
+        setCurrent((prev) => (prev + 1) % banners.length);
         setVisible(true);
       }, 600);
     }, 4000);
-    return () => clearInterval(interval);
-  }, []);
 
-  const slide = sliderContent[current];
+    return () => clearInterval(interval);
+  }, [banners.length]);
 
   const formatPrice = (p: ApiProduct) => {
     const n = Number(p.end_user_price || p.price)
     return n === 0 ? 'Price on request' : `₦ ${n.toLocaleString('en-NG')}`
   }
 
+  const currentBanner = banners[current];
+
+  /* ── slider card background ── */
+  const sliderStyle = bannersLoading
+    ? { background: '#1a1a2e' }
+    : currentBanner
+      ? { backgroundImage: `url(${currentBanner.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+      : { background: '#1a1a2e' }; // no banners — plain dark card
+
   return (
     <div className={styles.hero}>
 
       {/* ── left: slider card ── */}
-      <div className={`${styles.sliderCard} ${visible ? styles.fadeIn : styles.fadeOut}`}>
-        <img src={slide.contentpicture} alt={slide.title} className={styles.slideImage} />
-        <motion.div 
-          className={styles.textBlock}
-          key={current}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h2 className={styles.subtitle}>
-            {slide.subtitle}{" "}
-            <span style={{ fontWeight: "800" }}>{slide.span}</span>
-          </h2>
-          <h1 className={styles.title}>
-            {slide.title}
-          </h1>
-          <motion.button 
-            onClick={goToPage} 
-            className={styles.button}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+      <div
+        className={`${styles.sliderCard} ${visible ? styles.fadeIn : styles.fadeOut}`}
+        style={sliderStyle}
+      >
+        {bannersLoading ? (
+          /* skeleton while fetching */
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '40%', height: 16, borderRadius: 8, background: 'rgba(255,255,255,0.1)' }} />
+          </div>
+        ) : currentBanner ? (
+          /* Django banner content */
+          <motion.div
+            className={styles.textBlock}
+            key={currentBanner.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            Shop Now
-          </motion.button>
-        </motion.div>
+            {currentBanner.title && (
+              <h2 className={styles.subtitle}>{currentBanner.title}</h2>
+            )}
+            {currentBanner.text && (
+              <h1 className={styles.title}>{currentBanner.text}</h1>
+            )}
+            {currentBanner.link ? (
+              <a href={currentBanner.link} className={styles.button}>
+                Shop Now
+              </a>
+            ) : (
+              <motion.button
+                onClick={goToPage}
+                className={styles.button}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Shop Now
+              </motion.button>
+            )}
+          </motion.div>
+        ) : null /* no banners — render nothing */}
+
+        {/* dot indicators — only when multiple banners */}
+        {!bannersLoading && banners.length > 1 && (
+          <div style={{ position: 'absolute', bottom: '1em', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '0.4em', zIndex: 2 }}>
+            {banners.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                style={{
+                  width: i === current ? 20 : 8,
+                  height: 8,
+                  borderRadius: 4,
+                  border: 'none',
+                  background: i === current ? '#F18E1A' : 'rgba(255,255,255,0.5)',
+                  cursor: 'pointer',
+                  padding: 0,
+                  transition: 'all 0.3s ease',
+                }}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── right: weekly deals panel ── */}
-      <motion.div 
+      <motion.div
         className={styles.dealsPanel}
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
@@ -151,8 +199,7 @@ export default function Hero() {
         <hr className={styles.dealsDivider} />
 
         {weeklyDeals.length === 0
-          ? /* skeleton while loading */
-            Array.from({ length: 3 }).map((_, i) => (
+          ? Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className={styles.dealItem}>
                 <div style={{ width: 64, height: 64, borderRadius: 8, background: '#f0f0f0', flexShrink: 0 }} />
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
