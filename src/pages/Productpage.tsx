@@ -253,7 +253,6 @@ export default function Productpage() {
           headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
         })
         const json = await res.json()
-        console.log('Product response:', res.status, json)
         
         // API wraps product in a data property
         const productData = json.data || json

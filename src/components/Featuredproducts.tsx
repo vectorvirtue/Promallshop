@@ -86,10 +86,6 @@ export default function FeaturedProducts() {
       .then((res) => res.json())
       .then((data) => {
         if (data.status === 'success' && Array.isArray(data.affiliate_banners) && data.affiliate_banners.length > 0) {
-          // Log the actual shape so field names are visible in the browser console
-          console.log('[affiliate_banners] first entry keys:', Object.keys(data.affiliate_banners[0]))
-          console.log('[affiliate_banners] first entry:', data.affiliate_banners[0])
-
           const sorted: AffiliateBanner[] = [...data.affiliate_banners].sort(
             (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
           )

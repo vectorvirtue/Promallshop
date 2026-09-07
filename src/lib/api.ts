@@ -69,17 +69,13 @@ export const markAsOrdered = (): void =>
  */
 export async function checkHasOrderedBefore(): Promise<boolean> {
   if (localStorage.getItem('has_ordered') === 'true') {
-    console.log('checkHasOrderedBefore: fast path — already flagged in localStorage')
     return true
   }
 
   const token = getToken()
   if (!token) {
-    console.log('checkHasOrderedBefore: no token found — treating as first-time buyer')
     return false
   }
-
-  console.log('checkHasOrderedBefore: token found, checking orders API...')
 
   try {
     // fetch directly so we can handle 401 without throwing
@@ -99,8 +95,6 @@ export async function checkHasOrderedBefore(): Promise<boolean> {
     }
 
     const data = await res.json()
-    console.log('Orders response — full:', data)
-    console.log('Orders count:', data.count, '| data length:', Array.isArray(data.data) ? data.data.length : 'N/A')
 
     const hasOrders = (data.count ?? (Array.isArray(data.data) ? data.data.length : 0)) > 0
     if (hasOrders) localStorage.setItem('has_ordered', 'true')
@@ -134,7 +128,6 @@ async function request<T>(
   })
 
   const data = await res.json()
-  console.log('API response:', res.status, data)
 
   if (!res.ok) {
     // clear stale token on 401 or 403 (session invalid / forbidden)

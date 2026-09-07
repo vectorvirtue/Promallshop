@@ -271,6 +271,9 @@ width: 50%;
 
 /* ── mobile ── */
 @media (max-width: 768px) {
+  .form{
+    width: 100%;
+  }
   .nav {
     flex-wrap: wrap;
     gap: 6px;
@@ -298,6 +301,11 @@ width: 50%;
   /* hide desktop-only items */
   .linksContainer { display: none; }
   .quoteBtn       { display: none; }
+
+  /* BUT show submit button inside the quote form */
+  .form .quoteBtn {
+    display: block;
+  }
 
   .logo { height: 44px; }
 

@@ -20,6 +20,10 @@ interface ApiCategory {
   products: SearchProduct[]
 }
 function QuoteForm({ onBack, productInfo }: { onBack: () => void; productInfo: { id: number; name: string; price: string } | null }) {
+  const [submitting, setSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const formRef = useRef<HTMLFormElement>(null)
+
   useEffect(() => {
     // Disable scrolling on the main page when form is open
     document.body.style.overflow = 'hidden';
@@ -30,16 +34,62 @@ function QuoteForm({ onBack, productInfo }: { onBack: () => void; productInfo: {
     };
   }, []); 
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    e.currentTarget.reset();
+    setSubmitting(true)
+    setSubmitStatus('idle')
+
+    const formData = new FormData(e.currentTarget)
+    
+    // Prepare Web3Forms payload
+    const payload = {
+      access_key: import.meta.env.VITE_WEB3FORMS_ACCESS_KEY,
+      subject: `Quote Request from ${formData.get('name')}`,
+      from_name: formData.get('name'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      company: formData.get('company'),
+      message: formData.get('message'),
+      quantity: formData.get('quantity'),
+      product: productInfo ? `${productInfo.name} (${productInfo.price})` : 'General Inquiry',
+    }
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setSubmitStatus('success')
+        formRef.current?.reset()
+        
+        // Close form after 2 seconds on success
+        setTimeout(() => {
+          onBack()
+        }, 2000)
+      } else {
+        throw new Error(result.message || 'Failed to submit')
+      }
+    } catch (error) {
+      console.error('Quote submission error:', error)
+      setSubmitStatus('error')
+    } finally {
+      setSubmitting(false)
+    }
   };
 
   return (
     <div className={styles.quoteform}>
      
 
-      <form className={styles.form} onSubmit={handleSubmit}>
+      <form ref={formRef} className={styles.form} onSubmit={handleSubmit}>
          <div className={styles.end}>
            <h2>Contact Us</h2>
         <button type="button" onClick={onBack}>
@@ -47,11 +97,22 @@ function QuoteForm({ onBack, productInfo }: { onBack: () => void; productInfo: {
         </button>
       </div>
 
+      {submitStatus === 'success' && (
+        <div style={{ padding: '1em', background: '#d4edda', color: '#155724', borderRadius: '4px', marginBottom: '1em' }}>
+          ✅ Quote request sent successfully! We'll get back to you soon.
+        </div>
+      )}
+
+      {submitStatus === 'error' && (
+        <div style={{ padding: '1em', background: '#f8d7da', color: '#721c24', borderRadius: '4px', marginBottom: '1em' }}>
+          ❌ Failed to send quote request. Please try again.
+        </div>
+      )}
      
-        <input className={styles.formInput} type="text" name="name" placeholder="Your Name" required />
-        <input className={styles.formInput} type="email" name="email" placeholder="Your Email" required />
-        <input type="tel" className={styles.formInput} name="phone" placeholder="Phone Number" required />
-                <input type="text" className={styles.formInput} name="company" placeholder="Company Name" required />
+        <input className={styles.formInput} type="text" name="name" placeholder="Your Name" required disabled={submitting} />
+        <input className={styles.formInput} type="email" name="email" placeholder="Your Email" required disabled={submitting} />
+        <input type="tel" className={styles.formInput} name="phone" placeholder="Phone Number" required disabled={submitting} />
+        <input type="text" className={styles.formInput} name="company" placeholder="Company Name" required disabled={submitting} />
 
         <textarea  
           className={styles.formInput} 
@@ -59,9 +120,12 @@ function QuoteForm({ onBack, productInfo }: { onBack: () => void; productInfo: {
           placeholder="Which item are you interested in?" 
           defaultValue={productInfo ? `I'm interested in: ${productInfo.name} (${productInfo.price})` : ''}
           required
+          disabled={submitting}
         ></textarea>
-        <input className={styles.formInput} type="number" name="quantity" id="" placeholder='Quantity' required />
-        <button className={styles.quoteBtn} type="submit">Send Message</button>
+        <input className={styles.formInput} type="number" name="quantity" placeholder='Quantity' required disabled={submitting} />
+        <button className={styles.quoteBtn} type="submit" disabled={submitting}>
+          {submitting ? 'Sending...' : 'Send Message'}
+        </button>
       </form>
     </div>
   );
