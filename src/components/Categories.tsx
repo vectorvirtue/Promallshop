@@ -55,7 +55,7 @@ const itemVariants: Variants = {
 const StaticCategoryItem = ({ cat }: { cat: typeof staticCategories[number] }) => (
   <motion.div className={styles.category} variants={itemVariants}>
     <Link
-      to={`/shop?category=${cat.slug}`}
+      to={`/shop/${cat.slug}`}
       style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}
     >
       <motion.img

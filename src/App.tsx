@@ -57,6 +57,11 @@ function AnimatedRoutes() {
             <Shop />
           </motion.div>
         } />
+        <Route path="/shop/:category" element={
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
+            <Shop />
+          </motion.div>
+        } />
         <Route path="/signup" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
             <SignUp />
@@ -117,7 +122,7 @@ function AnimatedRoutes() {
             <ForgotPassword />
           </motion.div>
         } />
-        <Route path="/product/:id" element={
+        <Route path="/product/:slug" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
             <Product />
           </motion.div>

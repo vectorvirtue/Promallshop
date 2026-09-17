@@ -7,6 +7,7 @@ import { UserCircle2, ShoppingCartIcon, Menu, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { productsApi, getImageUrl } from "../lib/api";
 import { useQuoteForm } from "../context/QuoteFormContext";
+import { generateProductSlug } from "../lib/slugs";
 
 interface SearchProduct {
   id: number
@@ -275,7 +276,7 @@ export default function Navbar() {
                   {results.map(p => (
                     <Link
                       key={p.id}
-                      to={`/product/${p.id}`}
+                      to={`/product/${generateProductSlug(p.name, p.id)}`}
                       className={styles.searchItem}
                       onClick={() => { setShowDropdown(false); setQuery('') }}
                     >

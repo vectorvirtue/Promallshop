@@ -3,13 +3,13 @@ import logitechgif from '../assets/ad-banner.gif'
 import { Heart, ChevronDown, SlidersHorizontal } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { Pagination } from 'antd'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { productsApi, getImageUrl, quoteApi } from '../lib/api'
+import { generateProductSlug } from '../lib/slugs'
 import { useWishlist } from '../lib/useWishlist'
-import { useSearchParams } from 'react-router-dom'
 import { useQuoteForm } from '../context/QuoteFormContext'
 import shop from '../assets/shop.gif'
 interface ApiProduct {
@@ -122,7 +122,8 @@ export default function Shop(){
  const { addToCart } = useCart()
  const { addToWishlist } = useWishlist()
  const { openQuoteForm } = useQuoteForm()
- const [searchParams] = useSearchParams()
+ const navigate = useNavigate()
+ const { category: categoryParam } = useParams<{ category?: string }>()
  const [currentPage, setCurrentPage] = useState(1)
  const [openCat, setOpenCat] = useState<string | null>(null)
  const [activeCat, setActiveCat] = useState<string | null>(null)
@@ -172,10 +173,16 @@ export default function Shop(){
    setCurrentPage(1)
  }, [selectedCategory, categories])
 
- /* pre-select category from URL param ?category=slug */
+ /* pre-select category from URL param */
  useEffect(() => {
-   const slug = searchParams.get('category')
-   if (!slug || categories.length === 0) return
+   const slug = categoryParam
+   if (!slug || categories.length === 0) {
+     // No category in URL - clear all selections
+     setActiveCat(null)
+     setOpenCat(null)
+     setSelectedCategory(null)
+     return
+   }
    const matched = categories.find(c =>
      c.category_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') === slug ||
      c.category_slug === slug
@@ -183,8 +190,9 @@ export default function Shop(){
    if (matched) {
      setSelectedCategory(matched.category_id)
      setActiveCat(matched.category_name)
+     setOpenCat(matched.category_name)
    }
- }, [searchParams, categories])
+ }, [categoryParam, categories])
 
  /* price range state */
  const MIN_PRICE = 0
@@ -206,11 +214,19 @@ export default function Shop(){
   const indexOfFirstProduct = indexOfLastProduct - pageSize
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct)
 
-  function toggleCat(categoryId: number, label: string) {
-    const isOpen = openCat === label
-    setOpenCat(isOpen ? null : label)
-    setActiveCat(isOpen ? null : label)
-    setSelectedCategory(isOpen ? null : categoryId)
+  function toggleCat(cat: ApiCategory) {
+    const isCurrentlyActive = activeCat === cat.category_name
+    if (isCurrentlyActive) {
+      // Clear filter - go to /shop
+      navigate('/shop')
+      setActiveCat(null)
+      setOpenCat(null)
+      setSelectedCategory(null)
+    } else {
+      // Navigate to category URL
+      const slug = cat.category_slug || cat.category_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      navigate(`/shop/${slug}`)
+    }
   }
 
   const formatPrice = (n: number) => '₦ ' + n.toLocaleString('en-NG')
@@ -335,7 +351,7 @@ export default function Shop(){
                <div key={cat.category_id} className={styles.catItem}>
                  <button
                    className={`${styles.catBtn} ${activeCat === cat.category_name ? styles.catBtnActive : ''}`}
-                   onClick={() => toggleCat(cat.category_id, cat.category_name)}
+                   onClick={() => toggleCat(cat)}
                  >
                    <span>{cat.category_name}</span>
                    <motion.span animate={{ rotate: openCat === cat.category_name ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ display: 'flex' }}>
@@ -353,7 +369,7 @@ export default function Shop(){
              ))}
              {selectedCategory !== null && (
                <button
-                 onClick={() => { setSelectedCategory(null); setActiveCat(null); setOpenCat(null) }}
+                 onClick={() => navigate('/shop')}
                  style={{ width: '100%', padding: '0.5em', background: 'none', border: 'none', color: '#F18E1A', cursor: 'pointer', fontSize: '0.8em', fontFamily: 'inherit', fontWeight: 600 }}
                >
                  Clear filter
@@ -402,7 +418,7 @@ export default function Shop(){
        <div key={cat.category_id} className={styles.catItem}>
          <button
            className={`${styles.catBtn} ${activeCat === cat.category_name ? styles.catBtnActive : ''}`}
-           onClick={() => toggleCat(cat.category_id, cat.category_name)}
+           onClick={() => toggleCat(cat)}
          >
            <span>{cat.category_name}</span>
            <motion.span
@@ -435,7 +451,7 @@ export default function Shop(){
      ))}
      {selectedCategory !== null && (
        <button
-         onClick={() => { setSelectedCategory(null); setActiveCat(null); setOpenCat(null) }}
+         onClick={() => navigate('/shop')}
          style={{ width: '100%', marginTop: '0.5em', background: 'none', border: 'none', color: '#F18E1A', cursor: 'pointer', fontSize: '0.8em', fontFamily: 'inherit', fontWeight: 600 }}
        >
          Clear filter
@@ -504,7 +520,7 @@ export default function Shop(){
             <div className={styles.infoRow}>
               <div className={styles.info}>
                 <p className={styles.name}>
-                  <Link to={`/product/${p.id}`} className={styles.productLink}>{p.name}</Link>
+                  <Link to={`/product/${generateProductSlug(p.name, p.id)}`} className={styles.productLink}>{p.name}</Link>
                 </p>
                 <p className={styles.price}>
                   {Number(p.end_user_price || p.price) === 0

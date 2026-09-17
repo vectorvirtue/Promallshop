@@ -3,9 +3,7 @@ import { useEffect, useState } from 'react'
 import { useCart } from '../context/CartContext'
 import styles from './Cart.module.css'
 import { TriangleAlert } from 'lucide-react'
-import { getToken, checkHasOrderedBefore } from '../lib/api'
-
-const FIRST_ORDER_DISCOUNT = 0.15
+import { getToken } from '../lib/api'
 
 /* ── helpers ── */
 const parsePrice = (str: string): number =>
@@ -39,7 +37,10 @@ const EmptyCartIcon = () => (
 export default function Cart() {
   const { items, removeFromCart, updateQuantity } = useCart()
   const navigate = useNavigate()
-  const [isFirstTimeBuyer, setIsFirstTimeBuyer] = useState(false)
+  const [showCouponInput, setShowCouponInput] = useState(false)
+  const [couponCode, setCouponCode] = useState('')
+  const [couponDiscount, setCouponDiscount] = useState(0)
+  const [couponError, setCouponError] = useState('')
 
   /* ── per-item selection — default: all selected ── */
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -54,10 +55,6 @@ export default function Cart() {
       return next
     })
   }, [items])
-
-  useEffect(() => {
-    checkHasOrderedBefore().then(hasOrdered => setIsFirstTimeBuyer(!hasOrdered))
-  }, [])
 
   /* helpers */
   const allSelected = items.length > 0 && items.every(i => selected.has(i.name))
@@ -90,9 +87,34 @@ export default function Cart() {
     0
   )
   const productDiscount = originalTotal - subtotal
-  const firstOrderDiscount = isFirstTimeBuyer ? subtotal * FIRST_ORDER_DISCOUNT : 0
-  const totalAfterDiscount = subtotal - firstOrderDiscount
+  const totalAmount = subtotal - couponDiscount
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0)
+
+  const handleApplyCoupon = () => {
+    // TODO: Call API to validate coupon
+    // For now, just mock validation
+    setCouponError('')
+    
+    if (!couponCode.trim()) {
+      setCouponError('Please enter a coupon code')
+      return
+    }
+
+    // Mock coupon validation - replace with actual API call
+    if (couponCode.toUpperCase() === 'SAVE10') {
+      setCouponDiscount(subtotal * 0.1) // 10% off
+      setShowCouponInput(false)
+      setCouponCode('')
+    } else {
+      setCouponError('Invalid coupon code')
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    setCouponDiscount(0)
+    setCouponCode('')
+    setCouponError('')
+  }
 
   const handleCheckout = () => {
     if (selected.size === 0) return
@@ -261,23 +283,59 @@ export default function Cart() {
                 </span>
               </div>
 
-              {isFirstTimeBuyer && subtotal > 0 && (
-                <div className={styles.summaryRow}>
-                  <span style={{ color: '#f18e1a', fontWeight: 700 }}>🎉 First Order 15% OFF</span>
-                  <span className={styles.discount}>-{formatNaira(firstOrderDiscount)}</span>
-                </div>
-              )}
-
               <div className={styles.summaryRow}>
                 <span>Coupon Discount</span>
-                <span className={styles.coupon}>Apply Coupon</span>
+                {couponDiscount > 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5em' }}>
+                    <span className={styles.discount}>-{formatNaira(couponDiscount)}</span>
+                    <button 
+                      onClick={handleRemoveCoupon}
+                      className={styles.couponRemoveBtn}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <span 
+                    className={styles.coupon}
+                    onClick={() => setShowCouponInput(!showCouponInput)}
+                  >
+                    Apply Coupon
+                  </span>
+                )}
               </div>
+
+              {showCouponInput && couponDiscount === 0 && (
+                <div className={styles.couponInputWrapper}>
+                  <div className={styles.couponInputRow}>
+                    <input
+                      type="text"
+                      placeholder="Enter coupon "
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                      className={styles.couponInput}
+                    />
+                    <button
+                      onClick={handleApplyCoupon}
+                      className={styles.couponApplyBtn}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  {couponError && (
+                    <p className={styles.couponError}>
+                      {couponError}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <hr style={{ marginBlock: '1.5em' }} className={styles.divide} />
 
               <div className={styles.totalRow}>
                 <span>Total Amount</span>
-                <span>{formatNaira(isFirstTimeBuyer ? totalAfterDiscount : subtotal)}</span>
+                <span>{formatNaira(totalAmount)}</span>
               </div>
             </div>
 

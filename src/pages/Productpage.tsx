@@ -7,6 +7,7 @@ import { useQuoteForm } from '../context/QuoteFormContext'
 import styles from './Productpage.module.css'
 import { getMonthEndTarget, getTimeLeft as getCountdownTimeLeft } from '../lib/countdown'
 import { getImageUrl, checkHasOrderedBefore, deliveryCostApi, quoteApi, type DeliveryCost } from '../lib/api'
+import { extractIdFromSlug, generateProductSlug } from '../lib/slugs'
 
 const API = import.meta.env.VITE_PUBLIC_API_URL as string
 
@@ -143,7 +144,7 @@ function ProductStrip({ title, products, stripRef, onScroll, addToCart, addToWis
                 <div className={styles.similarInfoRow}>
                   <div className={styles.similarInfo}>
                     <p className={styles.similarName}>
-                      <Link to={`/product/${p.id}`} className={styles.similarNameLink}>{p.name}</Link>
+                      <Link to={`/product/${generateProductSlug(p.name, p.id)}`} className={styles.similarNameLink}>{p.name}</Link>
                     </p>
                     <p className={styles.similarPrice}>{price}</p>
                     <span className={styles.similarStars}>★★★★★</span>
@@ -172,7 +173,11 @@ function ProductStrip({ title, products, stripRef, onScroll, addToCart, addToWis
 }
 
 export default function Productpage() {
-  const { id } = useParams<{ id: string }>()
+  const { slug } = useParams<{ slug: string }>()
+  // Handle both old format (/product/123) and new format (/product/name-123)
+  const productId = slug 
+    ? (slug.match(/^\d+$/) ? parseInt(slug, 10) : extractIdFromSlug(slug))
+    : 0
   const { addToCart } = useCart()
   const { addToWishlist } = useWishlist()
   const { openQuoteForm } = useQuoteForm()
@@ -240,7 +245,7 @@ export default function Productpage() {
   }, [])
 
   useEffect(() => {
-    if (!id) return
+    if (!productId) return
     setLoading(true)
     setError('')
     setCategoryName('')
@@ -249,7 +254,7 @@ export default function Productpage() {
 
     async function load() {
       try {
-        const res = await fetch(`${API}/products/${id}`, {
+        const res = await fetch(`${API}/products/${productId}`, {
           headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
         })
         const json = await res.json()
@@ -297,7 +302,7 @@ export default function Productpage() {
       }
     }
     load()
-  }, [id])
+  }, [productId])
 
   if (loading) return (
     <div className={styles.loadingWrap}>

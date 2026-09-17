@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { productsApi, getImageUrl, promallBannerApi } from "../lib/api";
 import type { PromallBanner } from "../lib/api";
 import { Link } from "react-router-dom";
+import { generateProductSlug } from "../lib/slugs";
 
 interface ApiProduct {
   id: number
@@ -215,7 +216,7 @@ export default function Hero() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
               >
-                <Link to={`/product/${deal.id}`} className={styles.dealItem} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <Link to={`/product/${generateProductSlug(deal.name, deal.id)}`} className={styles.dealItem} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <img
                     src={getImageUrl(deal.image)}
                     alt={deal.name}

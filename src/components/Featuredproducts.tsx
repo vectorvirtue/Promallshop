@@ -7,6 +7,7 @@ import { useCart } from '../context/CartContext'
 import { productsApi, getImageUrl, quoteApi } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
+import { generateProductSlug } from '../lib/slugs'
 // import sales from '../assets/deliver.gif'
 
 const PROMALL_PROXY_URL =
@@ -233,7 +234,7 @@ export default function FeaturedProducts() {
                 <div className={styles.infoRow}>
                   <div className={styles.info}>
                     <p className={styles.name}>
-                      <Link to={`/product/${p.id}`} className={styles.productLink}>{p.name}</Link>
+                      <Link to={`/product/${generateProductSlug(p.name, p.id)}`} className={styles.productLink}>{p.name}</Link>
                     </p>
                     <p className={styles.price}>
                       {Number(p.end_user_price || p.price) === 0
