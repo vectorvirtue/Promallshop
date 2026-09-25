@@ -3,7 +3,7 @@ import logitechgif from '../assets/ad-banner.gif'
 import { Heart, ChevronDown, SlidersHorizontal } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { Pagination } from 'antd'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
@@ -124,6 +124,8 @@ export default function Shop(){
  const { openQuoteForm } = useQuoteForm()
  const navigate = useNavigate()
  const { category: categoryParam } = useParams<{ category?: string }>()
+ const [searchParams] = useSearchParams()
+ const searchQuery = searchParams.get('q')?.trim().toLowerCase() ?? ''
  const [currentPage, setCurrentPage] = useState(1)
  const [openCat, setOpenCat] = useState<string | null>(null)
  const [activeCat, setActiveCat] = useState<string | null>(null)
@@ -204,6 +206,7 @@ export default function Shop(){
 
   /* price-filtered products */
   const filteredProducts = products.filter(p => {
+    if (searchQuery && !p.name.toLowerCase().includes(searchQuery)) return false
     const price = parseFloat(String(p.end_user_price || p.price)) || 0
     // products with price 0 always show (price not set yet)
     if (price === 0) return true

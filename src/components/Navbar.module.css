@@ -81,7 +81,8 @@
 }
 
 .select {
-  padding: 0.55em;
+  width: 125px;
+  padding: 0.55em 0.35em;
   border: 2px solid #F18E1A;
   outline: none;
   color: #0B0B0B;

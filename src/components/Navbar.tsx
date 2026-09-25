@@ -18,6 +18,9 @@ interface SearchProduct {
 }
 
 interface ApiCategory {
+  category_id: number
+  category_name: string
+  category_slug?: string
   products: SearchProduct[]
 }
 function QuoteForm({ onBack, productInfo }: { onBack: () => void; productInfo: { id: number; name: string; price: string } | null }) {
@@ -140,6 +143,8 @@ export default function Navbar() {
   // ── search state ──
   const [query, setQuery] = useState('')
   const [allProducts, setAllProducts] = useState<SearchProduct[]>([])
+  const [categories, setCategories] = useState<ApiCategory[]>([])
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | ''>('')
   const [results, setResults] = useState<SearchProduct[]>([])
   const [showDropdown, setShowDropdown] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
@@ -149,7 +154,9 @@ export default function Navbar() {
     productsApi.getAll()
       .then((res: unknown) => {
         const r = res as { data: ApiCategory[] }
-        const products = Array.isArray(r.data) ? r.data.flatMap(c => c.products) : []
+        const fetchedCategories = Array.isArray(r.data) ? r.data : []
+        const products = fetchedCategories.flatMap(c => c.products)
+        setCategories(fetchedCategories)
         setAllProducts(products)
       })
       .catch(() => {})
@@ -157,18 +164,22 @@ export default function Navbar() {
 
   // filter as user types
   useEffect(() => {
-    if (!query.trim()) {
+    const categoryProducts = selectedCategoryId === ''
+      ? allProducts
+      : categories.find(category => category.category_id === selectedCategoryId)?.products ?? []
+
+    if (!query.trim() && selectedCategoryId === '') {
       setResults([])
       setShowDropdown(false)
       return
     }
     const q = query.toLowerCase()
-    const matched = allProducts
-      .filter(p => p.name.toLowerCase().includes(q))
+    const matched = categoryProducts
+      .filter(p => !q || p.name.toLowerCase().includes(q))
       .slice(0, 5)
     setResults(matched)
     setShowDropdown(true)
-  }, [query, allProducts])
+  }, [query, allProducts, categories, selectedCategoryId])
 
   // close dropdown when clicking outside
   useEffect(() => {
@@ -187,7 +198,10 @@ export default function Navbar() {
   }
 
   const handleSeeMore = () => {
-    navigate(`/shop?q=${encodeURIComponent(query)}`)
+    const selectedCategory = categories.find(category => category.category_id === selectedCategoryId)
+    const categorySlug = selectedCategory?.category_slug || selectedCategory?.category_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    const search = query.trim() ? `?q=${encodeURIComponent(query)}` : ''
+    navigate(categorySlug ? `/shop/${categorySlug}${search}` : `/shop${search}`)
     setShowDropdown(false)
     setQuery('')
   }
@@ -255,12 +269,25 @@ export default function Navbar() {
             onChange={e => setQuery(e.target.value)}
             onFocus={() => query.trim() && setShowDropdown(true)}
           />
-          <select className={styles.select} name="category" id="category">
+          <select
+            className={styles.select}
+            name="category"
+            id="category"
+            value={selectedCategoryId}
+            onChange={e => {
+              const categoryId = e.target.value ? Number(e.target.value) : ''
+              setSelectedCategoryId(categoryId)
+            }}
+          >
             <option value="">Categories</option>
-            <option value="vc">Video Conferencing</option>
-            <option value="screens">Screens</option>
-            <option value="kits">Coding and Robotic Kits</option>
-            <option value="vc">VC Accessories</option>
+            {categories.map(category => (
+              <option
+                key={category.category_id}
+                value={category.category_id}
+              >
+                {category.category_name}
+              </option>
+            ))}
           </select>
           <div className={styles.searchBtn} onClick={handleSeeMore}>
             <img src={vector} alt="Search Icon" />
