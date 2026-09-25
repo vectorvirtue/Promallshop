@@ -6,6 +6,8 @@
 }
 .gif{
   width: 100%;
+  display: block;
+  margin-block: 2em;
 }
 .container{
      padding: 5px var(--page-x);
@@ -133,7 +135,8 @@ font-size: 0.8em;
 /* ── card — fixed 344×507 ── */
 .card {
   width: 250px;
-  height: 400px;
+  min-height: 400px;
+  height: auto;
   background: #fff;
   border: 1.5px solid #f18d1a9c;
   border-radius: 0.8em;
@@ -238,7 +241,7 @@ font-size: 0.8em;
 
 /* add to cart */
 .addToCart {
-  margin: 0 0.8em 0.8em;
+  margin: 0.7em 0.8em 0.8em;
   padding: 0.5em;
   background: #fff;
   border: 1.5px solid #333;
@@ -249,8 +252,8 @@ font-size: 0.8em;
   cursor: pointer;
   font-family: inherit;
   width: calc(100% - 1.6em);
+  flex-shrink: 0;
   transition: border-color 0.2s, color 0.2s;
-  margin-top: -12em;
 }
 
 .addToCart:hover {
@@ -448,8 +451,7 @@ font-size: 0.8em;
   }
 
   .addToCart {
-    margin-top: 0.4em !important;
-    margin-bottom: 0.6em;
+    margin: 0.7em 0.8em 0.8em;
   }
 
   .breadcrumb {

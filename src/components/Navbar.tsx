@@ -145,9 +145,19 @@ export default function Navbar() {
   const [allProducts, setAllProducts] = useState<SearchProduct[]>([])
   const [categories, setCategories] = useState<ApiCategory[]>([])
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | ''>('')
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false)
+  const [canHoverCategories, setCanHoverCategories] = useState(false)
   const [results, setResults] = useState<SearchProduct[]>([])
   const [showDropdown, setShowDropdown] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const hoverQuery = window.matchMedia('(hover: hover) and (pointer: fine)')
+    const updateHoverSupport = () => setCanHoverCategories(hoverQuery.matches)
+    updateHoverSupport()
+    hoverQuery.addEventListener('change', updateHoverSupport)
+    return () => hoverQuery.removeEventListener('change', updateHoverSupport)
+  }, [])
 
   // load products into memory once
   useEffect(() => {
@@ -168,7 +178,7 @@ export default function Navbar() {
       ? allProducts
       : categories.find(category => category.category_id === selectedCategoryId)?.products ?? []
 
-    if (!query.trim() && selectedCategoryId === '') {
+    if (!query.trim()) {
       setResults([])
       setShowDropdown(false)
       return
@@ -186,6 +196,7 @@ export default function Navbar() {
     const handler = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setShowDropdown(false)
+        setCategoryMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', handler)
@@ -200,8 +211,12 @@ export default function Navbar() {
   const handleSeeMore = () => {
     const selectedCategory = categories.find(category => category.category_id === selectedCategoryId)
     const categorySlug = selectedCategory?.category_slug || selectedCategory?.category_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-    const search = query.trim() ? `?q=${encodeURIComponent(query)}` : ''
-    navigate(categorySlug ? `/shop/${categorySlug}${search}` : `/shop${search}`)
+    const searchTerm = query.trim()
+    navigate(searchTerm
+      ? categorySlug
+        ? `/shop/${categorySlug}/search/${encodeURIComponent(searchTerm)}`
+        : `/shop/search/${encodeURIComponent(searchTerm)}`
+      : categorySlug ? `/shop/${categorySlug}` : '/shop')
     setShowDropdown(false)
     setQuery('')
   }
@@ -212,6 +227,10 @@ export default function Navbar() {
     { label: "Blog", href: 'https://www.promallshop.com/blog/', external: true },
     { label: "Events", href: '/events', external: false },
   ];
+  const selectedCategory = categories.find(category => category.category_id === selectedCategoryId)
+  const selectedCategorySlug = selectedCategory
+    ? selectedCategory.category_slug || selectedCategory.category_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    : ''
 
   return (
     <>
@@ -269,29 +288,68 @@ export default function Navbar() {
             onChange={e => setQuery(e.target.value)}
             onFocus={() => query.trim() && setShowDropdown(true)}
           />
-          <select
-            className={styles.select}
-            name="category"
-            id="category"
-            value={selectedCategoryId}
-            onChange={e => {
-              const categoryId = e.target.value ? Number(e.target.value) : ''
-              setSelectedCategoryId(categoryId)
+          <button
+            className={styles.categoryButton}
+            type="button"
+            onClick={() => {
+              setCategoryMenuOpen(open => !open)
+              setShowDropdown(false)
             }}
+            aria-expanded={categoryMenuOpen}
           >
-            <option value="">Categories</option>
-            {categories.map(category => (
-              <option
-                key={category.category_id}
-                value={category.category_id}
-              >
-                {category.category_name}
-              </option>
-            ))}
-          </select>
+            Categories
+          </button>
           <div className={styles.searchBtn} onClick={handleSeeMore}>
             <img src={vector} alt="Search Icon" />
           </div>
+
+          {categoryMenuOpen && (
+            <div className={styles.categoryMenu}>
+              <div className={styles.categoryList}>
+                {categories.map(category => (
+                  <button
+                    key={category.category_id}
+                    type="button"
+                    className={`${styles.categoryMenuItem} ${selectedCategoryId === category.category_id ? styles.categoryMenuItemActive : ''}`}
+                    onMouseEnter={() => setSelectedCategoryId(category.category_id)}
+                    onClick={() => {
+                      if (!canHoverCategories) setSelectedCategoryId(category.category_id)
+                    }}
+                  >
+                    {category.category_name.toUpperCase()}
+                    <span aria-hidden="true">›</span>
+                  </button>
+                ))}
+              </div>
+              <div className={styles.categoryProducts}>
+                {selectedCategoryId === '' ? (
+                  <p className={styles.categoryMenuHint}>Select a category to view products</p>
+                ) : (
+                  <>
+                    <strong>{selectedCategory?.category_name.toUpperCase()}</strong>
+                    {(selectedCategory?.products ?? []).slice(0, 8).map(product => (
+                        <Link
+                          key={product.id}
+                          className={styles.categoryProduct}
+                          to={`/product/${generateProductSlug(product.name, product.id)}`}
+                          onClick={() => setCategoryMenuOpen(false)}
+                        >
+                          <img src={getImageUrl(product.image)} alt="" />
+                          <span>{product.name}</span>
+                        </Link>
+                    ))}
+                    <Link
+                      className={styles.categoryViewMore}
+                      to={`/shop/${selectedCategorySlug}`}
+                      onClick={() => setCategoryMenuOpen(false)}
+                    >
+                      View more in shop <span aria-hidden="true">→</span>
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* dropdown */}
           {showDropdown && (

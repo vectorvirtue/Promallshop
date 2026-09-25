@@ -20,6 +20,7 @@ interface ApiProduct {
   end_user_price: string | number
   image: string
   discount: number
+  categoryOnlineDiscount?: number
   availability: number
   qty?: string | number
 }
@@ -27,6 +28,7 @@ interface ApiProduct {
 interface ApiCategory {
   category_id: number
   category_name: string
+  online_discount?: number
   products: ApiProduct[]
 }
 
@@ -107,11 +109,22 @@ export default function FlashSales() {
     productsApi.getAll()
       .then((res: unknown) => {
         const r = res as { success: boolean; data: ApiCategory[] }
-        const all = (Array.isArray(r.data) ? r.data : []).flatMap(c => c.products)
+        if (import.meta.env.DEV) {
+          console.log('[FlashSales] category discounts:', (r.data ?? []).map(category => ({
+            category: category.category_name,
+            online_discount: category.online_discount,
+          })))
+        }
+        const all = (Array.isArray(r.data) ? r.data : []).flatMap(c =>
+          c.products.map(product => ({
+            ...product,
+            categoryOnlineDiscount: Number(c.online_discount) || 0,
+          }))
+        )
         // only in-stock products
         const inStock = all.filter(p => p.availability !== 0 && (p.qty === undefined || Number(p.qty) > 0))
         // prefer discounted, fall back to all in-stock
-        const discounted = inStock.filter(p => p.discount > 0)
+        const discounted = inStock.filter(p => (p.categoryOnlineDiscount ?? p.discount) > 0)
         const source = discounted.length >= LIMIT ? discounted : inStock
         setProducts(source.slice(0, LIMIT))
       })
@@ -210,18 +223,32 @@ export default function FlashSales() {
 
                 <div className={styles.infoRow}>
                   <div className={styles.info}>
+                    {(() => {
+                      const currentPrice = Number(p.end_user_price || p.price)
+                      const discount = p.categoryOnlineDiscount ?? p.discount ?? 0
+                      const formerPrice = discount > 0 && currentPrice > 0
+                        ? Math.round(currentPrice / (1 - discount / 100))
+                        : 0
+                      return (
+                        <>
                     <p className={styles.name}>
                       <Link to={`/product/${generateProductSlug(p.name, p.id)}`} className={styles.productLink}>{p.name}</Link>
                     </p>
                     <p className={styles.price}>
-                      {Number(p.end_user_price || p.price) === 0
+                      {currentPrice === 0
                         ? 'Price on request'
-                        : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`}
+                        : `₦ ${currentPrice.toLocaleString('en-NG')}`}
                     </p>
-                    {p.discount > 0 && (
-                      <p className={styles.discount}>{p.discount}% OFF</p>
+                    {formerPrice > 0 && (
+                      <p className={styles.oldPrice}>₦ {formerPrice.toLocaleString('en-NG')}</p>
+                    )}
+                    {discount > 0 && (
+                      <p className={styles.discount}>{discount}% OFF</p>
                     )}
                     <Stars count={4} />
+                        </>
+                      )
+                    })()}
                   </div>
                   <button
                     className={styles.wishlist}

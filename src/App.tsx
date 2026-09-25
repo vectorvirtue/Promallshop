@@ -43,21 +43,27 @@ class ErrorBoundary extends Component<
 
 function AnimatedRoutes() {
   const location = useLocation();
+  const routeKey = location.pathname.startsWith('/shop') ? '/shop' : location.pathname
 
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+      <Routes location={location} key={routeKey}>
         <Route path="/" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
             <Home />
           </motion.div>
         } />
-        <Route path="/shop" element={
+        <Route path="/shop/:category?" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
             <Shop />
           </motion.div>
         } />
-        <Route path="/shop/:category" element={
+        <Route path="/shop/search/:term" element={
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
+            <Shop />
+          </motion.div>
+        } />
+        <Route path="/shop/:category/search/:term" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
             <Shop />
           </motion.div>

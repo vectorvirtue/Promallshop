@@ -90,6 +90,19 @@
   font-weight: 500;
 }
 
+.categoryButton {
+  width: 125px;
+  padding: 0.55em 0.35em;
+  border: 2px solid #F18E1A;
+  outline: none;
+  background: #fff;
+  color: #0B0B0B;
+  margin-left: -1px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 .searchBtn {
   padding: 0.25em 0.4em 0.3em;
   border: 2px solid #F18E1A;
@@ -346,6 +359,122 @@ width: 50%;
   box-shadow: 0 8px 32px rgba(0,0,0,0.13);
   z-index: 9999;
   overflow: hidden;
+}
+
+.categoryMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: min(760px, 92vw);
+  min-height: 250px;
+  display: grid;
+  grid-template-columns: 42% 58%;
+  background: #fff;
+  border: 1.5px solid #f18e1a40;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.13);
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.categoryList {
+  padding: 0.5em;
+  background: #fff8f0;
+  border-right: 1px solid #f2dfcb;
+  overflow-y: auto;
+  max-height: 390px;
+}
+
+.categoryMenuItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em;
+  padding: 0.7em 0.65em;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #0b2d68;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8em;
+}
+
+.categoryMenuItem:hover,
+.categoryMenuItemActive {
+  background: #f9dfbc;
+  color: #f18e1a;
+}
+
+.categoryProducts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  padding: 0.8em;
+  overflow-y: auto;
+  max-height: 390px;
+}
+
+.categoryProducts strong {
+  margin-bottom: 0.35em;
+  color: #0b2d68;
+  font-size: 0.9em;
+}
+
+.categoryMenuHint {
+  align-self: center;
+  margin: auto;
+  color: #687080;
+  font-size: 0.8em;
+  text-align: center;
+}
+
+.categoryProduct {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  min-width: 0;
+  padding: 0.35em;
+  border-radius: 5px;
+  color: #0b2d68;
+  text-decoration: none;
+  font-size: 0.78em;
+}
+
+.categoryProduct:hover {
+  background: #fff8f0;
+  color: #f18e1a;
+}
+
+.categoryProduct img {
+  width: 42px;
+  height: 36px;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #f8f3ed;
+}
+
+.categoryProduct span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.categoryViewMore {
+  margin-top: auto;
+  padding-top: 0.7em;
+  border-top: 1px solid #f2dfcb;
+  color: #f18e1a;
+  font-size: 0.8em;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.categoryViewMore:hover {
+  color: #0b2d68;
 }
 
 .searchItem {

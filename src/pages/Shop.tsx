@@ -19,6 +19,7 @@ interface ApiProduct {
   end_user_price: string | number
   image: string
   discount: number
+  categoryOnlineDiscount?: number
   availability: number
   qty?: number | string
   sku?: string
@@ -123,9 +124,9 @@ export default function Shop(){
  const { addToWishlist } = useWishlist()
  const { openQuoteForm } = useQuoteForm()
  const navigate = useNavigate()
- const { category: categoryParam } = useParams<{ category?: string }>()
+ const { category: categoryParam, term: searchTermParam } = useParams<{ category?: string; term?: string }>()
  const [searchParams] = useSearchParams()
- const searchQuery = searchParams.get('q')?.trim().toLowerCase() ?? ''
+ const searchQuery = (searchTermParam || searchParams.get('q') || '').trim().toLowerCase()
  const [currentPage, setCurrentPage] = useState(1)
  const [openCat, setOpenCat] = useState<string | null>(null)
  const [activeCat, setActiveCat] = useState<string | null>(null)
@@ -150,7 +151,13 @@ export default function Shop(){
    productsApi.getAll()
      .then((res: unknown) => {
        const r = res as { success: boolean; data: ApiCategory[] }
-       const cats = Array.isArray(r.data) ? r.data : []
+       const cats = Array.isArray(r.data) ? r.data.map(category => ({
+         ...category,
+         products: category.products.map(product => ({
+           ...product,
+           categoryOnlineDiscount: Number(category.online_discount) || 0,
+         })),
+       })) : []
        setCategories(cats)
        // flatten all products from all categories by default
        const allProducts = cats.flatMap(c => c.products)
@@ -204,12 +211,18 @@ export default function Shop(){
 
  const pageSize = 6
 
+ const parseProductPrice = (value: string | number) => {
+   if (typeof value === 'number') return value
+   const normalized = value.replace(/[^0-9.-]/g, '')
+   return normalized ? Number(normalized) : 0
+ }
+
   /* price-filtered products */
   const filteredProducts = products.filter(p => {
     if (searchQuery && !p.name.toLowerCase().includes(searchQuery)) return false
-    const price = parseFloat(String(p.end_user_price || p.price)) || 0
-    // products with price 0 always show (price not set yet)
-    if (price === 0) return true
+    const price = parseProductPrice(p.end_user_price || p.price)
+    // Products without a price are included only while the range includes zero.
+    if (price === 0) return priceMin === MIN_PRICE
     return price >= priceMin && price <= priceMax
   })
 
@@ -356,7 +369,7 @@ export default function Shop(){
                    className={`${styles.catBtn} ${activeCat === cat.category_name ? styles.catBtnActive : ''}`}
                    onClick={() => toggleCat(cat)}
                  >
-                   <span>{cat.category_name}</span>
+                   <span>{cat.category_name.toUpperCase()}</span>
                    <motion.span animate={{ rotate: openCat === cat.category_name ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ display: 'flex' }}>
                      <ChevronDown size={14} />
                    </motion.span>
@@ -423,7 +436,7 @@ export default function Shop(){
            className={`${styles.catBtn} ${activeCat === cat.category_name ? styles.catBtnActive : ''}`}
            onClick={() => toggleCat(cat)}
          >
-           <span>{cat.category_name}</span>
+                   <span>{cat.category_name.toUpperCase()}</span>
            <motion.span
              animate={{ rotate: openCat === cat.category_name ? 180 : 0 }}
              transition={{ duration: 0.25 }}
@@ -490,11 +503,25 @@ export default function Shop(){
      {!loadingProducts && (fetchError || filteredProducts.length === 0) && (
        <div style={{ padding: '3em', textAlign: 'center' }}>
          <p style={{ fontSize: '1.1em', fontWeight: 700, color: '#0b0b0b', marginBottom: '0.4em' }}>
-           Products Coming Soon
+           {fetchError
+             ? 'Products Coming Soon'
+             : priceMin !== MIN_PRICE || priceMax !== MAX_PRICE
+               ? 'No products match this price range'
+               : 'Products Coming Soon'}
          </p>
          <p style={{ fontSize: '0.85em', color: '#7f7f7f' }}>
-           We're stocking up. Check back shortly.
+           {fetchError || (priceMin === MIN_PRICE && priceMax === MAX_PRICE)
+             ? "We're stocking up. Check back shortly."
+             : 'Try adjusting the slider or clear the price filter.'}
          </p>
+         {!fetchError && (priceMin !== MIN_PRICE || priceMax !== MAX_PRICE) && (
+           <button
+             onClick={() => { setPriceMin(MIN_PRICE); setPriceMax(MAX_PRICE) }}
+             style={{ marginTop: '0.75em', padding: '0.55em 1em', border: '1px solid #F18E1A', borderRadius: 5, background: '#fff', color: '#F18E1A', cursor: 'pointer', fontWeight: 600 }}
+           >
+             Clear price filter
+           </button>
+         )}
        </div>
      )}
 
@@ -522,18 +549,32 @@ export default function Shop(){
 
             <div className={styles.infoRow}>
               <div className={styles.info}>
+                {(() => {
+                  const currentPrice = Number(p.end_user_price || p.price)
+                  const discount = p.categoryOnlineDiscount ?? p.discount ?? 0
+                  const formerPrice = discount > 0 && currentPrice > 0
+                    ? Math.round(currentPrice / (1 - discount / 100))
+                    : 0
+                  return (
+                    <>
                 <p className={styles.name}>
                   <Link to={`/product/${generateProductSlug(p.name, p.id)}`} className={styles.productLink}>{p.name}</Link>
                 </p>
                 <p className={styles.price}>
-                  {Number(p.end_user_price || p.price) === 0
+                  {currentPrice === 0
                     ? 'Price on request'
-                    : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`}
+                    : `₦ ${currentPrice.toLocaleString('en-NG')}`}
                 </p>
-                {p.discount > 0 && (
-                  <p className={styles.discount}>{p.discount}% OFF</p>
+                {formerPrice > 0 && (
+                  <p className={styles.oldPrice}>₦ {formerPrice.toLocaleString('en-NG')}</p>
+                )}
+                {discount > 0 && (
+                  <p className={styles.discount}>{discount}% OFF</p>
                 )}
                 <Stars count={4} />
+                    </>
+                  )
+                })()}
               </div>
               <button
                 className={styles.wishlist}

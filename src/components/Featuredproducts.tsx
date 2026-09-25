@@ -30,6 +30,7 @@ interface ApiProduct {
   end_user_price: string | number
   image: string
   discount: number
+  categoryOnlineDiscount?: number
   availability: number
   qty?: string | number
 }
@@ -37,6 +38,7 @@ interface ApiProduct {
 interface ApiCategory {
   category_id: number
   category_name: string
+  online_discount?: number
   products: ApiProduct[]
 }
 
@@ -60,9 +62,6 @@ const cardVariants = {
 }
 
 const LIMIT = 12
-
-const toTitleCase = (str: string) =>
-  str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
 
 const currentMonth = new Date().toLocaleString('default', { month: 'long' })
 
@@ -113,7 +112,19 @@ export default function FeaturedProducts() {
     productsApi.getAll()
       .then((res: unknown) => {
         const r = res as { success: boolean; data: ApiCategory[] }
-        const cats = Array.isArray(r.data) ? r.data : []
+        if (import.meta.env.DEV) {
+          console.log('[FeaturedProducts] category discounts:', (r.data ?? []).map(category => ({
+            category: category.category_name,
+            online_discount: category.online_discount,
+          })))
+        }
+        const cats = Array.isArray(r.data) ? r.data.map(category => ({
+          ...category,
+          products: category.products.map(product => ({
+            ...product,
+            categoryOnlineDiscount: Number(category.online_discount) || 0,
+          })),
+        })) : []
         setCategories(cats)
         // only show in-stock products
         const inStock = cats.flatMap(c => c.products).filter(
@@ -141,7 +152,7 @@ export default function FeaturedProducts() {
   const isHighValue = (price: number) => price >= quoteThreshold
 
   const filtered = (() => {
-    if (active === 'All') return allProducts.slice(0, LIMIT)
+    if (active === 'All') return allProducts.slice(LIMIT - 4, LIMIT - 4 + LIMIT)
     const cat = categories.find(c => c.category_name === active)
     const inStock = (cat?.products ?? []).filter(
       p => p.availability !== 0 && (p.qty === undefined || Number(p.qty) > 0)
@@ -188,7 +199,7 @@ export default function FeaturedProducts() {
                 className={`${styles.filterBtn} ${active === f ? styles.filterActive : ''}`}
                 onClick={() => setActive(f)}
               >
-                {f === 'All' ? 'All' : toTitleCase(f.length > 20 ? f.slice(0, 18) + '…' : f)}
+                {f === 'All' ? 'ALL' : (f.length > 20 ? f.slice(0, 18) + '…' : f).toUpperCase()}
               </button>
             ))}
           </div>
@@ -233,18 +244,32 @@ export default function FeaturedProducts() {
                 {/* info + heart */}
                 <div className={styles.infoRow}>
                   <div className={styles.info}>
+                    {(() => {
+                      const currentPrice = Number(p.end_user_price || p.price)
+                      const discount = p.categoryOnlineDiscount ?? p.discount ?? 0
+                      const formerPrice = discount > 0 && currentPrice > 0
+                        ? Math.round(currentPrice / (1 - discount / 100))
+                        : 0
+                      return (
+                        <>
                     <p className={styles.name}>
                       <Link to={`/product/${generateProductSlug(p.name, p.id)}`} className={styles.productLink}>{p.name}</Link>
                     </p>
                     <p className={styles.price}>
-                      {Number(p.end_user_price || p.price) === 0
+                      {currentPrice === 0
                         ? 'Price on request'
-                        : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`}
+                        : `₦ ${currentPrice.toLocaleString('en-NG')}`}
                     </p>
-                    {p.discount > 0 && (
-                      <p className={styles.oldPrice}>{p.discount}% OFF</p>
+                    {formerPrice > 0 && (
+                      <p className={styles.oldPrice}>₦ {formerPrice.toLocaleString('en-NG')}</p>
+                    )}
+                    {discount > 0 && (
+                      <p className={styles.discount}>{discount}% OFF</p>
                     )}
                     <Stars count={4} />
+                        </>
+                      )
+                    })()}
                   </div>
                   <button
                     className={styles.wishlist}

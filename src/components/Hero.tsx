@@ -14,10 +14,12 @@ interface ApiProduct {
   end_user_price: string | number
   image: string
   discount: number
+  categoryOnlineDiscount?: number
 }
 
 interface ApiCategory {
   category_name: string
+  online_discount?: number
   products: ApiProduct[]
 }
 
@@ -56,7 +58,13 @@ export default function Hero() {
     productsApi.getAll()
       .then((res: unknown) => {
         const r = res as { success: boolean; data: ApiCategory[] }
-        const cats = Array.isArray(r.data) ? r.data : []
+        const cats = Array.isArray(r.data) ? r.data.map(category => ({
+          ...category,
+          products: category.products.map(product => ({
+            ...product,
+            categoryOnlineDiscount: Number(category.online_discount) || 0,
+          })),
+        })) : []
 
         const pick = (keywords: string[]) => {
           const cat = cats.find(c =>
@@ -103,6 +111,14 @@ export default function Hero() {
   const formatPrice = (p: ApiProduct) => {
     const n = Number(p.end_user_price || p.price)
     return n === 0 ? 'Price on request' : `₦ ${n.toLocaleString('en-NG')}`
+  }
+
+  const getFormerPrice = (p: ApiProduct) => {
+    const currentPrice = Number(p.end_user_price || p.price)
+    const discount = p.categoryOnlineDiscount ?? p.discount ?? 0
+    return discount > 0 && currentPrice > 0
+      ? Math.round(currentPrice / (1 - discount / 100))
+      : 0
   }
 
   const currentBanner = banners[current];
@@ -225,8 +241,11 @@ export default function Hero() {
                   <div className={styles.dealInfo}>
                     <p className={styles.dealName}>{deal.name}</p>
                     <p className={styles.dealPrice}>{formatPrice(deal)}</p>
-                    {deal.discount > 0 && (
-                      <p className={styles.dealOldPrice}>{deal.discount}% OFF</p>
+                    {getFormerPrice(deal) > 0 && (
+                      <p className={styles.dealOldPrice}>₦ {getFormerPrice(deal).toLocaleString('en-NG')}</p>
+                    )}
+                    {(deal.categoryOnlineDiscount ?? deal.discount) > 0 && (
+                      <p className={styles.dealDiscount}>{deal.categoryOnlineDiscount ?? deal.discount}% OFF</p>
                     )}
                     <p className={styles.dealStars}>★★★★★</p>
                   </div>

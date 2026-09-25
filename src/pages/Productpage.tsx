@@ -19,6 +19,7 @@ interface Product {
   image: string
   images?: string[]
   discount: number
+  categoryOnlineDiscount?: number
   short_description: string
   description: string
   warranty: string
@@ -46,6 +47,7 @@ interface SimilarProduct {
 interface ApiCategory {
   category_id: number
   category_name: string
+  online_discount?: number
   products: SimilarProduct[]
 }
 
@@ -258,6 +260,9 @@ export default function Productpage() {
           headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
         })
         const json = await res.json()
+        if (import.meta.env.DEV) {
+          console.log('[ProductPage] product response:', json)
+        }
         
         // API wraps product in a data property
         const productData = json.data || json
@@ -274,6 +279,9 @@ export default function Productpage() {
           ...rawProd,
           images: imageList.length > 0 ? imageList : undefined,
         }
+        if (import.meta.env.DEV) {
+          console.log('[ProductPage] normalized product:', prod)
+        }
         setProduct(prod)
         setActiveImg(imageList[0] ?? getImageUrl(rawProd.image))
 
@@ -288,9 +296,17 @@ export default function Productpage() {
           headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
         })
         const catJson = await catRes.json()
+        if (import.meta.env.DEV) {
+          console.log('[ProductPage] grouped products response:', catJson)
+        }
         const cats: ApiCategory[] = Array.isArray(catJson.data) ? catJson.data : []
         const matched = cats.find(c => String(c.category_id) === String(prod.category_id))
-        if (matched) setCategoryName(matched.category_name)
+        if (matched) {
+          setCategoryName(matched.category_name)
+          setProduct(current => current
+            ? { ...current, categoryOnlineDiscount: Number(matched.online_discount) || 0 }
+            : current)
+        }
 
         setAlternative(altProducts)
         setComplementary(compProducts)
@@ -322,8 +338,10 @@ export default function Productpage() {
   const price = formatPrice(product.end_user_price || product.price)
   const priceNum = Number(product.end_user_price || product.price)
   const isHighValue = priceNum >= quoteThreshold
-  const hasDiscount = product.discount > 0
-  const originalPriceNum = hasDiscount ? Math.round(priceNum / (1 - product.discount / 100)) : 0
+  const quoteRequired = priceNum > 0 && isHighValue
+  const discount = product.categoryOnlineDiscount ?? product.discount ?? 0
+  const hasDiscount = discount > 0
+  const originalPriceNum = hasDiscount ? Math.round(priceNum / (1 - discount / 100)) : 0
   const originalPrice = hasDiscount ? formatPrice(originalPriceNum) : null
   const shipping = shippingData ? parseFloat(shippingData.amount) || 0 : 0
   const total = priceNum > 0 ? priceNum + shipping : 0
@@ -430,7 +448,7 @@ export default function Productpage() {
                 <span className={styles.oldPrice}>{originalPrice}</span>
               )}
               {hasDiscount && (
-                <span className={styles.discountTag}>{product.discount}% OFF</span>
+                <span className={styles.discountTag}>{discount}% OFF</span>
               )}
             </div>
 
@@ -476,35 +494,42 @@ export default function Productpage() {
             </div>
 
             <div className={styles.actions}>
-              <button
-                className={styles.addBtn}
-                disabled={product.qty <= 0}
-                onClick={() => {
-                  if (product.qty <= 0) return
-                  if (priceNum > 0 && isHighValue) {
+              {quoteRequired ? (
+                <button
+                  className={styles.addBtn}
+                  disabled={product.qty <= 0}
+                  onClick={() => {
+                    if (product.qty <= 0) return
                     openQuoteForm({ id: product.id, name: product.name, price })
-                  } else {
-                    addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
-                  }
-                }}
-              >
-                {product.qty <= 0 ? 'Out of Stock' : (priceNum > 0 && isHighValue) ? 'Request for Quote' : 'Add to Cart'}
-              </button>
-              <button
-                className={styles.buyBtn}
-                disabled={product.qty <= 0}
-                onClick={() => {
-                  if (product.qty <= 0) return
-                  if (priceNum > 0 && isHighValue) {
-                    openQuoteForm({ id: product.id, name: product.name, price })
-                  } else {
-                    addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
-                    navigate('/checkout')
-                  }
-                }}
-              >
-                {(priceNum > 0 && isHighValue) ? 'Request for Quote' : 'Buy Now'}
-              </button>
+                  }}
+                >
+                  {product.qty <= 0 ? 'Out of Stock' : 'Request for Quote'}
+                </button>
+              ) : (
+                <>
+                  <button
+                    className={styles.addBtn}
+                    disabled={product.qty <= 0}
+                    onClick={() => {
+                      if (product.qty <= 0) return
+                      addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
+                    }}
+                  >
+                    {product.qty <= 0 ? 'Out of Stock' : 'Add to Cart'}
+                  </button>
+                  <button
+                    className={styles.buyBtn}
+                    disabled={product.qty <= 0}
+                    onClick={() => {
+                      if (product.qty <= 0) return
+                      addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
+                      navigate('/checkout')
+                    }}
+                  >
+                    Buy Now
+                  </button>
+                </>
+              )}
             </div>
 
             {/* perks bar */}
@@ -552,7 +577,7 @@ export default function Productpage() {
             {/* price + discount */}
             <div className={styles.panelPriceRow}>
               <span className={styles.panelPrice}>{price}</span>
-              {hasDiscount && <span className={styles.panelDiscount}>{product.discount}% OFF</span>}
+              {hasDiscount && <span className={styles.panelDiscount}>{discount}% OFF</span>}
             </div>
 
             {/* payment summary */}
