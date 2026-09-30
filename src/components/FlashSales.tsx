@@ -7,7 +7,7 @@ import { useCart } from '../context/CartContext'
 import { productsApi, getImageUrl, quoteApi } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
-import { generateProductSlug } from '../lib/slugs'
+import { productPath } from '../lib/slugs'
 
 const PROMALL_PROXY_URL =
   (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
@@ -232,7 +232,7 @@ export default function FlashSales() {
                       return (
                         <>
                     <p className={styles.name}>
-                      <Link to={`/product/${generateProductSlug(p.name, p.id)}`} className={styles.productLink}>{p.name}</Link>
+                      <Link to={`${productPath(p.name, p.id)}`} className={styles.productLink}>{p.name}</Link>
                     </p>
                     <p className={styles.price}>
                       {currentPrice === 0

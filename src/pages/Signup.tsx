@@ -1,13 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import styles from './Signup.module.css'
+import Breadcrumb from '../components/Breadcrumb'
 import { authApi } from '../lib/api'
 
 export default function SignUp() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/'
 
   const [form, setForm] = useState({
     name: '',
@@ -45,7 +44,7 @@ export default function SignUp() {
       // store the success message from the API — login page will display it
       const msg = (response as { message?: string }).message || 'Account created! You can now log in.'
       localStorage.setItem('registration_msg', msg)
-      navigate(`/login${redirectTo !== '/' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`)
+      navigate('/login')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.')
     } finally {
@@ -55,6 +54,7 @@ export default function SignUp() {
 
   return (
     <>
+      <Breadcrumb items={[{ label: 'Login', to: '/login' }, { label: 'Create Account' }]} />
       <div className={styles.darkenBackground}>
         <div className={styles.formContainer}>
           <h2 className={styles.header}>Create an Account</h2>

@@ -121,9 +121,84 @@
   cursor: pointer;
   transition: color 0.2s;
   flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
 }
 
 .icon:hover { color: #F18E1A; }
+
+/* ── user icon + mini sign-in popup ── */
+.userWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.userPopup {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 290px;
+  background: #fff;
+  border: 1.5px solid #f18e1a40;
+  border-radius: 12px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.14);
+  padding: 1.1em;
+  z-index: 10000;
+  animation: popupIn 0.16s ease-out;
+}
+
+.userPopup::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 14px;
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-left: 1.5px solid #f18e1a40;
+  border-top: 1.5px solid #f18e1a40;
+  transform: rotate(45deg);
+}
+
+@keyframes popupIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.popupTitle {
+  margin: 0;
+  font-size: 1.05em;
+  font-weight: 700;
+  color: #0b0b0b;
+}
+
+.popupSubtitle {
+  margin: 0.2em 0 0.9em;
+  font-size: 0.75em;
+  color: #7f7f7f;
+}
+
+.popupFooter {
+  margin: 0.7em 0 0;
+  font-size: 0.75em;
+  color: #0b0b0b;
+}
+
+.popupFooter:first-of-type {
+  margin-top: 1em;
+  padding-top: 0.9em;
+  border-top: 1px solid #f2f2f2;
+}
+
+.popupLink {
+  color: #F18E1A;
+  text-decoration: underline;
+  font-weight: 600;
+}
 
 .cartWrap {
   position: relative;
@@ -309,6 +384,7 @@ width: 50%;
   /* row 2: logo left, icons right */
   .logoLink  { order: 1; }
   .cartWrap  { order: 2; margin-left: auto; }
+  .userWrap  { order: 3; }
   .icon      { order: 3; }
   .hamburger { order: 4; display: flex; }
 
@@ -550,4 +626,12 @@ width: 50%;
 .searchSeeMore:hover {
   background: #f18e1a;
   color: #fff;
+}
+
+/* ── mobile: keep the user popup inside the viewport ── */
+@media (max-width: 768px) {
+  .userPopup {
+    right: -10px;
+    width: min(290px, calc(100vw - 2 * var(--page-x)));
+  }
 }

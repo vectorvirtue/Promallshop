@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Calendar, MapPin, Clock, ExternalLink } from 'lucide-react'
 import { motion } from 'framer-motion'
 import styles from './Events.module.css'
+import Breadcrumb from './Breadcrumb'
 
 interface Event {
   id: number
@@ -88,7 +89,9 @@ export default function Events() {
   ]
 
   return (
-    <section className={styles.section}>
+    <>
+      <Breadcrumb items={[{ label: 'Events' }]} />
+      <section className={styles.section}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -189,6 +192,7 @@ export default function Events() {
           ))}
         </div>
       )}
-    </section>
+      </section>
+    </>
   )
 }

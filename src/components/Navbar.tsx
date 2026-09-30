@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import logo from "../assets/promall1crop-2@2x.png";
 import styles from "./Navbar.module.css";    
 import vector from "../assets/Vector (8).svg";
@@ -7,7 +7,8 @@ import { UserCircle2, ShoppingCartIcon, Menu, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { productsApi, getImageUrl } from "../lib/api";
 import { useQuoteForm } from "../context/QuoteFormContext";
-import { generateProductSlug } from "../lib/slugs";
+import { useAuth } from "../context/AuthContext";
+import { productPath } from "../lib/slugs";
 
 interface SearchProduct {
   id: number
@@ -137,8 +138,12 @@ function QuoteForm({ onBack, productInfo }: { onBack: () => void; productInfo: {
 export default function Navbar() {
   const { totalItems } = useCart()
   const { isOpen, productInfo, openQuoteForm, closeQuoteForm } = useQuoteForm()
+  const { isAuthenticated } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [signInOpen, setSignInOpen] = useState(false)
+  const userWrapRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
+  const location = useLocation()
 
   // ── search state ──
   const [query, setQuery] = useState('')
@@ -202,6 +207,39 @@ export default function Navbar() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  // close the mini sign-in popup on outside click or Escape
+  useEffect(() => {
+    if (!signInOpen) return
+    const onPointerDown = (e: MouseEvent) => {
+      if (userWrapRef.current && !userWrapRef.current.contains(e.target as Node)) {
+        setSignInOpen(false)
+      }
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSignInOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [signInOpen])
+
+  // the popup belongs to the navbar — close it whenever the route changes
+  useEffect(() => {
+    setSignInOpen(false)
+    setMenuOpen(false)
+  }, [location.pathname])
+
+  const handleUserClick = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard')
+      return
+    }
+    setSignInOpen(open => !open)
+  }
 
   const formatPrice = (p: SearchProduct) => {
     const n = Number(p.end_user_price || p.price)
@@ -331,7 +369,7 @@ export default function Navbar() {
                         <Link
                           key={product.id}
                           className={styles.categoryProduct}
-                          to={`/product/${generateProductSlug(product.name, product.id)}`}
+                          to={`${productPath(product.name, product.id)}`}
                           onClick={() => setCategoryMenuOpen(false)}
                         >
                           <img src={getImageUrl(product.image)} alt="" />
@@ -361,7 +399,7 @@ export default function Navbar() {
                   {results.map(p => (
                     <Link
                       key={p.id}
-                      to={`/product/${generateProductSlug(p.name, p.id)}`}
+                      to={`${productPath(p.name, p.id)}`}
                       className={styles.searchItem}
                       onClick={() => { setShowDropdown(false); setQuery('') }}
                     >
@@ -401,18 +439,44 @@ export default function Navbar() {
         </div>
 
         {/* user */}
-        <div className={styles.icon}>
-         <Link style={{
-  display:'flex',
-  
-  alignItems:'center',
-  justifyContent:'center',
-  
-  color:'inherit',
-  textDecoration:'none',
-         }} to= '/signup'>
-          <UserCircle2 size={28} />
-         </Link>
+        <div className={styles.userWrap} ref={userWrapRef}>
+          <button
+            type="button"
+            className={styles.icon}
+            onClick={handleUserClick}
+            aria-label={isAuthenticated ? 'Go to dashboard' : 'Sign in'}
+            aria-expanded={isAuthenticated ? undefined : signInOpen}
+          >
+            <UserCircle2 size={28} />
+          </button>
+
+          {!isAuthenticated && signInOpen && (
+            <div className={styles.userPopup} role="dialog" aria-label="Sign in">
+              <h4 className={styles.popupTitle}>Sign in</h4>
+              <p className={styles.popupSubtitle}>Access your dashboard and orders</p>
+
+              <p className={styles.popupFooter}>
+                Don't have an account?{' '}
+                <Link
+                  className={styles.popupLink}
+                  to="/login"
+                  onClick={() => setSignInOpen(false)}
+                >
+                  Sign in
+                </Link>
+              </p>
+              <p className={styles.popupFooter}>
+                New here?{' '}
+                <Link
+                  className={styles.popupLink}
+                  to="/signup"
+                  onClick={() => setSignInOpen(false)}
+                >
+                  Create an Account
+                </Link>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* hamburger — mobile only */}

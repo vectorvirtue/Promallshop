@@ -1,0 +1,480 @@
+/* page wrapper — breadcrumb sits above the dashboard grid */
+.page {
+  padding-bottom: 4em;
+  background-color: #f8fafc;
+}
+
+/* align the trail with the navbar logo, like the shop page breadcrumb */
+.breadcrumb {
+  padding: 14px var(--page-x) 0;
+}
+
+.dashboardContainer {
+  display: flex;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: #1a202c;
+  background-color: #f8fafc;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  width: 280px;
+  background-color: #0d1e4c;
+  border-radius: 12px;
+  padding: 32px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.profileSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.avatarWrapper {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 3px solid #f5a623;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* initials fallback — no profile photo in the API */
+.avatarInitials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0d1e4c 0%, #1d3a7a 100%);
+  color: #f5a623;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  user-select: none;
+}
+
+.welcomeText {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: #ffffff;
+}
+
+.navigation {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.navItem:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navItem.active {
+  background-color: #ffffff;
+  color: #0d1e4c;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.navIcon {
+  flex-shrink: 0;
+}
+
+.logout {
+  margin-top: 12px;
+}
+
+/* Main Content Styles */
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.overviewCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px 28px;
+}
+
+.sectionTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 16px 0;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #edf2f7;
+  margin-bottom: 20px;
+}
+
+.infoGroup {
+  margin-bottom: 16px;
+}
+
+.fieldLabel {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 6px;
+}
+
+.fieldBox {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: #ffffff;
+  font-size: 0.95rem;
+  color: #718096;
+}
+
+.currency {
+  font-family: sans-serif;
+}
+
+.couponSection {
+  margin-top: 20px;
+}
+
+.subTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 10px 0;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #a0aec0;
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+.couponRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.codeText {
+  color: #718096;
+}
+
+.amountText {
+  color: #718096;
+}
+
+/* Affiliate Card Styles */
+.affiliateCard {
+  background: linear-gradient(135deg, #070e28 0%, #0d1e4c 100%);
+  border-radius: 12px;
+  padding: 24px 28px;
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(13, 30, 76, 0.15);
+}
+
+.affiliateTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.affiliateTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+}
+
+.affiliateSub {
+  font-size: 0.85rem;
+  color: #cbd5e0;
+  margin: 0;
+}
+
+.statusBadge {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #48bb78;
+  white-space: nowrap;
+}
+
+.statusBadge span:first-of-type {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statusDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #48bb78;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.statusSubtext {
+  font-size: 0.7rem;
+  color: #a0aec0;
+  font-weight: normal;
+}
+
+.referralBox {
+  margin-bottom: 24px;
+}
+
+.referralLabel {
+  display: block;
+  font-size: 0.8rem;
+  color: #cbd5e0;
+  margin-bottom: 6px;
+}
+
+.linkWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.linkText {
+  font-size: 0.85rem;
+  color: #a0aec0;
+}
+
+.copyBtn {
+  background: none;
+  border: none;
+  color: #a0aec0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.copyBtn:hover {
+  color: #ffffff;
+}
+
+.affiliateBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.viewMoreBtn {
+  background-color: #f5a623;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 24px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.viewMoreBtn:hover {
+  background-color: #e0961f;
+}
+
+.earningsContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.earningsIconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.earningsDetails {
+  text-align: right;
+}
+
+.earningsAmount {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.earningsLabel {
+  font-size: 0.7rem;
+  color: #a0aec0;
+}
+
+/* ── Orders tab ── */
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  margin-bottom: 4px;
+}
+
+.panelHead .sectionTitle {
+  margin: 0;
+}
+/* column labels — mirrors the cart's .colLabels */
+.colLabels {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.9em;
+  padding: 0 0.9em 0.75em;
+  font-size: 0.78em;
+  color: #888;
+  font-weight: 500;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 0.75em;
+}
+
+.colLabels span:first-child {
+  flex: 1 1 220px;
+}
+
+/* ── responsive ── */
+
+/* tablet — stack the sidebar above the content */
+@media (max-width: 900px) {
+  .dashboardContainer {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  /* nav items run across the width instead of down the side */
+  .navigation {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .logout {
+    margin-top: 0;
+  }
+
+  .navItem {
+    width: 100%;
+  }
+}
+
+/* phone — single column throughout */
+@media (max-width: 600px) {
+  .dashboardContainer {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .page {
+    padding-bottom: 2em;
+  }
+
+  .breadcrumb {
+    padding: 14px var(--page-x) 0;
+  }
+
+  .sidebar {
+    padding: 22px 14px;
+  }
+
+  .navigation {
+    grid-template-columns: 1fr;
+  }
+
+  .mainContent {
+    gap: 14px;
+  }
+
+  .overviewCard {
+    padding: 18px 16px;
+  }
+
+  .sectionTitle {
+    font-size: 1.15rem;
+  }
+
+  .colLabels {
+    display: none;
+  }
+
+  .affiliateCard {
+    padding: 18px 16px;
+  }
+
+  .affiliateTop,
+  .affiliateBottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .earningsDetails {
+    text-align: left;
+  }
+}
+
+@media (hover: none) {
+  .navItem:active { background-color: rgba(255, 255, 255, 0.1); }
+  .navItem.active:active { background-color: #ffffff; }
+}
+

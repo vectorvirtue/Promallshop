@@ -3,7 +3,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { HelmetProvider } from "react-helmet-async";
 import { Component, type ReactNode } from "react";
 import { CartProvider } from "./context/CartContext";
+import { WishlistProvider } from "./context/WishlistContext";
 import { QuoteFormProvider } from "./context/QuoteFormContext";
+import { AuthProvider } from "./context/AuthContext";
 import ScrollToTop from "./components/ScrolltoTop";
 import BacktoTop from "./components/BacktoTop";
 import Chatbox from "./components/Chatbox";
@@ -16,6 +18,8 @@ import Navbar from "./components/Navbar";
 import Topnav from "./components/Topnav";
 import SignUp from "./pages/Signup";
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+
 import TermsOfUse from "./legal/TOU";
 import OrderTracking from "./pages/TrackOrder";
 import Privacy from "./legal/Privacy";
@@ -76,6 +80,11 @@ function AnimatedRoutes() {
         <Route path="/login" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
             <Login />
+          </motion.div>
+        } />
+        <Route path="/dashboard" element={
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
+            <Dashboard />
           </motion.div>
         } />
         <Route path="/terms-of-use" element={
@@ -141,27 +150,31 @@ function AnimatedRoutes() {
 export default function App() {
   return (
     <HelmetProvider>
-      <CartProvider>
-        <QuoteFormProvider>
-          <BrowserRouter>
-            <PageLoader />
-            <ScrollToTop />
-            <Toaster
-              position="bottom-right"
-              richColors
-              toastOptions={{ style: { fontFamily: 'inherit' } }}
-            />
-            <Topnav />
-            <Navbar />
-            <ErrorBoundary>
-              <AnimatedRoutes />
-            </ErrorBoundary>
-            <Chatbox />
-            <BacktoTop />
-            <Footer />
-          </BrowserRouter>
-        </QuoteFormProvider>
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <QuoteFormProvider>
+              <BrowserRouter>
+                <PageLoader />
+                <ScrollToTop />
+                <Toaster
+                  position="bottom-right"
+                  richColors
+                  toastOptions={{ style: { fontFamily: 'inherit' } }}
+                />
+                <Topnav />
+                <Navbar />
+                <ErrorBoundary>
+                  <AnimatedRoutes />
+                </ErrorBoundary>
+                <Chatbox />
+                <BacktoTop />
+                <Footer />
+              </BrowserRouter>
+            </QuoteFormProvider>
+          </WishlistProvider>
+        </CartProvider>
+      </AuthProvider>
     </HelmetProvider>
   );
 }

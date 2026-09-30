@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 import { TriangleAlert, CheckCircle2, X, Phone, Copy, Loader2 } from 'lucide-react'
 import styles from './Checkout.module.css'
 import paystackLogo from '../assets/download (1).png'
 import flutterwaveLogo from '../assets/download.png'
 import visaLogo from '../assets/visa.png'
 import mastercardLogo from '../assets/mastercard.png'
-import { ordersApi, markAsOrdered, cartApi, deliveryCostApi, type DeliveryCost } from '../lib/api'
+import { ordersApi, orderItemsApi, markAsOrdered, cartApi, deliveryCostApi, type DeliveryCost } from '../lib/api'
 
 /* ── Paystack inline SDK type ── */
 declare global {
@@ -88,6 +89,7 @@ const STEPS = [
 
 export default function Checkout() {
   const { items: allItems, clearCart } = useCart()
+  const { user } = useAuth()
   const navigate = useNavigate()
 
   /* ── filter to only selected items from Cart (falls back to all if none stored) ── */
@@ -98,10 +100,35 @@ export default function Checkout() {
       const selected: string[] = JSON.parse(raw)
       if (!selected.length) return allItems
       return allItems.filter(i => selected.includes(i.name))
-    } catch {
-      return allItems
-    }
+} catch {
+        return allItems
+      }
   })()
+
+  /**
+   * The order resource is only an invoice header, so the product lines have to
+   * be recorded separately — the Orders tab reads them back to show real product
+   * names and thumbnails. Best-effort: an order must still succeed if this fails.
+   */
+  const recordOrderItems = async (orderId: number | string | undefined) => {
+    if (!orderId) return
+    await Promise.all(
+      items
+        .filter(item => item.product_id)
+        .map(item =>
+          orderItemsApi
+            .create({
+              order_id: Number(orderId),
+              product_id: Number(item.product_id),
+              qty: item.quantity,
+              rate: String(item.price),
+              amount: String(parsePrice(item.price) * item.quantity),
+              type: 'product',
+            })
+            .catch(() => undefined)
+        )
+    )
+  }
 
   const [step, setStep] = useState(1)
 
@@ -156,6 +183,21 @@ export default function Checkout() {
     country: 'Nigeria',
     additionalInfo: '',
   })
+
+  /* ── prefill the billing form from the signed-in user ── */
+  useEffect(() => {
+    if (!user) return
+    const [firstName = '', ...rest] = (user.name ?? '').trim().split(/\s+/)
+    setAddress(prev => ({
+      ...prev,
+      firstName: prev.firstName || firstName,
+      lastName: prev.lastName || rest.join(' '),
+      email: prev.email || user.email || '',
+      phone: prev.phone || user.phone || '',
+      // no address column on the user record yet — sent and stored once it lands
+      address: prev.address || user.address || '',
+    }))
+  }, [user])
 
   /* delivery state */
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('pickup')
@@ -367,8 +409,9 @@ export default function Checkout() {
           callback(response) {
             ordersApi
               .create({ ...orderPayload, payment_ref: response.reference })
-              .then((orderRes) => {
-                const res = orderRes as { data?: { bill_no?: string } }
+              .then(async (orderRes) => {
+                const res = orderRes as { data?: { bill_no?: string; id?: number } }
+                await recordOrderItems(res?.data?.id)
                 markAsOrdered()
                 clearCart()
                 sessionStorage.removeItem('checkout_selected')
@@ -414,9 +457,10 @@ export default function Checkout() {
             if (response.status === 'successful' || response.status === 'completed') {
               ordersApi
                 .create({ ...orderPayload, payment_ref: response.tx_ref })
-                .then((orderRes) => {
-                  const res = orderRes as { data?: { bill_no?: string } }
-                  markAsOrdered()
+.then(async (orderRes) => {
+                    const res = orderRes as { data?: { bill_no?: string; id?: number } }
+                    await recordOrderItems(res?.data?.id)
+                    markAsOrdered()
                   clearCart()
                   sessionStorage.removeItem('checkout_selected')
                   cartApi.clear().catch(() => { /* ignore */ })
@@ -437,7 +481,8 @@ export default function Checkout() {
         })
       } else {
         // bank transfer or cheque — create order and show confirmation popup
-        const orderRes = await ordersApi.create(orderPayload) as { data?: { bill_no?: string } }
+        const orderRes = await ordersApi.create(orderPayload) as { data?: { bill_no?: string; id?: number } }
+        await recordOrderItems(orderRes?.data?.id)
         markAsOrdered()
         clearCart()
         sessionStorage.removeItem('checkout_selected')

@@ -6,7 +6,7 @@ import { getTimeLeft } from '../lib/countdown'
 import type { TimeLeft } from '../lib/countdown'
 import { getImageUrl } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
-import { generateProductSlug } from '../lib/slugs'
+import { productPath } from '../lib/slugs'
 
 const PROMALL_PROXY_URL =
   (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
@@ -69,7 +69,7 @@ export default function Deals() {
   // HANDLE BUY NOW CLICK
   const handleBuyNow = () => {
     if (deal.product_id && deal.title) {
-      navigate(`/product/${generateProductSlug(deal.title, deal.product_id)}`)
+      navigate(`${productPath(deal.title, deal.product_id)}`)
     } else {
       console.warn('No product linked to this deal')
     }

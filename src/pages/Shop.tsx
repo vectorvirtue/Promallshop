@@ -8,7 +8,7 @@ import { Pagination } from 'antd'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { productsApi, getImageUrl, quoteApi } from '../lib/api'
-import { generateProductSlug } from '../lib/slugs'
+import { productPath } from '../lib/slugs'
 import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
 import shop from '../assets/shop.gif'
@@ -558,7 +558,7 @@ export default function Shop(){
                   return (
                     <>
                 <p className={styles.name}>
-                  <Link to={`/product/${generateProductSlug(p.name, p.id)}`} className={styles.productLink}>{p.name}</Link>
+                  <Link to={`${productPath(p.name, p.id)}`} className={styles.productLink}>{p.name}</Link>
                 </p>
                 <p className={styles.price}>
                   {currentPrice === 0

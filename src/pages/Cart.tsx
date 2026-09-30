@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext'
 import styles from './Cart.module.css'
 import { TriangleAlert } from 'lucide-react'
 import { getToken } from '../lib/api'
+import { setLoginRedirect } from '../lib/redirect'
 
 /* ── helpers ── */
 const parsePrice = (str: string): number =>
@@ -123,7 +124,8 @@ export default function Cart() {
     if (getToken()) {
       navigate('/checkout')
     } else {
-      navigate('/login?redirect=/checkout')
+      setLoginRedirect('/checkout')
+      navigate('/login')
     }
   }
 

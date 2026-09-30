@@ -7,7 +7,7 @@ import { useQuoteForm } from '../context/QuoteFormContext'
 import styles from './Productpage.module.css'
 import { getMonthEndTarget, getTimeLeft as getCountdownTimeLeft } from '../lib/countdown'
 import { getImageUrl, checkHasOrderedBefore, deliveryCostApi, quoteApi, type DeliveryCost } from '../lib/api'
-import { extractIdFromSlug, generateProductSlug } from '../lib/slugs'
+import { extractIdFromSlug, productPath } from '../lib/slugs'
 
 const API = import.meta.env.VITE_PUBLIC_API_URL as string
 
@@ -146,7 +146,7 @@ function ProductStrip({ title, products, stripRef, onScroll, addToCart, addToWis
                 <div className={styles.similarInfoRow}>
                   <div className={styles.similarInfo}>
                     <p className={styles.similarName}>
-                      <Link to={`/product/${generateProductSlug(p.name, p.id)}`} className={styles.similarNameLink}>{p.name}</Link>
+                      <Link to={`${productPath(p.name, p.id)}`} className={styles.similarNameLink}>{p.name}</Link>
                     </p>
                     <p className={styles.similarPrice}>{price}</p>
                     <span className={styles.similarStars}>★★★★★</span>

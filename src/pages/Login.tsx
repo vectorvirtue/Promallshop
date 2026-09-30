@@ -1,21 +1,21 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import styles from './Signup.module.css'
-import { authApi, saveToken, saveUser } from '../lib/api'
+import Breadcrumb from '../components/Breadcrumb'
+import { useAuth } from '../context/AuthContext'
+import { clearLoginRedirect, getLoginRedirect } from '../lib/redirect'
 
 export default function Login() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/'
+  const { signIn, isLoading, error } = useAuth()
+  const redirectTo = getLoginRedirect()
 
   // read the registration message stored by Signup — persists across refreshes
   const registrationMsg = localStorage.getItem('registration_msg')
 
   const [form, setForm] = useState({ email: '', password: '', remember: false })
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
 
   const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target
@@ -24,25 +24,19 @@ export default function Login() {
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
-    setError('')
-    setLoading(true)
-
     try {
-      const res = await authApi.login(form.email, form.password)
-      // response: { success, message, data: { token, token_type, user } }
-      saveToken(res.data.token, form.remember)
-      saveUser(res.data.user, form.remember)
+      await signIn(form.email, form.password, form.remember)
       localStorage.removeItem('registration_msg')
+      clearLoginRedirect()
       navigate(redirectTo)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid email or password.')
-    } finally {
-      setLoading(false)
+    } catch {
+      /* error surfaced from useAuth().error */
     }
   }
 
   return (
     <>
+      <Breadcrumb items={[{ label: 'Login' }]} />
       <div className={styles.darkenBackground}>
         <div className={styles.formContainer}>
           <h2 className={styles.header}>Sign in to Your Account</h2>
@@ -104,8 +98,8 @@ export default function Login() {
               </Link>
             </p>
 
-            <button className={styles.button} type="submit" disabled={loading}>
-              {loading ? 'Signing in…' : 'Sign In'}
+            <button className={styles.button} type="submit" disabled={isLoading}>
+              {isLoading ? 'Signing in…' : 'Sign In'}
             </button>
           </form>
 
@@ -113,7 +107,7 @@ export default function Login() {
             Don't have an account?{' '}
             <Link
               style={{ color: '#F18E1A', textDecoration: 'underline' }}
-              to={`/signup${redirectTo !== '/' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`}
+              to="/signup"
             >
               Create an Account
             </Link>

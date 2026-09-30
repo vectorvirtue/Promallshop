@@ -127,7 +127,15 @@ async function request<T>(
     },
   })
 
-  const data = await res.json()
+  // read as text first — an HTML error page would make res.json() throw a
+  // SyntaxError and hide the real status/message
+  const text = await res.text()
+  let data: Record<string, unknown> = {}
+  try {
+    data = text ? JSON.parse(text) : {}
+  } catch {
+    data = { message: text.slice(0, 200) }
+  }
 
   if (!res.ok) {
     // clear stale token on 401 or 403 (session invalid / forbidden)
@@ -136,7 +144,9 @@ async function request<T>(
       const first = Object.values(data.errors as Record<string, string[]>)[0]
       throw new Error(first[0])
     }
-    throw new Error(data?.message || `Request failed (${res.status})`)
+    throw new Error(
+      (data?.message as string) || `Request failed (${res.status}${path ? ` ${path}` : ''})`
+    )
   }
 
   return data as T
@@ -286,6 +296,41 @@ export const deliveryCostApi = {
   },
 }
 
+/* ── users ── */
+export const usersApi = {
+  /** full profile update — PUT /users/me */
+  update: async (id: number | string | undefined, payload: Record<string, unknown>) => {
+    try {
+      return await request('/users/me', {
+        method: 'PUT',
+        auth: true,
+        body: JSON.stringify(payload),
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : ''
+      const notFound = /not found|404/i.test(message)
+      // don't build /users/undefined if the login payload had no id
+      if (!notFound || id === undefined || id === null) throw err
+      return request(`/users/${id}`, {
+        method: 'PUT',
+        auth: true,
+        body: JSON.stringify(payload),
+      })
+    }
+  },
+
+  /**
+   * Password change. The API has no dedicated route — /users/me/password is a
+   * 404 and /users/password just resolves to /users/{id} — so this reuses the
+   * profile update with the same field names as the register payload.
+   */
+  changePassword: (id: number | string | undefined, payload: {
+    current_password: string
+    password: string
+    password_confirmation: string
+  }) => usersApi.update(id, payload),
+}
+
 /* ── orders ── */export const ordersApi = {
   create: (payload: Record<string, unknown>) =>
     request('/orders', { method: 'POST', auth: true, body: JSON.stringify(payload) }),
@@ -294,6 +339,32 @@ export const deliveryCostApi = {
   getByBill: (billNo: string) => request(`/orders/bill/${billNo}`, { auth: true }),
   markPaid: (id: number | string) =>
     request(`/orders/${id}/mark-paid`, { method: 'PATCH', auth: true }),
+}
+
+/* ── order items ──
+ * The order record itself carries no product data — it is only an invoice header
+ * (bill_no, amounts, status). Line items live in their own resource, and the
+ * product name has to be resolved through /products/{id} because the item row
+ * only stores product_id.
+ *
+ * NOTE: GET /order-items is NOT scoped to the signed-in user — it returns the
+ * whole store's items. Callers must filter by their own order ids.
+ */
+export interface ApiOrderItem {
+  id?: number;
+  order_id: number;
+  product_id: number;
+  qty: number;
+  rate: string;
+  amount: string;
+  type?: string;
+  attributes?: string | null;
+}
+
+export const orderItemsApi = {
+  getAll: () => request('/order-items', { auth: true }),
+  create: (payload: Omit<ApiOrderItem, 'id'>) =>
+    request('/order-items', { method: 'POST', auth: true, body: JSON.stringify(payload) }),
 }
 
 /* ── quote requests ── */
