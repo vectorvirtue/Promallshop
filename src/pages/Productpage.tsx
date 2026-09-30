@@ -7,6 +7,8 @@ import { useQuoteForm } from '../context/QuoteFormContext'
 import styles from './Productpage.module.css'
 import { getMonthEndTarget, getTimeLeft as getCountdownTimeLeft } from '../lib/countdown'
 import { getImageUrl, checkHasOrderedBefore, deliveryCostApi, quoteApi, type DeliveryCost } from '../lib/api'
+import { extractIdFromSlug, productPath } from '../lib/slugs'
+import { Helmet } from 'react-helmet-async'
 
 const API = import.meta.env.VITE_PUBLIC_API_URL as string
 
@@ -31,6 +33,100 @@ interface Product {
   category_id: string
   alternative_products: string | null
   complementary_products: string | null
+  meta_title?: string
+  meta_description?: string
+  meta_keywords?: string
+}
+
+/**
+ * The API packs the SEO strings into `sku` as "TITLE***DESCRIPTION***KEYWORDS" —
+ * they are for meta tags, not for the page body. Older records only carry the
+ * first two parts, so keywords falls back to the dedicated field.
+ */
+function getSeo(product: Product): { title: string; description: string; keywords: string } {
+  const [rawTitle, rawDescription, rawKeywords] = (product.sku ?? '').split('***')
+
+  return {
+    title: product.meta_title?.trim() || rawTitle?.trim() || product.name,
+    description:
+      product.meta_description?.trim() ||
+      rawDescription?.trim() ||
+      product.short_description ||
+      '',
+    keywords: rawKeywords?.trim() || product.meta_keywords?.trim() || '',
+  }
+}
+
+/**
+ * The CMS description is stored as HTML with editor artefacts (data-start /
+ * data-end offsets, inline styles). Convert it to plain readable text: block
+ * boundaries become line breaks, every tag is dropped, and the entities the CMS
+ * emits are decoded back into real characters.
+ */
+function htmlToReadableText(html: string): string {
+  return html
+    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '')
+    /* block boundaries become line breaks */
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|ul|ol|h[1-6]|tr|table|section)>/gi, '\n')
+    .replace(/<(li|p|div|h[1-6])[^>]*>/gi, '\n')
+    /* drop every remaining tag */
+    .replace(/<[^>]+>/g, '')
+    /* decode the entities the CMS emits */
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;|&#0?39;/gi, "'")
+    .replace(/&ldquo;|&rdquo;/gi, '"')
+    .replace(/&lsquo;|&rsquo;/gi, "'")
+    .replace(/&mdash;/gi, '\u2014')
+    .replace(/&ndash;/gi, '\u2013')
+    .replace(/&hellip;/gi, '\u2026')
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)))
+    /* tidy up the leftover whitespace */
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+/** strip tags + entities so a heading's text can be matched */
+function headingText(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .trim()
+}
+
+/**
+ * Split the CMS description into prose and specifications at whichever heading
+ * marks the specs. The markup varies per product — <h3>, <strong>, "Key
+ * Specifications", "Specifications and Features" — so match on the text rather
+ * than a fixed tag.
+ */
+function splitDescription(html: string): { description: string; specifications: string } {
+  const headingRe = /<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]>/gi
+  let match: RegExpExecArray | null
+
+  while ((match = headingRe.exec(html)) !== null) {
+    if (!/specification/i.test(headingText(match[0]))) continue
+
+    const before = html.slice(0, match.index)
+    /* drop a leading "Product Description" heading — the tab is already labelled */
+    const first = before.match(/<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]>/i)
+
+    return {
+      description:
+        first && /product description/i.test(headingText(first[0]))
+          ? before.replace(first[0], '')
+          : before,
+      specifications: html.slice(match.index + match[0].length),
+    }
+  }
+
+  return { description: html, specifications: '' }
 }
 
 interface SimilarProduct {
@@ -172,7 +268,9 @@ function ProductStrip({ title, products, stripRef, onScroll, addToCart, addToWis
 }
 
 export default function Productpage() {
-  const { id } = useParams<{ id: string }>()
+  // the route is /product/:slug and links use productPath(), which appends .html
+  const { slug } = useParams<{ slug: string }>()
+  const id = slug ? extractIdFromSlug(slug) : 0
   const { addToCart } = useCart()
   const { addToWishlist } = useWishlist()
   const { openQuoteForm } = useQuoteForm()
@@ -249,33 +347,16 @@ export default function Productpage() {
 
     async function load() {
       try {
-        const res = await fetch(`http://127.0.0.1:8001/proxy/product/${id}/`, {
-  headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
-})
+        const res = await fetch(`${API}/products/${id}`, {
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
+        })
 const json = await res.json()
-console.log('Product response (Django):', res.status, json)
-if (!json.id) throw new Error('Product not found')
-const rawProd: Product = {
-  id: json.id,
-  name: json.name,
-  price: json.price || 0,
-  end_user_price: json.price || 0,
-  image: json.image || '',
-  discount: 0,
-  short_description: json.description || '',
-  description: json.description || '',
-  warranty: '',
-  model: '',
-  sku: '',
-  qty: 10,
-  faq: '',
-  video_url: '',
-  availability: 1,
-  brand_id: null,
-  category_id: '',
-  alternative_products: null,
-  complementary_products: null,
-}
+        console.log('[ProductPage] backend response:', res.status, json)
+
+        // the API wraps the product in a data envelope
+        const productData = json.data || json
+        if (!productData.id) throw new Error('Product not found')
+        const rawProd: Product = productData
 
 
 
@@ -332,9 +413,14 @@ const rawProd: Product = {
   )
 
   const faqs = parseFaq(product.faq)
+  const { description, specifications } = splitDescription(product.description || '')
+  const hasSpecs = specifications.trim().length > 0
+  /* the Read more blurb shows only the prose — specs live in their own tab */
+  const readableDescription = htmlToReadableText(description)
   const price = formatPrice(product.end_user_price || product.price)
   const priceNum = Number(product.end_user_price || product.price)
   const isHighValue = priceNum >= quoteThreshold
+  const quoteRequired = priceNum > 0 && isHighValue
   const hasDiscount = product.discount > 0
   const originalPriceNum = hasDiscount ? Math.round(priceNum / (1 - product.discount / 100)) : 0
   const originalPrice = hasDiscount ? formatPrice(originalPriceNum) : null
@@ -353,8 +439,36 @@ const rawProd: Product = {
   /* thumbnail list — use product.images if present, otherwise just the main image */
   const thumbList = product.images && product.images.length > 0 ? product.images : [product.image]
 
+  /* the API packs the SEO strings into `sku` as "TITLE***DESCRIPTION***KEYWORDS" */
+  const seo = getSeo(product)
+  const canonicalUrl = `${window.location.origin}${productPath(product.name, product.id)}`
+  const socialImage = product.image ? getImageUrl(product.image) : ''
+
   return (
     <>
+      <Helmet>
+        <title>{seo.title}</title>
+        <meta name="description" content={seo.description} />
+        {seo.keywords && <meta name="keywords" content={seo.keywords} />}
+
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:title" content={seo.title} />
+        <meta property="og:description" content={product.short_description || seo.description} />
+        <meta property="og:image" content={socialImage} />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@promallshop" />
+        <meta name="twitter:site:id" content="1709918300" />
+        <meta name="twitter:creator" content="@promallshop" />
+        <meta name="twitter:title" content={seo.title} />
+        <meta name="twitter:description" content={product.short_description || seo.description} />
+        <meta name="twitter:image" content={socialImage} />
+        <meta name="twitter:url" content={canonicalUrl} />
+
+        <link rel="canonical" href={canonicalUrl} />
+      </Helmet>
+
       <nav className={styles.breadcrumb}>
         <Link to="/" className={styles.breadLink}>Home</Link>
         <span>→</span>
@@ -407,14 +521,14 @@ const rawProd: Product = {
             <p className={styles.catLabel}>{catLabel}</p>
             <h1 className={styles.productName}>{product.name}</h1>
 
-            {product.short_description && (
+            {product.description && (
               <div>
                 <p className={styles.shortDesc}>
                   {showFullDesc
-                    ? product.short_description
-                    : product.short_description.slice(0, 120) + (product.short_description.length > 120 ? '…' : '')}
+                    ? readableDescription
+                    : readableDescription.slice(0, 120) + (readableDescription.length > 120 ? '…' : '')}
                 </p>
-                {product.short_description.length > 120 && (
+                {readableDescription.length > 120 && (
                   <button
                     className={styles.readMoreBtn}
                     onClick={() => setShowFullDesc(v => !v)}
@@ -494,30 +608,30 @@ const rawProd: Product = {
                 disabled={product.qty <= 0}
                 onClick={() => {
                   if (product.qty <= 0) return
-                  if (priceNum > 0 && isHighValue) {
+                  if (quoteRequired) {
                     openQuoteForm({ id: product.id, name: product.name, price })
                   } else {
                     addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
                   }
                 }}
               >
-                {product.qty <= 0 ? 'Out of Stock' : (priceNum > 0 && isHighValue) ? 'Request for Quote' : 'Add to Cart'}
+                {product.qty <= 0 ? 'Out of Stock' : quoteRequired ? 'Request for Quote' : 'Add to Cart'}
               </button>
-              <button
-                className={styles.buyBtn}
-                disabled={product.qty <= 0}
-                onClick={() => {
-                  if (product.qty <= 0) return
-                  if (priceNum > 0 && isHighValue) {
-                    openQuoteForm({ id: product.id, name: product.name, price })
-                  } else {
+              {/* high-value products quote instead of checking out, so the quote
+                  action appears once — a second one here would duplicate it */}
+              {!quoteRequired && (
+                <button
+                  className={styles.buyBtn}
+                  disabled={product.qty <= 0}
+                  onClick={() => {
+                    if (product.qty <= 0) return
                     addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
                     navigate('/checkout')
-                  }
-                }}
-              >
-                {(priceNum > 0 && isHighValue) ? 'Request for Quote' : 'Buy Now'}
-              </button>
+                  }}
+                >
+                  Buy Now
+                </button>
+              )}
             </div>
 
             {/* perks bar */}
@@ -628,7 +742,7 @@ const rawProd: Product = {
 
         {/* ── TABS ── */}
         <div className={styles.tabs}>
-          {(['description', 'specs', 'faq'] as const).map(tab => (
+          {(['description', ...(hasSpecs ? (['specs'] as const) : []), 'faq'] as const).map(tab => (
             <button
               key={tab}
               className={`${styles.tab} ${activeTab === tab ? styles.tabActive : ''}`}
@@ -641,15 +755,20 @@ const rawProd: Product = {
 
         <div className={styles.tabContent}>
           {activeTab === 'description' && (
-            <div className={styles.descText}>
-              {product.sku
-                ? product.sku.split('***').map((line, i) => <p key={i}>{line.trim()}</p>)
-                : <p style={{ color: '#7f7f7f' }}>No description available.</p>
-              }
-            </div>
+            <div
+              className={styles.descHtml}
+              dangerouslySetInnerHTML={{
+                __html: description.trim() || '<p>No description available.</p>',
+              }}
+            />
           )}
           {activeTab === 'specs' && (
-            <div className={styles.descHtml} dangerouslySetInnerHTML={{ __html: product.description || '<p>No specifications available.</p>' }} />
+            <div
+              className={styles.descHtml}
+              dangerouslySetInnerHTML={{
+                __html: specifications.trim() || '<p>No specifications available.</p>',
+              }}
+            />
           )}
           {activeTab === 'faq' && (
             <div className={styles.faqList}>

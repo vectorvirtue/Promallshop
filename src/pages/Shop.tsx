@@ -12,6 +12,7 @@ import { productPath } from '../lib/slugs'
 import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
 import shop from '../assets/shop.gif'
+import shopSocialImage from '../assets/promall1crop-2@2x.png'
 interface ApiProduct {
   id: number
   name: string
@@ -319,12 +320,46 @@ export default function Shop(){
     startDrag,
     resetPrice: () => { setPriceMin(MIN_PRICE); setPriceMax(MAX_PRICE) },
   }
+
+  /* canonical + social URLs follow the current route, so /shop and
+     /shop/:category each declare themselves */
+  const shopUrl = `${window.location.origin}/shop`
+  /* imported rather than hardcoded — the asset lives in src/assets, so Vite
+     hashes it and the URL resolves wherever the app is deployed */
+  const shopImage = new URL(shopSocialImage, window.location.origin).toString()
     return(
         <>
         <Helmet>
           <title>
-            VC Solutions, Accessories and More — Promallshop
+            Nigeria’s Top Tech Store: VC Solutions, Accessories, and More | Promallshop
           </title>
+          <meta
+            name="description"
+            content="Find top video conferencing solutions, headsets, webcams, keyboards, coding & robotic kits, and accessories at Promallshop. Best deals today!"
+          />
+          <meta
+            name="keywords"
+            content="Wireless Headsets, Gaming Headsets, Noise-canceling Headphones, Bluetooth Headsets, Logitech H390 USB Headset, Best Webcams for Streaming, Logitech Webcams, Video Conferencing Tools, Video Conferencing Solutions, Mechanical Keyboards, Ergonomic Keyboards, Gaming Keyboards, Wireless Keyboard and Mouse, Curved Monitors, Samsung Odyssey Monitors, Touchscreen Displays, Interactive Touchscreen Displays, Digital Signage, Wireless Presentation Devices, Logitech Video Conferencing Accessories, Wireless Mouse for Gaming, Programmable Mouse, Gaming Mice, Best Coding and Robotics Kits, Programmable Robot Kits for Adults, Programmable Robot Kits for Beginners, Arduino Kits, Mobile Phone Accessories, Powerbanks, Belkin Accessories, Headphones, AirPods, Car Chargers, USB Cables, Accessories, Mouse, Office Equipment, Toner Cartridge, Printer, Toner, Cartridge, Sublimation Printer, Printing Near Me, DTF Printer, Printer Ink, Office, Equipment, Scanner, Yealink, Huawei, Samsung, Hikvision, Belkin, Logitech, Video Conferencing, Shop, Technology"
+          />
+
+          <meta property="og:url" content={shopUrl} />
+          <meta property="og:type" content="website" />
+          <meta property="og:title" content="PROMALLSHOP ECOMMERCE STORE" />
+          <meta
+            property="og:description"
+            content="Shop headsets, IT accessories, webcams, keyboards, coding kits, home automation, and office equipment at Promallshop. Discover deals on the latest tech."
+          />
+          <meta property="og:image" content={shopImage} />
+
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:site" content="@promallshop" />
+          <meta name="twitter:site:id" content="1709918300" />
+          <meta name="twitter:creator" content="@promallshop" />
+          <meta name="twitter:title" content="Promallshop Online Shopping" />
+          <meta name="twitter:image" content={shopImage} />
+          <meta name="twitter:url" content={shopUrl} />
+
+          <link rel="canonical" href={shopUrl} />
         </Helmet>
          <nav className={styles.breadcrumb}>
             <Link className={styles.link} to="/">Home</Link><span>→</span>

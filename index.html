@@ -32,14 +32,55 @@
     
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="src/assets/Promallshop NEW Logo 1.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nigeria's Top Tech Store: VC Solutions, Accessories, and More | Promallshop</title>
-    <meta name="description" content="Promallshop is Nigeria's leading e-commerce store for IT solutions — Video Conferencing, Headsets, Keyboards, IP Phones, Screens, and more. Shop top brands like Yealink, Logitech, Samsung, and Maxhub." />
-    <meta name="keywords" content="Promallshop, IT solutions Nigeria, video conferencing, headsets, keyboards, IP phones, Yealink, Logitech, Samsung, Maxhub, tech store Nigeria" />
-    <meta property="og:title" content="Nigeria's Top Tech Store: VC Solutions, Accessories, and More | Promallshop" />
-    <meta property="og:description" content="Shop top IT brands in Nigeria — Video Conferencing, Headsets, Keyboards, Screens and more on Promallshop." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://promallshop.com" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Title/description/keywords/og are NOT set here. This one file is served
+         for every route in the SPA, so any static copy would be the same on every
+         page and would compete with the per-page tags each page renders through
+         react-helmet-async (Home.tsx, Shop.tsx, Productpage.tsx). -->
+    <!-- Structured data stays here: Organization/WebSite describe the site itself,
+         and <head> is where crawlers expect them. Rendering these through Helmet
+         placed them in <body> instead. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Promallshop",
+        "url": "https://promallshop.com",
+        "logo": "https://promallshop.com/logo.png",
+        "description": "Promallshop is Nigeria and Ghana's leading tech store for IT equipment, video conferencing systems, computer accessories, coding kits, IP phones, screens, and more. Trusted brands: Logitech, Yealink, MAXHUB, Huawei, Samsung, LG, Sharp.",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "5B Adedeji Close, Opebi Ikeja",
+          "addressLocality": "Lagos",
+          "addressCountry": "NG"
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+234-703-264-7755",
+          "contactType": "customer service",
+          "email": "sales@promallshop.com"
+        },
+        "sameAs": [
+          "https://www.facebook.com/promallshop",
+          "https://www.instagram.com/promallshop"
+        ]
+      }
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Promallshop",
+        "url": "https://promallshop.com",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://promallshop.com/shop?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
   </head>
   <body>
     <!-- Google Tag Manager (noscript) -->

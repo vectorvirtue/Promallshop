@@ -456,7 +456,7 @@ export default function Navbar() {
               <p className={styles.popupSubtitle}>Access your dashboard and orders</p>
 
               <p className={styles.popupFooter}>
-                Don't have an account?{' '}
+                Have an account?{' '}
                 <Link
                   className={styles.popupLink}
                   to="/login"

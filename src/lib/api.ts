@@ -29,6 +29,12 @@ export function getImageUrl(path: string): string {
 
 const BASE_URL = import.meta.env.VITE_PUBLIC_API_URL as string
 
+if (import.meta.env.DEV && !BASE_URL) {
+  console.error(
+    '[api] VITE_PUBLIC_API_URL is not set. Copy .env.example to .env and restart the dev server.'
+  )
+}
+
 /* ── token helpers ── */
 export const getToken = (): string | null =>
   localStorage.getItem('token') ?? sessionStorage.getItem('token')
@@ -119,7 +125,10 @@ async function request<T>(
   options: RequestInit & { auth?: boolean } = {}
 ): Promise<T> {
   const { auth = false, ...rest } = options
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const url = `${BASE_URL}${path}`
+  const method = rest.method ?? 'GET'
+
+  const res = await fetch(url, {
     ...rest,
     headers: {
       ...baseHeaders(auth),
@@ -135,6 +144,20 @@ async function request<T>(
     data = text ? JSON.parse(text) : {}
   } catch {
     data = { message: text.slice(0, 200) }
+  }
+
+  if (import.meta.env.DEV) {
+    console.groupCollapsed(
+      `%c[api] ${method} ${path} → ${res.status}`,
+      `color: ${res.ok ? '#16a34a' : '#dc2626'}; font-weight: bold`
+    )
+    console.log('url  :', url)
+    if (res.ok) {
+      console.log('data :', data)
+    } else {
+      console.warn('error:', data)
+    }
+    console.groupEnd()
   }
 
   if (!res.ok) {
