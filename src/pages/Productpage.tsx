@@ -7,7 +7,6 @@ import { useQuoteForm } from '../context/QuoteFormContext'
 import styles from './Productpage.module.css'
 import { getMonthEndTarget, getTimeLeft as getCountdownTimeLeft } from '../lib/countdown'
 import { getImageUrl, checkHasOrderedBefore, deliveryCostApi, quoteApi, type DeliveryCost } from '../lib/api'
-import { extractIdFromSlug, productPath } from '../lib/slugs'
 
 const API = import.meta.env.VITE_PUBLIC_API_URL as string
 
@@ -19,7 +18,6 @@ interface Product {
   image: string
   images?: string[]
   discount: number
-  categoryOnlineDiscount?: number
   short_description: string
   description: string
   warranty: string
@@ -47,7 +45,6 @@ interface SimilarProduct {
 interface ApiCategory {
   category_id: number
   category_name: string
-  online_discount?: number
   products: SimilarProduct[]
 }
 
@@ -146,7 +143,7 @@ function ProductStrip({ title, products, stripRef, onScroll, addToCart, addToWis
                 <div className={styles.similarInfoRow}>
                   <div className={styles.similarInfo}>
                     <p className={styles.similarName}>
-                      <Link to={`${productPath(p.name, p.id)}`} className={styles.similarNameLink}>{p.name}</Link>
+                      <Link to={`/product/${p.id}`} className={styles.similarNameLink}>{p.name}</Link>
                     </p>
                     <p className={styles.similarPrice}>{price}</p>
                     <span className={styles.similarStars}>★★★★★</span>
@@ -175,11 +172,7 @@ function ProductStrip({ title, products, stripRef, onScroll, addToCart, addToWis
 }
 
 export default function Productpage() {
-  const { slug } = useParams<{ slug: string }>()
-  // Handle both old format (/product/123) and new format (/product/name-123)
-  const productId = slug 
-    ? (slug.match(/^\d+$/) ? parseInt(slug, 10) : extractIdFromSlug(slug))
-    : 0
+  const { id } = useParams<{ id: string }>()
   const { addToCart } = useCart()
   const { addToWishlist } = useWishlist()
   const { openQuoteForm } = useQuoteForm()
@@ -247,7 +240,7 @@ export default function Productpage() {
   }, [])
 
   useEffect(() => {
-    if (!productId) return
+    if (!id) return
     setLoading(true)
     setError('')
     setCategoryName('')
@@ -256,18 +249,33 @@ export default function Productpage() {
 
     async function load() {
       try {
-        const res = await fetch(`${API}/products/${productId}`, {
-          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
-        })
-        const json = await res.json()
-        if (import.meta.env.DEV) {
-          console.log('[ProductPage] product response:', json)
-        }
-        
-        // API wraps product in a data property
-        const productData = json.data || json
-        if (!productData.id) throw new Error('Product not found')
-        const rawProd: Product = productData
+        const res = await fetch(`http://127.0.0.1:8001/proxy/product/${id}/`, {
+  headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+})
+const json = await res.json()
+console.log('Product response (Django):', res.status, json)
+if (!json.id) throw new Error('Product not found')
+const rawProd: Product = {
+  id: json.id,
+  name: json.name,
+  price: json.price || 0,
+  end_user_price: json.price || 0,
+  image: json.image || '',
+  discount: 0,
+  short_description: json.description || '',
+  description: json.description || '',
+  warranty: '',
+  model: '',
+  sku: '',
+  qty: 10,
+  faq: '',
+  video_url: '',
+  availability: 1,
+  brand_id: null,
+  category_id: '',
+  alternative_products: null,
+  complementary_products: null,
+}
 
 
 
@@ -278,9 +286,6 @@ export default function Productpage() {
         const prod: Product = {
           ...rawProd,
           images: imageList.length > 0 ? imageList : undefined,
-        }
-        if (import.meta.env.DEV) {
-          console.log('[ProductPage] normalized product:', prod)
         }
         setProduct(prod)
         setActiveImg(imageList[0] ?? getImageUrl(rawProd.image))
@@ -296,17 +301,9 @@ export default function Productpage() {
           headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
         })
         const catJson = await catRes.json()
-        if (import.meta.env.DEV) {
-          console.log('[ProductPage] grouped products response:', catJson)
-        }
         const cats: ApiCategory[] = Array.isArray(catJson.data) ? catJson.data : []
         const matched = cats.find(c => String(c.category_id) === String(prod.category_id))
-        if (matched) {
-          setCategoryName(matched.category_name)
-          setProduct(current => current
-            ? { ...current, categoryOnlineDiscount: Number(matched.online_discount) || 0 }
-            : current)
-        }
+        if (matched) setCategoryName(matched.category_name)
 
         setAlternative(altProducts)
         setComplementary(compProducts)
@@ -318,7 +315,7 @@ export default function Productpage() {
       }
     }
     load()
-  }, [productId])
+  }, [id])
 
   if (loading) return (
     <div className={styles.loadingWrap}>
@@ -338,10 +335,8 @@ export default function Productpage() {
   const price = formatPrice(product.end_user_price || product.price)
   const priceNum = Number(product.end_user_price || product.price)
   const isHighValue = priceNum >= quoteThreshold
-  const quoteRequired = priceNum > 0 && isHighValue
-  const discount = product.categoryOnlineDiscount ?? product.discount ?? 0
-  const hasDiscount = discount > 0
-  const originalPriceNum = hasDiscount ? Math.round(priceNum / (1 - discount / 100)) : 0
+  const hasDiscount = product.discount > 0
+  const originalPriceNum = hasDiscount ? Math.round(priceNum / (1 - product.discount / 100)) : 0
   const originalPrice = hasDiscount ? formatPrice(originalPriceNum) : null
   const shipping = shippingData ? parseFloat(shippingData.amount) || 0 : 0
   const total = priceNum > 0 ? priceNum + shipping : 0
@@ -448,7 +443,7 @@ export default function Productpage() {
                 <span className={styles.oldPrice}>{originalPrice}</span>
               )}
               {hasDiscount && (
-                <span className={styles.discountTag}>{discount}% OFF</span>
+                <span className={styles.discountTag}>{product.discount}% OFF</span>
               )}
             </div>
 
@@ -494,42 +489,35 @@ export default function Productpage() {
             </div>
 
             <div className={styles.actions}>
-              {quoteRequired ? (
-                <button
-                  className={styles.addBtn}
-                  disabled={product.qty <= 0}
-                  onClick={() => {
-                    if (product.qty <= 0) return
+              <button
+                className={styles.addBtn}
+                disabled={product.qty <= 0}
+                onClick={() => {
+                  if (product.qty <= 0) return
+                  if (priceNum > 0 && isHighValue) {
                     openQuoteForm({ id: product.id, name: product.name, price })
-                  }}
-                >
-                  {product.qty <= 0 ? 'Out of Stock' : 'Request for Quote'}
-                </button>
-              ) : (
-                <>
-                  <button
-                    className={styles.addBtn}
-                    disabled={product.qty <= 0}
-                    onClick={() => {
-                      if (product.qty <= 0) return
-                      addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
-                    }}
-                  >
-                    {product.qty <= 0 ? 'Out of Stock' : 'Add to Cart'}
-                  </button>
-                  <button
-                    className={styles.buyBtn}
-                    disabled={product.qty <= 0}
-                    onClick={() => {
-                      if (product.qty <= 0) return
-                      addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
-                      navigate('/checkout')
-                    }}
-                  >
-                    Buy Now
-                  </button>
-                </>
-              )}
+                  } else {
+                    addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
+                  }
+                }}
+              >
+                {product.qty <= 0 ? 'Out of Stock' : (priceNum > 0 && isHighValue) ? 'Request for Quote' : 'Add to Cart'}
+              </button>
+              <button
+                className={styles.buyBtn}
+                disabled={product.qty <= 0}
+                onClick={() => {
+                  if (product.qty <= 0) return
+                  if (priceNum > 0 && isHighValue) {
+                    openQuoteForm({ id: product.id, name: product.name, price })
+                  } else {
+                    addToCart({ product_id: product.id, name: product.name, price, img: getImageUrl(product.image) }, qty)
+                    navigate('/checkout')
+                  }
+                }}
+              >
+                {(priceNum > 0 && isHighValue) ? 'Request for Quote' : 'Buy Now'}
+              </button>
             </div>
 
             {/* perks bar */}
@@ -577,7 +565,7 @@ export default function Productpage() {
             {/* price + discount */}
             <div className={styles.panelPriceRow}>
               <span className={styles.panelPrice}>{price}</span>
-              {hasDiscount && <span className={styles.panelDiscount}>{discount}% OFF</span>}
+              {hasDiscount && <span className={styles.panelDiscount}>{product.discount}% OFF</span>}
             </div>
 
             {/* payment summary */}

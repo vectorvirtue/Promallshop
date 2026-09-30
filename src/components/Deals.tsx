@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import { ShoppingBagIcon, Heart } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'  // <-- ADD THIS
 import styles from './Deal.module.css'
 import { getTimeLeft } from '../lib/countdown'
 import type { TimeLeft } from '../lib/countdown'
 import { getImageUrl } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
-import { productPath } from '../lib/slugs'
 
 const PROMALL_PROXY_URL =
   (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
@@ -66,10 +65,10 @@ export default function Deals() {
 
   const imageUrl = getImageUrl(deal.image)
 
-  // HANDLE BUY NOW CLICK
+  // HANDLE BUY NOW CLICK - ADD THIS FUNCTION
   const handleBuyNow = () => {
-    if (deal.product_id && deal.title) {
-      navigate(`${productPath(deal.title, deal.product_id)}`)
+    if (deal.product_id) {
+      navigate(`/product/${deal.product_id}`)
     } else {
       console.warn('No product linked to this deal')
     }
