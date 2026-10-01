@@ -34,6 +34,7 @@ interface OrderItem {
   image: string;
   date: string;
   status: string;
+  discount: string;  // calculated discount amount for display
   total: string;
   /* struck-through pre-discount price, empty when the product isn't discounted */
   formerTotal: string;
@@ -102,6 +103,7 @@ function toRows(
         image: '',
         date: formatDate(order.date_time),
         status: order.status || 'Pending',
+        discount: saved > 0 ? formatAmount(saved) : '0',
         total: formatAmount(gross),
         formerTotal: saved > 0 ? formatAmount(gross + saved) : '',
         actionStatus,
@@ -120,6 +122,8 @@ function toRows(
       const formerUnit = percent > 0 && percent < 100 && unit > 0
         ? unit / (1 - percent / 100)
         : 0;
+      
+      const discountAmount = formerUnit > 0 ? Math.round((formerUnit * qty) - lineAmount) : 0;
 
       return {
         id: `${order.id}-${item.id ?? index}`,
@@ -127,6 +131,7 @@ function toRows(
         image: product?.image ?? '',
         date: formatDate(order.date_time),
         status: order.status || 'Pending',
+        discount: discountAmount > 0 ? formatAmount(discountAmount) : '0',
         total: formatAmount(lineAmount),
         formerTotal: formerUnit > 0 ? formatAmount(Math.round(formerUnit * qty)) : '',
         actionStatus,
@@ -209,11 +214,12 @@ export const Orders: React.FC = () => {
         <>
           {/* Table Headers */}
           <div className={styles.tableHeader}>
-<div className={styles.colOrder}>Order</div>
-                <div className={styles.colDate}>Date</div>
-                <div className={styles.colStatus}>Status</div>
-                <div className={styles.colTotal}>Total</div>
-                <div className={styles.colActions}>Actions</div>
+            <div className={styles.colOrder}>Order</div>
+            <div className={styles.colDate}>Date</div>
+            <div className={styles.colStatus}>Status</div>
+            <div className={styles.colDiscount}>Discount</div>
+            <div className={styles.colTotal}>Total</div>
+            <div className={styles.colActions}>Actions</div>
           </div>
 
           {/* Orders List */}
@@ -240,17 +246,19 @@ export const Orders: React.FC = () => {
                   <span className={styles.cellText}>{order.status}</span>
                 </div>
 
-{/* Total */}
-                  <div className={styles.colTotal}>
-                    <span className={styles.totalText}>
-                      <span className={styles.currency}>₦</span> {order.total}
-                    </span>
-                    {order.formerTotal && (
-                      <span className={styles.formerTotal}>
-                        <span className={styles.currency}>₦</span> {order.formerTotal}
-                      </span>
-                    )}
-                  </div>
+                {/* Discount */}
+                <div className={styles.colDiscount}>
+                  <span className={styles.discountText}>
+                    <span className={styles.currency}>₦</span> {order.discount}
+                  </span>
+                </div>
+
+                {/* Total */}
+                <div className={styles.colTotal}>
+                  <span className={styles.totalText}>
+                    <span className={styles.currency}>₦</span> {order.total}
+                  </span>
+                </div>
 
                 {/* Actions */}
                 <div className={styles.colActions}>
