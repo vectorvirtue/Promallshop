@@ -5,7 +5,7 @@ import styles from "./Navbar.module.css";
 import vector from "../assets/Vector (8).svg";
 import { UserCircle2, ShoppingCartIcon, Menu, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
-import { productsApi, getImageUrl } from "../lib/api";
+import { productsApi, getImageUrl, quoteApi } from "../lib/api";
 import { useQuoteForm } from "../context/QuoteFormContext";
 import { useAuth } from "../context/AuthContext";
 import { productPath } from "../lib/slugs";
@@ -45,43 +45,39 @@ function QuoteForm({ onBack, productInfo }: { onBack: () => void; productInfo: {
     setSubmitStatus('idle')
 
     const formData = new FormData(e.currentTarget)
+
+    const quantity = Number(formData.get('quantity'))
     
-    // Prepare Web3Forms payload
+    // Validate quantity is at least 1
+    if (quantity < 1) {
+      setSubmitStatus('error')
+      setSubmitting(false)
+      return
+    }
+
     const payload = {
-      access_key: import.meta.env.VITE_WEB3FORMS_ACCESS_KEY,
-      subject: `Quote Request from ${formData.get('name')}`,
-      from_name: formData.get('name'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
-      company: formData.get('company'),
-      message: formData.get('message'),
-      quantity: formData.get('quantity'),
-      product: productInfo ? `${productInfo.name} (${productInfo.price})` : 'General Inquiry',
+      name: String(formData.get('name') ?? ''),
+      company_name: String(formData.get('company') ?? ''),
+      email: String(formData.get('email') ?? ''),
+      phone: String(formData.get('phone') ?? ''),
+      item_interested: String(formData.get('message') ?? '') || productInfo?.name || 'General Inquiry',
+      quantity,
     }
 
     try {
-      const response = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
+      const result = await quoteApi.submit(payload)
 
-      const result = await response.json()
-
-      if (result.success) {
-        setSubmitStatus('success')
-        formRef.current?.reset()
-        
-        // Close form after 2 seconds on success
-        setTimeout(() => {
-          onBack()
-        }, 2000)
-      } else {
+      if (result?.success === false) {
         throw new Error(result.message || 'Failed to submit')
       }
+
+      setSubmitStatus('success')
+      formRef.current?.reset()
+
+      // Close form after 2 seconds on success
+      setTimeout(() => {
+        onBack()
+      }, 2000)
     } catch (error) {
       console.error('Quote submission error:', error)
       setSubmitStatus('error')
@@ -127,7 +123,7 @@ function QuoteForm({ onBack, productInfo }: { onBack: () => void; productInfo: {
           required
           disabled={submitting}
         ></textarea>
-        <input className={styles.formInput} type="number" name="quantity" placeholder='Quantity' required disabled={submitting} />
+        <input className={styles.formInput} type="number" name="quantity" placeholder='Quantity' min="1" required disabled={submitting} />
         <button className={styles.quoteBtn} type="submit" disabled={submitting}>
           {submitting ? 'Sending...' : 'Send Message'}
         </button>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import styles from './ChangePassword.module.css';
@@ -74,7 +75,15 @@ export const ChangePassword: React.FC = () => {
       <form onSubmit={handleSubmit} noValidate>
         {/* current password */}
         <div className={styles.group}>
-          <label className={styles.label} htmlFor="currentPassword">Current Password</label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <label className={styles.label} htmlFor="currentPassword">Current Password</label>
+            <Link 
+              to="/forgotpassword" 
+              style={{ fontSize: '0.8em', color: '#F18E1A', textDecoration: 'none', fontWeight: 500 }}
+            >
+              Forgot password?
+            </Link>
+          </div>
           <div className={`${styles.inputWrap} ${errors.currentPassword ? styles.invalid : ''}`}>
             <input
               id="currentPassword"

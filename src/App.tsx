@@ -28,7 +28,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
-import ForgotPassword from "./pages/Forgot";
+import ForgotPassword from "./pages/ForgotPassword";
 import Product from "./pages/Productpage";
 import Events from "./components/Events";
 

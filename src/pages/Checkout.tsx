@@ -367,6 +367,9 @@ export default function Checkout() {
         : pickupLocation
 
       const orderPayload = {
+          product_ids: items
+          .map(item => Number(item.product_id))
+          .filter(id => Number.isFinite(id) && id > 0),
         billing_address: billingAddressStr,
         billing_address1: address.address,
         billing_address2: address.additionalInfo || '',

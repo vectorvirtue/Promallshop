@@ -59,14 +59,15 @@ export default function RequestQuoteModal({
 
     try {
       const payload: QuoteRequest = {
-        full_name: formData.full_name,
+        name: formData.full_name,
         company_name: formData.company_name,
         email: formData.email,
         phone: formData.phone,
-        product_name: productName,
+        item_interested: formData.message.trim()
+          ? `${productName} - ${formData.message.trim()}`
+          : productName,
         product_id: productId,
         quantity: formData.quantity,
-        message: formData.message,
       }
 
       await quoteApi.submit(payload)

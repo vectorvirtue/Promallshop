@@ -125,7 +125,7 @@ async function request<T>(
   options: RequestInit & { auth?: boolean } = {}
 ): Promise<T> {
   const { auth = false, ...rest } = options
-  const url = `${BASE_URL}${path}`
+  const url = /^https?:\/\//i.test(path) ? path : `${BASE_URL}${path}`
   const method = rest.method ?? 'GET'
 
   const res = await fetch(url, {
@@ -233,6 +233,25 @@ export const authApi = {
 
   me: () =>
     request('/me', { auth: true }),
+
+  // Forgot Password Flow
+  forgotPassword: (email: string) =>
+    request<{ success: boolean; message: string; email: string }>('/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  verifyResetCode: (email: string, code: string) =>
+    request<{ success: boolean; message: string }>('/verify-reset-code', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    }),
+
+  resetPassword: (payload: { email: string; code: string; password: string; password_confirmation: string }) =>
+    request<{ success: boolean; message: string }>('/reset-password', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 }
 
 /* ── products ── */
@@ -321,37 +340,39 @@ export const deliveryCostApi = {
 
 /* ── users ── */
 export const usersApi = {
-  /** full profile update — PUT /users/me */
+  /** Get current user profile */
+  getProfile: () => 
+    request('/profile', { 
+      method: 'GET',
+      auth: true 
+    }),
+
+  /** Update user profile */
   update: async (id: number | string | undefined, payload: Record<string, unknown>) => {
-    try {
-      return await request('/users/me', {
-        method: 'PUT',
-        auth: true,
-        body: JSON.stringify(payload),
-      })
-    } catch (err) {
-      const message = err instanceof Error ? err.message : ''
-      const notFound = /not found|404/i.test(message)
-      // don't build /users/undefined if the login payload had no id
-      if (!notFound || id === undefined || id === null) throw err
-      return request(`/users/${id}`, {
-        method: 'PUT',
-        auth: true,
-        body: JSON.stringify(payload),
-      })
-    }
+    return request('/profile', {
+      method: 'PUT',
+      auth: true,
+      body: JSON.stringify(payload),
+    })
   },
 
   /**
-   * Password change. The API has no dedicated route — /users/me/password is a
-   * 404 and /users/password just resolves to /users/{id} — so this reuses the
-   * profile update with the same field names as the register payload.
+   * Password change using the dedicated endpoint
    */
   changePassword: (id: number | string | undefined, payload: {
     current_password: string
     password: string
     password_confirmation: string
-  }) => usersApi.update(id, payload),
+  }) => 
+    request('/profile/change-password', {
+      method: 'POST',
+      auth: true,
+      body: JSON.stringify({
+        current_password: payload.current_password,
+        new_password: payload.password,
+        new_password_confirmation: payload.password_confirmation,
+      }),
+    }),
 }
 
 /* ── orders ── */export const ordersApi = {
@@ -392,14 +413,13 @@ export const orderItemsApi = {
 
 /* ── quote requests ── */
 export interface QuoteRequest {
-  full_name: string
+  name: string
   company_name: string
   email: string
   phone: string
-  product_name: string
-  product_id: number | string
+  item_interested: string
+  product_id?: number | string
   quantity: number
-  message?: string
 }
 
 export const quoteApi = {
@@ -418,10 +438,13 @@ export const quoteApi = {
 
   // Submit a quote request
   submit: (payload: QuoteRequest) =>
-    request('/quote-requests', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
+    request<{ success?: boolean; message?: string }>(
+      '/quote-request',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    ),
 }
 
 
