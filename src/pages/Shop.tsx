@@ -1,13 +1,13 @@
-import styles from './Shop.module.css'
+﻿import styles from './Shop.module.css'
 import logitechgif from '../assets/ad-banner.gif'
 import { Heart, ChevronDown, SlidersHorizontal } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Pagination } from 'antd'
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { productsApi, getImageUrl, quoteApi } from '../lib/api'
+import { productsApi, getImageUrl, quoteApi, subcategoriesApi } from '../lib/api'
 import { productPath } from '../lib/slugs'
 import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
@@ -20,6 +20,8 @@ interface ApiProduct {
   end_user_price: string | number
   image: string
   discount: number
+  category_id?: number | string
+  subcategory_id?: number | string
   categoryOnlineDiscount?: number
   availability: number
   qty?: number | string
@@ -32,11 +34,183 @@ interface ApiCategory {
   category_name: string
   category_slug: string
   category_description: string
+  faq?: string
   online_discount: number
   product_count: number
   products: ApiProduct[]
 }
 
+
+function FaqAccordion({ html }: { html: string }) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+
+  // Format: <p>Question<br>Answer line 1<br>Answer line 2<br>***</p>
+  // Each <p> is one FAQ item. First segment = question, rest (before ***) = answer.
+  const pairs = useMemo(() => {
+    const decodeHtml = (value: string) => {
+      const textarea = document.createElement('textarea')
+      textarea.innerHTML = value
+      return textarea.value
+    }
+
+    const normalized = decodeHtml(html)
+    const div = document.createElement('div')
+    div.innerHTML = normalized
+    const items: { question: string; answer: string }[] = []
+
+    let currentItem: { question: string; answer: string } | null = null
+
+    const flushItem = () => {
+      if (currentItem?.question && currentItem.answer.trim()) {
+        items.push({ ...currentItem, answer: currentItem.answer.trim() })
+      }
+      currentItem = null
+    }
+
+    const serializeNodes = (nodes: Node[]) => {
+      const container = document.createElement('div')
+      nodes.forEach(node => container.append(node.cloneNode(true)))
+      return container.innerHTML.trim()
+    }
+
+    const contentBlocks = Array.from(div.querySelectorAll('p, h1, h2, h3, h4, h5, h6'))
+    for (const node of contentBlocks) {
+      const segments: Node[][] = [[]]
+      if (node.tagName === 'P') {
+        Array.from(node.childNodes).forEach(child => {
+          if (child instanceof HTMLElement && child.tagName === 'BR') {
+            segments.push([])
+          } else {
+            segments[segments.length - 1].push(child)
+          }
+        })
+      } else {
+        segments[0] = Array.from(node.childNodes)
+      }
+
+      for (const segment of segments) {
+        const segmentHtml = serializeNodes(segment)
+        const segmentText = segment.map(child => child.textContent ?? '').join('').trim()
+        if (!segmentText) continue
+
+        if (/^\*{3,}$/.test(segmentText)) {
+          flushItem()
+          continue
+        }
+
+        const segmentContainer = document.createElement('div')
+        segmentContainer.innerHTML = segmentHtml
+        const strong = segmentContainer.querySelector('strong')
+        const strongText = strong?.textContent?.trim() ?? ''
+        const questionText = /\?$/.test(strongText)
+          ? strongText
+          : !strong && /\?$/.test(segmentText)
+            ? segmentText
+            : ''
+
+        if (questionText) {
+          flushItem()
+          if (strong) strong.remove()
+          currentItem = { question: questionText, answer: segmentContainer.innerHTML.trim() }
+        } else if (currentItem) {
+          const answerBlock = node.tagName === 'P' ? `<p>${segmentHtml}</p>` : segmentHtml
+          currentItem.answer += `${currentItem.answer ? ' ' : ''}${answerBlock}`
+        }
+      }
+    }
+
+    flushItem()
+
+    if (items.length === 0) {
+      const lines = normalized.replace(/\r/g, '').split('\n')
+      let currentQuestion: string | null = null
+      let currentAnswer: string[] = []
+
+      const flush = () => {
+        if (!currentQuestion) return
+        const answer = currentAnswer.join('\n').trim()
+        if (answer) {
+          items.push({ question: currentQuestion, answer })
+        }
+      }
+
+      for (const line of lines) {
+        const trimmed = line.trim()
+        const headingMatch = trimmed.match(/^#{1,6}\s*(?:\[(.+?)\]\([^)]*\)|(.+))$/)
+
+        if (headingMatch) {
+          flush()
+          currentQuestion = (headingMatch[1] || headingMatch[2] || '').trim()
+          currentAnswer = []
+          continue
+        }
+
+        if (!currentQuestion) {
+          if (!trimmed || /^\*{3,}$/.test(trimmed) || /^-+$/.test(trimmed)) continue
+          if (/\?$/.test(trimmed) || /^\d+\.?\s*.*\?$/.test(trimmed)) {
+            currentQuestion = trimmed.replace(/^\d+\.?\s*/, '')
+          }
+          continue
+        }
+
+        if (/^\*{3,}$/.test(trimmed) || /^-+$/.test(trimmed)) {
+          flush()
+          currentQuestion = null
+          currentAnswer = []
+          continue
+        }
+
+        if (trimmed) {
+          currentAnswer.push(trimmed)
+        }
+      }
+
+      flush()
+    }
+
+    return items
+  }, [html])
+
+  if (pairs.length === 0) return null
+
+  return (
+    <section className={styles.categoryFaq}>
+      <h2>Frequently Asked Questions</h2>
+      <div className={styles.faqList}>
+        {pairs.map((item, i) => (
+          <div key={i} className={styles.faqItem}>
+            <button
+              className={`${styles.faqQuestion} ${openIndex === i ? styles.faqQuestionOpen : ''}`}
+              onClick={() => setOpenIndex(openIndex === i ? null : i)}
+            >
+              <span>{item.question.replace(/<[^>]*>/g, '')}</span>
+              <motion.span
+                animate={{ rotate: openIndex === i ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ display: 'flex', flexShrink: 0 }}
+              >
+                <ChevronDown size={16} />
+              </motion.span>
+            </button>
+            <AnimatePresence initial={false}>
+              {openIndex === i && (
+                <motion.div
+                  className={styles.faqAnswer}
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <div dangerouslySetInnerHTML={{ __html: item.answer }} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
 
 function Stars({ count }: { count: number }) {
   return (
@@ -124,8 +298,7 @@ export default function Shop(){
  const { addToCart } = useCart()
  const { addToWishlist } = useWishlist()
  const { openQuoteForm } = useQuoteForm()
- const navigate = useNavigate()
- const { category: categoryParam, term: searchTermParam } = useParams<{ category?: string; term?: string }>()
+ const { category: categoryParam, subcategory: _subcategoryParam, term: searchTermParam } = useParams<{ category?: string; subcategory?: string; term?: string }>()
  const [searchParams] = useSearchParams()
  const searchQuery = (searchTermParam || searchParams.get('q') || '').trim().toLowerCase()
  const [currentPage, setCurrentPage] = useState(1)
@@ -133,6 +306,9 @@ export default function Shop(){
  const [activeCat, setActiveCat] = useState<string | null>(null)
  const [mobileCatOpen, setMobileCatOpen] = useState(false)
  const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
+  const [hoveredCat, setHoveredCat] = useState<number | null>(null)
+  const [hoveredCatY, setHoveredCatY] = useState(0)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
  /* api state */
  const [categories, setCategories] = useState<ApiCategory[]>([])
@@ -140,10 +316,16 @@ export default function Shop(){
  const [loadingProducts, setLoadingProducts] = useState(true)
  const [fetchError, setFetchError] = useState('')
  const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
+ const [selectedSubcategory, setSelectedSubcategory] = useState<{ id: number; name: string } | null>(null)
  const [quoteThreshold, setQuoteThreshold] = useState(2000000)
+  const [subcategoriesMap, setSubcategoriesMap] = useState<Record<number, { id: number; name: string; slug: string }[]>>({})
+
+ const fetchDone = useRef(false)
 
  useEffect(() => {
-   // Fetch quote threshold
+   if (fetchDone.current) return
+   fetchDone.current = true
+
    quoteApi.getThreshold()
      .then(res => setQuoteThreshold(res.threshold))
      .catch(() => setQuoteThreshold(2000000))
@@ -160,9 +342,23 @@ export default function Shop(){
          })),
        })) : []
        setCategories(cats)
-       // flatten all products from all categories by default
-       const allProducts = cats.flatMap(c => c.products)
-       setProducts(allProducts)
+
+       // If URL has a category slug, pre-select it — do this here so no separate
+       // useEffect can ever overwrite a user's subsequent click
+       const slug = categoryParam
+       const matched = slug ? cats.find(c =>
+         c.category_slug === slug ||
+         c.category_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') === slug
+       ) : null
+
+       if (matched) {
+         setSelectedCategory(matched.category_id)
+         setActiveCat(matched.category_name)
+         setOpenCat(matched.category_name)
+         setProducts(matched.products)
+       } else {
+         setProducts(cats.flatMap(c => c.products))
+       }
      })
      .catch((err) => {
        console.error('Products fetch error:', err)
@@ -171,38 +367,24 @@ export default function Shop(){
      .finally(() => setLoadingProducts(false))
  }, [])
 
- /* filter by selected category */
- useEffect(() => {
-   if (selectedCategory === null) {
-     const allProducts = categories.flatMap(c => c.products)
-     setProducts(allProducts)
-   } else {
-     const cat = categories.find(c => c.category_id === selectedCategory)
-     setProducts(cat?.products ?? [])
-   }
-   setCurrentPage(1)
- }, [selectedCategory, categories])
+  useEffect(() => {
+    subcategoriesApi.getGrouped()
+      .then((res: unknown) => {
+        const r = res as { data?: unknown; success?: boolean }
+        const raw = Array.isArray(r.data) ? r.data : Array.isArray(res) ? res as unknown[] : []
+        const data = raw as Array<{ category_id: string | number; subcategories: Array<{ id: number; name: string; slug: string }> }>
+        const map: Record<number, { id: number; name: string; slug: string }[]> = {}
+        data.forEach(group => {
+          if (group.subcategories?.length) {
+            map[Number(group.category_id)] = group.subcategories.map(s => ({ id: s.id, name: s.name, slug: s.slug }))
+          }
+        })
+        setSubcategoriesMap(map)
+      })
+      .catch(() => {})
+  }, [])
 
- /* pre-select category from URL param */
- useEffect(() => {
-   const slug = categoryParam
-   if (!slug || categories.length === 0) {
-     // No category in URL - clear all selections
-     setActiveCat(null)
-     setOpenCat(null)
-     setSelectedCategory(null)
-     return
-   }
-   const matched = categories.find(c =>
-     c.category_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') === slug ||
-     c.category_slug === slug
-   )
-   if (matched) {
-     setSelectedCategory(matched.category_id)
-     setActiveCat(matched.category_name)
-     setOpenCat(matched.category_name)
-   }
- }, [categoryParam, categories])
+
 
  /* price range state */
  const MIN_PRICE = 0
@@ -210,7 +392,7 @@ export default function Shop(){
  const [priceMin, setPriceMin] = useState(MIN_PRICE)
  const [priceMax, setPriceMax] = useState(MAX_PRICE)
 
- const pageSize = 6
+ const pageSize = 8
 
  const parseProductPrice = (value: string | number) => {
    if (typeof value === 'number') return value
@@ -234,16 +416,41 @@ export default function Shop(){
   function toggleCat(cat: ApiCategory) {
     const isCurrentlyActive = activeCat === cat.category_name
     if (isCurrentlyActive) {
-      // Clear filter - go to /shop
-      navigate('/shop')
       setActiveCat(null)
       setOpenCat(null)
       setSelectedCategory(null)
+      setSelectedSubcategory(null)
+      setProducts(categories.flatMap(c => c.products))
+      setCurrentPage(1)
     } else {
-      // Navigate to category URL
-      const slug = cat.category_slug || cat.category_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-      navigate(`/shop/${slug}`)
+      setActiveCat(cat.category_name)
+      setOpenCat(cat.category_name)
+      setSelectedCategory(cat.category_id)
+      setSelectedSubcategory(null)
+      setProducts(cat.products)
+      setCurrentPage(1)
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function matchesSubcategory(product: ApiProduct, subcategoryId: number) {
+    const ids = [product.subcategory_id, product.category_id]
+    return ids.some(id => Number(id) === subcategoryId)
+  }
+
+  function handleSubcategoryClick(sub: { id: number; name: string; slug: string }, categoryId: number) {
+    setHoveredCat(null)
+    setSelectedSubcategory(sub)
+    const matchedCat = categories.find(c => c.category_id === categoryId)
+    if (matchedCat) {
+      setActiveCat(matchedCat.category_name)
+      setOpenCat(matchedCat.category_name)
+      setSelectedCategory(matchedCat.category_id)
+      const filteredProducts = matchedCat.products.filter(product => matchesSubcategory(product, sub.id))
+      setProducts(filteredProducts)
+      setCurrentPage(1)
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const formatPrice = (n: number) => '₦ ' + n.toLocaleString('en-NG')
@@ -329,6 +536,7 @@ export default function Shop(){
   const shopImage = new URL(shopSocialImage, window.location.origin).toString()
     return(
         <>
+         <img className={styles.gif} src={shop} alt="Belkin gif" />
         <Helmet>
           <title>
             Nigeria’s Top Tech Store: VC Solutions, Accessories, and More | Promallshop
@@ -399,12 +607,15 @@ export default function Shop(){
              <div className={styles.dropdownPanel}>
                <p className={styles.dropdownPanelTitle}>Browse Categories</p>
                {categories.map((cat) => (
-               <div key={cat.category_id} className={styles.catItem}>
-                 <button
-                   className={`${styles.catBtn} ${activeCat === cat.category_name ? styles.catBtnActive : ''}`}
-                   onClick={() => toggleCat(cat)}
+                 <div key={cat.category_id} className={styles.catItem}>
+                   {/* mobile catItem has no hover */}
+                  <button
+                    className={`${styles.catBtn} ${activeCat === cat.category_name ? styles.catBtnActive : ""}`}
                  >
-                   <span>{cat.category_name.toUpperCase()}</span>
+                   <span className={styles.catText}>
+                     <span>{cat.category_name.toUpperCase()}</span>
+                     <span className={styles.catCount} style={{ listStyle: 'none', fontWeight: 600, color: 'rgb(241, 142, 26)', padding: '0.4em 1.5em', fontSize: '0.8em' }}>{cat.product_count} products</span>
+                   </span>
                    <motion.span animate={{ rotate: openCat === cat.category_name ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ display: 'flex' }}>
                      <ChevronDown size={14} />
                    </motion.span>
@@ -412,7 +623,10 @@ export default function Shop(){
                  <AnimatePresence initial={false}>
                    {openCat === cat.category_name && (
                      <motion.div className={styles.subList} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
-                       <li className={styles.subItem} style={{ listStyle: 'none', fontWeight: 600, color: '#F18E1A' }}>{cat.product_count} products</li>
+                        {(subcategoriesMap[cat.category_id] || []).map(sub => (
+                          <li key={sub.id} className={styles.subItem} style={{ listStyle: 'none' }} onClick={() => handleSubcategoryClick(sub, cat.category_id)}>{sub.name}</li>
+                        ))}
+                       <li className={styles.subItem} style={{ listStyle: 'none', fontWeight: 600, color: '#F18E1A', padding: '0.4em 1.5em' }}>{cat.product_count} products</li>
                      </motion.div>
                    )}
                  </AnimatePresence>
@@ -420,7 +634,7 @@ export default function Shop(){
              ))}
              {selectedCategory !== null && (
                <button
-                 onClick={() => navigate('/shop')}
+                 onClick={() => { setActiveCat(null); setOpenCat(null); setSelectedCategory(null); setSelectedSubcategory(null); setProducts(categories.flatMap(c => c.products)); setCurrentPage(1) }}
                  style={{ width: '100%', padding: '0.5em', background: 'none', border: 'none', color: '#F18E1A', cursor: 'pointer', fontSize: '0.8em', fontFamily: 'inherit', fontWeight: 600 }}
                >
                  Clear filter
@@ -465,59 +679,103 @@ export default function Shop(){
    Categories
    </h5>
    <div className={styles.two}>
-     {categories.map((cat) => (
-       <div key={cat.category_id} className={styles.catItem}>
-         <button
-           className={`${styles.catBtn} ${activeCat === cat.category_name ? styles.catBtnActive : ''}`}
-           onClick={() => toggleCat(cat)}
+       {categories.map((cat) => (
+         <div
+           key={cat.category_id}
+           className={styles.catItem}
+           onMouseEnter={(e) => {
+             if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+             setHoveredCat(cat.category_id)
+             setHoveredCatY(e.currentTarget.getBoundingClientRect().top)
+           }}
+           onMouseLeave={() => {
+             closeTimerRef.current = setTimeout(() => setHoveredCat(null), 120)
+           }}
          >
-                   <span>{cat.category_name.toUpperCase()}</span>
-           <motion.span
-             animate={{ rotate: openCat === cat.category_name ? 180 : 0 }}
-             transition={{ duration: 0.25 }}
-             style={{ display: 'flex' }}
+           <button
+             className={`${styles.catBtn} ${activeCat === cat.category_name ? styles.catBtnActive : ""}`}
+             onClick={() => toggleCat(cat)}
            >
-             <ChevronDown size={14} />
-           </motion.span>
-         </button>
-         <AnimatePresence initial={false}>
-           {openCat === cat.category_name && (
-             <motion.div
-               className={styles.subList}
-               initial={{ height: 0, opacity: 0 }}
-               animate={{ height: 'auto', opacity: 1 }}
-               exit={{ height: 0, opacity: 0 }}
-               transition={{ duration: 0.25, ease: 'easeInOut' }}
+             <span className={styles.catText}>
+               <span>{cat.category_name.toUpperCase()}</span>
+               <span className={styles.catCount} style={{ listStyle: 'none', fontWeight: 600, color: 'rgb(241, 142, 26)', padding: '0.4em 1.5em', fontSize: '0.8em' }}>{cat.product_count} products</span>
+             </span>
+             <motion.span
+               animate={{ rotate: openCat === cat.category_name ? 180 : 0 }}
+               transition={{ duration: 0.25 }}
+               style={{ display: "flex" }}
              >
-               <li
-                 className={styles.subItem}
-                 style={{ listStyle: 'none', fontWeight: 600, color: '#F18E1A', padding: '0.4em 1.5em' }}
-               >
-                 {cat.product_count} products
-               </li>
-             </motion.div>
-           )}
-         </AnimatePresence>
-       </div>
-     ))}
-     {selectedCategory !== null && (
-       <button
-         onClick={() => navigate('/shop')}
-         style={{ width: '100%', marginTop: '0.5em', background: 'none', border: 'none', color: '#F18E1A', cursor: 'pointer', fontSize: '0.8em', fontFamily: 'inherit', fontWeight: 600 }}
-       >
-         Clear filter
-       </button>
-     )}
+               <ChevronDown size={14} />
+             </motion.span>
+           </button>
+         </div>
+       ))}
+       {selectedCategory !== null && (
+         <button
+           onClick={() => { setActiveCat(null); setOpenCat(null); setSelectedCategory(null); setSelectedSubcategory(null); setProducts(categories.flatMap(c => c.products)); setCurrentPage(1) }}
+           style={{ width: "100%", marginTop: "0.5em", background: "none", border: "none", color: "#F18E1A", cursor: "pointer", fontSize: "0.8em", fontFamily: "inherit", fontWeight: 600 }}
+         >
+           Clear filter
+         </button>
+       )}
+     
    </div>
    </div>
    <img src={logitechgif} alt="" />
    </aside>
+    {/* Subcategory popup — floats over products */}
+    <AnimatePresence>
+      {hoveredCat !== null && (subcategoriesMap[hoveredCat] || []).length > 0 && (
+        <motion.div
+          className={styles.subPopup}
+          style={{ top: hoveredCatY }}
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -8 }}
+          transition={{ duration: 0.15 }}
+          onMouseEnter={() => {
+            if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+          }}
+          onMouseLeave={() => {
+            closeTimerRef.current = setTimeout(() => setHoveredCat(null), 120)
+          }}
+        >
+          {(subcategoriesMap[hoveredCat] || []).map(sub => (
+            <li
+              key={sub.id}
+              className={styles.subItem}
+              style={{ listStyle: "none" }}
+              onClick={() => handleSubcategoryClick(sub, hoveredCat!)}
+            >
+              {sub.name}
+            </li>
+          ))}
+        </motion.div>
+      )}
+    </AnimatePresence>
    <div className={styles.productContainer}>
            
 
     <h5 className={styles.head}>
-   Products
-   </h5>
+      {selectedSubcategory ? selectedSubcategory.name : 'Products'}
+      {selectedSubcategory && (
+        <button
+          onClick={() => {
+            setSelectedSubcategory(null)
+            if (selectedCategory !== null) {
+              const cat = categories.find(c => c.category_id === selectedCategory)
+              setProducts(cat?.products ?? [])
+            } else {
+              setProducts(categories.flatMap(c => c.products))
+            }
+            setCurrentPage(1)
+          }}
+          style={{ marginLeft: '1em', fontSize: '0.7em', fontWeight: 400, background: 'none', border: 'none', color: '#F18E1A', cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          ✕ clear
+        </button>
+      )}
+    </h5>
 
      {loadingProducts && (
        <div className={styles.grid}>
@@ -666,12 +924,33 @@ export default function Shop(){
               showSizeChanger={false}
             />
           </div>
+
       </>
      )}
-      <img className={styles.gif} src={shop} alt="Belkin gif" />
+      
    </div>
    
        </div>
+
+      {/* Category Description and FAQ — full page width */}
+      {selectedCategory && (() => {
+        const selectedCat = categories.find(cat => cat.category_id === selectedCategory);
+        if (!selectedCat) return null;
+
+        return (
+          <div className={styles.categoryInfoWrapper}>
+            {selectedCat.category_description && (
+              <div className={styles.categoryDescription}>
+                <h2>About {selectedCat.category_name}</h2>
+                <div dangerouslySetInnerHTML={{ __html: selectedCat.category_description }} />
+              </div>
+            )}
+
+            {selectedCat.faq && <FaqAccordion html={selectedCat.faq} />}
+          </div>
+        );
+      })()}
+      
         </>
     )
 }

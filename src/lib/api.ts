@@ -273,7 +273,14 @@ export const productsApi = {
   getDiscounted: () => cachedRequest('/products/discounted'),
   getAvailable: () => cachedRequest('/products/available'),
   getByCategory: (categoryId: number | string) => request(`/products/category/${categoryId}`),
+  getBySubcategory: (subcategoryId: number | string) => request(`/products/subcategory/${subcategoryId}`),
   getByBrand: (brandId: number | string) => request(`/products/brand/${brandId}`),
+}
+
+/* ── subcategories ── */
+export const subcategoriesApi = {
+  getAll: () => request('/subcategories'),
+  getGrouped: () => request('/subcategories/grouped'),
 }
 
 /* ── cart ── */
@@ -348,7 +355,7 @@ export const usersApi = {
     }),
 
   /** Update user profile */
-  update: async (id: number | string | undefined, payload: Record<string, unknown>) => {
+  update: async (_id: number | string | undefined, payload: Record<string, unknown>) => {
     return request('/profile', {
       method: 'PUT',
       auth: true,
@@ -359,7 +366,7 @@ export const usersApi = {
   /**
    * Password change using the dedicated endpoint
    */
-  changePassword: (id: number | string | undefined, payload: {
+  changePassword: (_id: number | string | undefined, payload: {
     current_password: string
     password: string
     password_confirmation: string

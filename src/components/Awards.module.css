@@ -1,9 +1,9 @@
 .container {
   background: #2d3748;
-  padding: 3em 0;
+  padding: 3em 0 0;
   display: flex;
   flex-direction: column;
-  gap: 3em;
+  gap: 0.75em;
 }
 
 .contentWrapper {
@@ -105,10 +105,10 @@
 /* Stamps Flexbox Container */
 .stampsContainer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
-  padding: 2em var(--page-x);
-  gap: 3em;
+  padding: 0 var(--page-x) 1em;
+  gap: 4em;
   background: #2d3748;
 }
 
@@ -219,7 +219,7 @@
 /* Responsive */
 @media (max-width: 1024px) {
   .container {
-    padding: 2.5em 0;
+    padding: 2.5em 0 0;
   }
 
   .contentWrapper {
@@ -229,7 +229,7 @@
   }
 
   .stampsContainer {
-    padding: 1.5em var(--page-x);
+    padding: 0 var(--page-x) 1em;
   }
 
   .stamp {
@@ -265,7 +265,7 @@
 
 @media (max-width: 768px) {
   .container {
-    padding: 2em 0;
+    padding: 2em 0 0;
   }
 
   .contentWrapper {
@@ -274,7 +274,7 @@
   }
 
   .stampsContainer {
-    padding: 1.2em var(--page-x);
+    padding: 0 var(--page-x) 0.75em;
     gap: 1.5em;
   }
 
@@ -335,11 +335,11 @@
 
 @media (max-width: 480px) {
   .container {
-    gap: 2em;
+    gap: 0.5em;
   }
 
   .stampsContainer {
-    padding: 1em var(--page-x);
+    padding: 0 var(--page-x) 0.75em;
     gap: 1em;
     flex-direction: column;
   }
