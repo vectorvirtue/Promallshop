@@ -47,7 +47,20 @@ export default function FAQ(){
     return(
         
         <>
-              <Helmet><title>FAQs — Promallshop </title></Helmet>
+              <Helmet>
+                <title>FAQs — Promallshop </title>
+                <meta name="description" content="Find answers to common questions about ordering, payment, delivery, and returns at Promallshop." />
+                <link rel="canonical" href={`${window.location.origin}/faqs`} />
+                <script type="application/ld+json">{JSON.stringify({
+                  '@context': 'https://schema.org',
+                  '@type': 'FAQPage',
+                  mainEntity: faqs.map(f => ({
+                    '@type': 'Question',
+                    name: f.q,
+                    acceptedAnswer: { '@type': 'Answer', text: f.a },
+                  })),
+                })}</script>
+              </Helmet>
 
        <nav className={styles.breadcrumb}>
         <Link className={styles.link} to="/">

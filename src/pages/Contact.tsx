@@ -19,7 +19,22 @@ export default function Contact() {
   return (
     <>
       <Helmet>
-        <title>Contact Us — Promallshop </title>
+        <title>Contact Us — Promallshop</title>
+        <meta name="description" content="Get in touch with Promallshop. Call, email, or visit us for enquiries about our tech products and services." />
+        <link rel="canonical" href={`${window.location.origin}/contact`} />
+        <script type="application/ld+json">{JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'ContactPage',
+          name: 'Contact Promallshop',
+          url: `${window.location.origin}/contact`,
+          publisher: {
+            '@type': 'Organization',
+            name: 'Promallshop',
+            url: window.location.origin,
+            telephone: '+234-703-264-7755',
+            email: 'sales@promallshop.com',
+          },
+        })}</script>
       </Helmet>
 
       <nav className={styles.breadcrumb}>

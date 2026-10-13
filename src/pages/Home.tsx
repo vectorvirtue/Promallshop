@@ -48,6 +48,34 @@ export default function Home() {
         <meta name="twitter:url" content={homeUrl} />
 
         <link rel="canonical" href={homeUrl} />
+
+        <script type="application/ld+json">{JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: 'Promallshop',
+          url: window.location.origin,
+          logo: `${window.location.origin}/favicon.svg`,
+          contactPoint: {
+            '@type': 'ContactPoint',
+            telephone: '+234-703-264-7755',
+            contactType: 'customer service',
+            areaServed: 'NG',
+            availableLanguage: 'English',
+          },
+          sameAs: ['https://twitter.com/promallshop'],
+        })}</script>
+
+        <script type="application/ld+json">{JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'Promallshop',
+          url: window.location.origin,
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: `${window.location.origin}/shop?q={search_term_string}`,
+            'query-input': 'required name=search_term_string',
+          },
+        })}</script>
       </Helmet>
 
       <Hero />

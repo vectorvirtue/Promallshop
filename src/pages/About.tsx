@@ -7,6 +7,16 @@ export default function About() {
     <>
       <Helmet>
         <title>About Us — Promallshop</title>
+        <meta name="description" content="Learn about Promallshop — Nigeria's top technology store for video conferencing solutions, IT accessories, and office equipment." />
+        <link rel="canonical" href={`${window.location.origin}/about-us`} />
+        <script type="application/ld+json">{JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'AboutPage',
+          name: 'About Promallshop',
+          url: `${window.location.origin}/about-us`,
+          description: 'Promallshop is Nigeria\'s top technology store for video conferencing solutions, IT accessories, and office equipment.',
+          publisher: { '@type': 'Organization', name: 'Promallshop', url: window.location.origin },
+        })}</script>
       </Helmet>
 
       <nav className={styles.breadcrumb}>

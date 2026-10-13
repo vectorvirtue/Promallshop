@@ -467,6 +467,36 @@ const json = await res.json()
         <meta name="twitter:url" content={canonicalUrl} />
 
         <link rel="canonical" href={canonicalUrl} />
+
+        <script type="application/ld+json">{JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.name,
+          image: socialImage,
+          description: product.short_description || seo.description,
+          sku: product.model || String(product.id),
+          brand: { '@type': 'Brand', name: 'Promallshop' },
+          offers: {
+            '@type': 'Offer',
+            url: canonicalUrl,
+            priceCurrency: 'NGN',
+            price: Number(product.end_user_price || product.price) || undefined,
+            availability: product.availability === 0 || Number(product.qty) <= 0
+              ? 'https://schema.org/OutOfStock'
+              : 'https://schema.org/InStock',
+            seller: { '@type': 'Organization', name: 'Promallshop' },
+          },
+        })}</script>
+
+        <script type="application/ld+json">{JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${window.location.origin}/` },
+            { '@type': 'ListItem', position: 2, name: 'Shop', item: `${window.location.origin}/shop` },
+            { '@type': 'ListItem', position: 3, name: product.name, item: canonicalUrl },
+          ],
+        })}</script>
       </Helmet>
 
       <nav className={styles.breadcrumb}>

@@ -528,12 +528,77 @@ export default function Shop(){
     resetPrice: () => { setPriceMin(MIN_PRICE); setPriceMax(MAX_PRICE) },
   }
 
-  /* canonical + social URLs follow the current route, so /shop and
-     /shop/:category each declare themselves */
+  /* canonical always matches the actual current URL so each category page
+     is indexed separately by search engines */
+  const canonicalUrl = `${window.location.origin}${window.location.pathname}`
   const shopUrl = `${window.location.origin}/shop`
-  /* imported rather than hardcoded — the asset lives in src/assets, so Vite
-     hashes it and the URL resolves wherever the app is deployed */
   const shopImage = new URL(shopSocialImage, window.location.origin).toString()
+
+  /* ── Schema.org structured data ── */
+  const selectedCatData = selectedCategory ? categories.find(c => c.category_id === selectedCategory) : null
+
+  // BreadcrumbList — always present, extended when a category is selected
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${window.location.origin}/` },
+      { '@type': 'ListItem', position: 2, name: 'Shop', item: `${window.location.origin}/shop` },
+      ...(selectedCatData ? [{
+        '@type': 'ListItem',
+        position: 3,
+        name: selectedCatData.category_name,
+        item: canonicalUrl,
+      }] : []),
+      ...(selectedSubcategory ? [{
+        '@type': 'ListItem',
+        position: 4,
+        name: selectedSubcategory.name,
+        item: canonicalUrl,
+      }] : []),
+    ],
+  }
+
+  // ItemList — the visible products on the current page
+  const itemListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: selectedCatData ? selectedCatData.category_name : 'All Products',
+    url: canonicalUrl,
+    numberOfItems: filteredProducts.length,
+    itemListElement: currentProducts.map((p, i) => {
+      const price = Number(p.end_user_price || p.price) || 0
+      return {
+        '@type': 'ListItem',
+        position: i + 1,
+        item: {
+          '@type': 'Product',
+          name: p.name,
+          image: getImageUrl(p.image),
+          url: `${window.location.origin}/product/${p.id}`,
+          offers: {
+            '@type': 'Offer',
+            priceCurrency: 'NGN',
+            price: price > 0 ? price : undefined,
+            availability: p.availability === 0 || Number(p.qty) <= 0
+              ? 'https://schema.org/OutOfStock'
+              : 'https://schema.org/InStock',
+            seller: { '@type': 'Organization', name: 'Promallshop' },
+          },
+        },
+      }
+    }),
+  }
+
+  // Organization — once, on the base /shop page only
+  const organizationSchema = !selectedCategory ? {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Promallshop',
+    url: window.location.origin,
+    logo: `${window.location.origin}/favicon.svg`,
+    sameAs: ['https://twitter.com/promallshop'],
+  } : null
     return(
         <>
          <img className={styles.gif} src={shop} alt="Belkin gif" />
@@ -567,7 +632,14 @@ export default function Shop(){
           <meta name="twitter:image" content={shopImage} />
           <meta name="twitter:url" content={shopUrl} />
 
-          <link rel="canonical" href={shopUrl} />
+          <link rel="canonical" href={canonicalUrl} />
+
+          {/* Schema.org structured data */}
+          <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
+          <script type="application/ld+json">{JSON.stringify(itemListSchema)}</script>
+          {organizationSchema && (
+            <script type="application/ld+json">{JSON.stringify(organizationSchema)}</script>
+          )}
         </Helmet>
          <nav className={styles.breadcrumb}>
             <Link className={styles.link} to="/">Home</Link><span>→</span>

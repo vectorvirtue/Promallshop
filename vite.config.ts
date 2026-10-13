@@ -10,15 +10,17 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       proxy: {
-        // Proxies /vite-proxy/* → Django backend, stripping the /vite-proxy prefix.
-        // This avoids CORS entirely: the browser calls same-origin /vite-proxy/...
-        // and Vite forwards the request to Django.
         '/vite-proxy': {
           target: djangoProxy.replace(/\/proxy\/?$/, ''),
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/vite-proxy/, '/proxy'),
         },
       },
+    },
+    test: {
+      environment: 'jsdom',         // simulates a browser DOM
+      globals: true,                // lets you use describe/it/expect without imports
+      setupFiles: './src/test/setup.ts',  // runs before every test file
     },
   }
 })

@@ -662,7 +662,7 @@ export default function Checkout() {
                       name="firstName"
                       value={address.firstName}
                       onChange={handleAddressChange}
-                      placeholder="Faith"
+                      placeholder="First Name"
                     />
                   </div>
                   <div className={styles.formGroup}>
@@ -672,7 +672,7 @@ export default function Checkout() {
                       name="lastName"
                       value={address.lastName}
                       onChange={handleAddressChange}
-                      placeholder="Amaugo"
+                      placeholder="Last Name"
                     />
                   </div>
                   <div className={styles.formGroup}>
@@ -694,7 +694,7 @@ export default function Checkout() {
                       type="email"
                       value={address.email}
                       onChange={handleAddressChange}
-                      placeholder="faith@example.com"
+                      placeholder="Email Address"
                     />
                   </div>
                   <div className={`${styles.formGroup} ${styles.fullWidth}`}>
@@ -704,7 +704,7 @@ export default function Checkout() {
                       name="address"
                       value={address.address}
                       onChange={handleAddressChange}
-                      placeholder="5B Adedeji Close, Opebi Ikeja, Lagos."
+                      placeholder="Street Address"
                     />
                   </div>
                   <div className={styles.formGroup}>
