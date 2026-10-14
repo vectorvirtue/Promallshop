@@ -1,7 +1,7 @@
 export const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
 const PROMALL_PROXY_URL =
   (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
-  'http://127.0.0.1:8001/proxy'
+  'https://manager.promallshop.com/proxy'
 /**
  * Converts a relative image path from the API into a full URL.
  * Appends ?ngrok-skip-browser-warning=true so ngrok doesn't intercept image requests.
