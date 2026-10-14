@@ -6,6 +6,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const djangoProxy = env.VITE_PROMALL_PROXY_URL || 'https://manager.promallshop.com/proxy'
 
+  
   return {
     plugins: [react()],
     server: {
