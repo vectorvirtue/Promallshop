@@ -39,6 +39,19 @@
   margin: 0;
 }
 
+.saleSchedule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em 1em;
+  color: #555;
+  font-size: 0.78em;
+}
+
+.saleSchedule strong {
+  color: #F18E1A;
+  font-weight: 700;
+}
+
 /* ── countdown timer ── */
 .countdown {
   display: flex;
@@ -48,18 +61,27 @@
 }
 
 .timeBlock {
+  box-sizing: border-box;
   background: #0B0B0B;
   color: #fff;
   padding: 0.3em 0.8em;
   border-radius: 0.4em;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4em;
   font-weight: 600;
   font-size: 0.9em;
 }
 
+.timeBlock:nth-child(1) { width: 5.8em; }
+.timeBlock:nth-child(2) { width: 6.5em; }
+.timeBlock:nth-child(3),
+.timeBlock:nth-child(4) { width: 8.1em; }
+
 .timeBlock span {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
   font-size: 1.4em;
   font-weight: 800;
   color: #F18E1A;
@@ -288,6 +310,10 @@ margin: 0 auto;
     font-size: 0.75em;
     padding: 0.2em 0.5em;
   }
+  .timeBlock:nth-child(1) { width: 5.8em; }
+  .timeBlock:nth-child(2) { width: 6.5em; }
+  .timeBlock:nth-child(3),
+  .timeBlock:nth-child(4) { width: 8.1em; }
   .timeBlock span {
     font-size: 1.1em;
   }

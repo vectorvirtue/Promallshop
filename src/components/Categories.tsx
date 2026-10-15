@@ -18,12 +18,12 @@ const PROMALL_PROXY_URL =
   (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
   'http://127.0.0.1:8001/proxy'
 
-type GifTile = {
+type CategoryGif = {
   id: number
-  title: string
-  media_file: string
-  link: string
-  display_order: number
+  category_id: number
+  category_name: string
+  gif_url: string
+  is_active: boolean
 }
 
 const staticCategories = [
@@ -71,43 +71,13 @@ const StaticCategoryItem = ({ cat }: { cat: typeof staticCategories[number] }) =
   </motion.div>
 )
 
-// A backend GIF tile — optionally links to gif.link; same visual as StaticCategoryItem
-const GifCategoryItem = ({ gif }: { gif: GifTile }) => {
-  const inner = (
-    <>
-      <motion.img
-        src={gif.media_file}
-        alt=""
-        className={styles.categoryImage}
-        whileHover={{ scale: 1.08 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-      />
-      <h3 className={styles.categoryTitle}>{gif.title}</h3>
-    </>
-  )
-
-  return (
-    <motion.div className={styles.category} variants={itemVariants}>
-      {gif.link ? (
-        <a
-          href={gif.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}
-        >
-          {inner}
-        </a>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {inner}
-        </div>
-      )}
-    </motion.div>
-  )
-}
+const categorySlug = (name: string) => name
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-|-$/g, '')
 
 export default function Categories() {
-  const [gifTiles, setGifTiles] = useState<GifTile[]>([])
+  const [categoryGifs, setCategoryGifs] = useState<CategoryGif[]>([])
 
   useEffect(() => {
     const url = import.meta.env.DEV
@@ -117,11 +87,8 @@ export default function Categories() {
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
-        if (data.status === 'success' && Array.isArray(data.gifs)) {
-          const sorted = [...data.gifs].sort(
-            (a: GifTile, b: GifTile) => (a.display_order ?? 0) - (b.display_order ?? 0)
-          )
-          setGifTiles(sorted)
+        if (data.status === 'success' && Array.isArray(data.category_gifs)) {
+          setCategoryGifs(data.category_gifs.filter((gif: CategoryGif) => gif.is_active && gif.gif_url))
         }
       })
       .catch(() => {
@@ -129,20 +96,26 @@ export default function Categories() {
       })
   }, [])
 
-  // All tiles: static categories first, then backend GIF tiles appended
+  const gifsBySlug = new Map(categoryGifs.map((gif) => [categorySlug(gif.category_name), gif]))
+  const staticSlugs = new Set(staticCategories.map((category) => category.slug))
+
   const allTiles = [
-    ...staticCategories.map((cat) => ({ type: 'static' as const, cat })),
-    ...gifTiles.map((gif) => ({ type: 'gif' as const, gif })),
+    ...staticCategories.map((cat) => ({
+      cat: { ...cat, img: gifsBySlug.get(cat.slug)?.gif_url ?? cat.img },
+    })),
+    ...categoryGifs
+      .filter((gif) => !staticSlugs.has(categorySlug(gif.category_name)))
+      .map((gif) => ({
+        cat: { img: gif.gif_url, label: gif.category_name, slug: categorySlug(gif.category_name) },
+      })),
   ]
 
   // Desktop: split into rows of 7
   const row1 = allTiles.slice(0, 7)
   const row2 = allTiles.slice(7)
 
-  const renderTile = (item: typeof allTiles[number], i: number) =>
-    item.type === 'static'
-      ? <StaticCategoryItem key={`s-${i}`} cat={item.cat} />
-      : <GifCategoryItem key={`g-${item.gif.id}`} gif={item.gif} />
+  const renderTile = (item: typeof allTiles[number]) =>
+    <StaticCategoryItem key={item.cat.slug} cat={item.cat} />
 
   return (
     <div className={styles.categories}>
@@ -165,7 +138,7 @@ export default function Categories() {
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
         >
-          {row1.map((item, i) => renderTile(item, i))}
+          {row1.map(renderTile)}
         </motion.div>
 
         {row2.length > 0 && (
@@ -176,7 +149,7 @@ export default function Categories() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
           >
-            {row2.map((item, i) => renderTile(item, i + 7))}
+            {row2.map(renderTile)}
           </motion.div>
         )}
       </div>
@@ -189,7 +162,7 @@ export default function Categories() {
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
       >
-        {allTiles.map((item, i) => renderTile(item, i))}
+        {allTiles.map(renderTile)}
       </motion.div>
     </div>
   )

@@ -153,6 +153,13 @@ export default function FlashSales() {
 
   const isHighValue = (price: number) => price >= quoteThreshold
 
+  const formatSaleDateTime = (value: string) => {
+    const date = new Date(value)
+    return Number.isNaN(date.getTime())
+      ? ''
+      : date.toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })
+  }
+
   // format countdown values
   const days = Math.floor(secondsLeft / 86400)
   const hours = Math.floor((secondsLeft % 86400) / 3600)
@@ -169,6 +176,16 @@ export default function FlashSales() {
           </span>
           <h2 className={styles.title}>Flash Sales</h2>
           <p className={styles.subtitle}>Every listed new product from our trusted sellers</p>
+          {flashSale && (
+            <div className={styles.saleSchedule}>
+              {formatSaleDateTime(flashSale.start_datetime) && (
+                <span><strong>Starts</strong> {formatSaleDateTime(flashSale.start_datetime)}</span>
+              )}
+              {formatSaleDateTime(flashSale.end_datetime) && (
+                <span><strong>Ends</strong> {formatSaleDateTime(flashSale.end_datetime)}</span>
+              )}
+            </div>
+          )}
           {/* Countdown display */}
           {flashSale && secondsLeft > 0 && (
             <div className={styles.countdown}>

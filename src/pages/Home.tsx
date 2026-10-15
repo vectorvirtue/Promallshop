@@ -11,8 +11,9 @@ import Blogs from "../components/Blogs"
 import Awards from "../components/Awards"
 import { Helmet } from "react-helmet-async"
 import homeSocialImage from "../assets/promall1crop-2@2x.png"
+import AffiliateBanner, { type AffiliateBannerRecord } from "../components/AffiliateBanner"
 
-export default function Home() {
+export default function Home({ affiliateBanners }: { affiliateBanners: AffiliateBannerRecord[] }) {
   const homeUrl = `${window.location.origin}/`
   const homeImage = new URL(homeSocialImage, window.location.origin).toString()
 
@@ -80,6 +81,9 @@ export default function Home() {
 
       <Hero />
       <Categories />
+      {affiliateBanners
+        .filter((banner) => banner.placement === 'below_categories')
+        .map((banner) => <AffiliateBanner key={banner.id} banner={banner} />)}
       <FlashSales />
       <FeaturedProducts />
             

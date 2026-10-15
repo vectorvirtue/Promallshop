@@ -44,6 +44,10 @@
 .width{
   width: 100%;
 }
+.bannerLink {
+  display: block;
+  width: 100%;
+}
 .shopNow {
   color: white;
   font-weight: 700;

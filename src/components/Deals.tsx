@@ -16,6 +16,7 @@ interface TodayDeal {
   title: string
   subtitle: string
   image: string
+  buy_now_url?: string
   product_id: number 
   display_order: number
   start_datetime: string
@@ -67,7 +68,9 @@ export default function Deals() {
 
   // HANDLE BUY NOW CLICK - ADD THIS FUNCTION
   const handleBuyNow = () => {
-    if (deal.product_id) {
+    if (deal.buy_now_url) {
+      window.location.assign(deal.buy_now_url)
+    } else if (deal.product_id) {
       navigate(`/product/${deal.product_id}`)
     } else {
       console.warn('No product linked to this deal')

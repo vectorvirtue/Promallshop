@@ -7,15 +7,36 @@ import Breadcrumb from './Breadcrumb'
 interface Event {
   id: number
   title: string
-  date: string
-  time: string
+  event_datetime: string
   location: string
   description: string
   image: string
   registration_link: string
-  event_type: string // webinar, product_launch, training, exhibition, conference, customer_event, partner_event
+  event_type: string
+  event_type_name: string
   is_online: boolean
 }
+
+interface ApiEvent {
+  id: number
+  name: string
+  description: string
+  event_datetime: string
+  location: string
+  event_type?: { name: string; slug: string }
+  image: string
+  registration_link: string
+}
+
+interface ApiEventType {
+  name: string
+  slug: string
+  display_order?: number
+}
+
+const PROMALL_PROXY_URL =
+  (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
+  'http://127.0.0.1:8001/proxy'
 
 const cardVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -28,43 +49,40 @@ const cardVariants = {
 
 export default function Events() {
   const [events, setEvents] = useState<Event[]>([])
+  const [eventTypes, setEventTypes] = useState<ApiEventType[]>([])
   const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<string>('all')
 
   useEffect(() => {
-    // Fetch events from API
-    // For now, using mock data
-    const mockEvents: Event[] = [
-      {
-        id: 1,
-        title: 'Video Conferencing Solutions Webinar',
-        date: '2025-02-15',
-        time: '10:00 AM',
-        location: 'Online - Zoom',
-        description: 'Learn about the latest video conferencing solutions for enterprise businesses.',
-        image: '/assets/events/webinar.jpg',
-        registration_link: 'https://example.com/register',
-        event_type: 'webinar',
-        is_online: true,
-      },
-      {
-        id: 2,
-        title: 'Tech Innovation Summit 2025',
-        date: '2025-03-20',
-        time: '9:00 AM',
-        location: 'Lagos Convention Centre',
-        description: 'Join us for the biggest technology innovation summit in West Africa.',
-        image: '/assets/events/summit.jpg',
-        registration_link: 'https://example.com/register',
-        event_type: 'conference',
-        is_online: false,
-      },
-    ]
-    
-    setTimeout(() => {
-      setEvents(mockEvents)
-      setLoading(false)
-    }, 500)
+    const url = import.meta.env.DEV
+      ? '/vite-proxy/combined/promallshop/'
+      : `${PROMALL_PROXY_URL}/combined/promallshop/`
+
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) throw new Error(`Events request failed: ${response.status}`)
+        return response.json()
+      })
+      .then((data) => {
+        const types: ApiEventType[] = Array.isArray(data.event_types) ? data.event_types : []
+        setEventTypes(types.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)))
+
+        const upcoming: ApiEvent[] = Array.isArray(data.upcoming_events) ? data.upcoming_events : []
+        setEvents(upcoming.map((event) => ({
+          id: event.id,
+          title: event.name,
+          event_datetime: event.event_datetime,
+          location: event.location,
+          description: event.description,
+          image: event.image,
+          registration_link: event.registration_link,
+          event_type: event.event_type?.slug ?? '',
+          event_type_name: event.event_type?.name ?? '',
+          is_online: event.event_type?.slug === 'online',
+        })))
+      })
+      .catch(() => setEvents([]))
+      .finally(() => setLoading(false))
   }, [])
 
   const filteredEvents = activeFilter === 'all' 
@@ -80,12 +98,14 @@ export default function Events() {
     })
   }
 
+  const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+
   const filters = [
     { value: 'all', label: 'All Events' },
-    { value: 'webinar', label: 'Webinars' },
-    { value: 'product_launch', label: 'Product Launches' },
-    { value: 'training', label: 'Training' },
-    { value: 'conference', label: 'Conferences' },
+    ...eventTypes.map((type) => ({ value: type.slug, label: type.name })),
   ]
 
   return (
@@ -156,7 +176,7 @@ export default function Events() {
 
               <div className={styles.cardContent}>
                 <span className={styles.eventType}>
-                  {event.event_type.replace('_', ' ').toUpperCase()}
+                  {event.event_type_name.toUpperCase()}
                 </span>
                 
                 <h3 className={styles.eventTitle}>{event.title}</h3>
@@ -166,11 +186,11 @@ export default function Events() {
                 <div className={styles.eventMeta}>
                   <div className={styles.metaItem}>
                     <Calendar size={16} />
-                    <span>{formatDate(event.date)}</span>
+                    <span>{formatDate(event.event_datetime)}</span>
                   </div>
                   <div className={styles.metaItem}>
                     <Clock size={16} />
-                    <span>{event.time}</span>
+                    <span>{formatTime(event.event_datetime)}</span>
                   </div>
                   <div className={styles.metaItem}>
                     <MapPin size={16} />

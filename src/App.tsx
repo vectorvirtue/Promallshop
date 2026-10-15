@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { HelmetProvider } from "react-helmet-async";
 import { Component, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { CartProvider } from "./context/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
 import { QuoteFormProvider } from "./context/QuoteFormContext";
@@ -31,6 +32,11 @@ import Checkout from "./pages/Checkout";
 import ForgotPassword from "./pages/ForgotPassword";
 import Product from "./pages/Productpage";
 import Events from "./components/Events";
+import { type AffiliateBannerRecord } from "./components/AffiliateBanner";
+
+const PROMALL_PROXY_URL =
+  (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
+  'http://127.0.0.1:8001/proxy'
 
 /* ── Error Boundary — contains crashes so one broken component can't blank the whole app ── */
 class ErrorBoundary extends Component<
@@ -45,7 +51,7 @@ class ErrorBoundary extends Component<
   }
 }
 
-function AnimatedRoutes() {
+function AnimatedRoutes({ affiliateBanners }: { affiliateBanners: AffiliateBannerRecord[] }) {
   const location = useLocation();
   const routeKey = location.pathname.startsWith('/shop') ? '/shop' : location.pathname
 
@@ -54,7 +60,7 @@ function AnimatedRoutes() {
       <Routes location={location} key={routeKey}>
         <Route path="/" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
-            <Home />
+            <Home affiliateBanners={affiliateBanners} />
           </motion.div>
         } />
         <Route path="/shop/:category?" element={
@@ -153,6 +159,31 @@ function AnimatedRoutes() {
 }
 
 export default function App() {
+  const [affiliateBanners, setAffiliateBanners] = useState<AffiliateBannerRecord[]>([])
+  const topAffiliateBanners = affiliateBanners.filter((banner) => banner.placement === 'top')
+
+  useEffect(() => {
+    const url = import.meta.env.DEV
+      ? '/vite-proxy/combined/promallshop/'
+      : `${PROMALL_PROXY_URL}/combined/promallshop/`
+
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) throw new Error(`Affiliate banner request failed: ${response.status}`)
+        return response.json()
+      })
+      .then((data) => {
+        if (data.status === 'success' && Array.isArray(data.affiliate_banners)) {
+          setAffiliateBanners(
+            data.affiliate_banners
+              .filter((banner: AffiliateBannerRecord) => banner.is_active !== false && (banner.image || banner.media_file))
+              .sort((a: AffiliateBannerRecord, b: AffiliateBannerRecord) => (a.display_order ?? 0) - (b.display_order ?? 0))
+          )
+        }
+      })
+      .catch(() => setAffiliateBanners([]))
+  }, [])
+
   return (
     <HelmetProvider>
       <AuthProvider>
@@ -167,10 +198,10 @@ export default function App() {
                   richColors
                   toastOptions={{ style: { fontFamily: 'inherit' } }}
                 />
-                <Topnav />
+                <Topnav affiliateBanner={topAffiliateBanners[0]} />
                 <Navbar />
                 <ErrorBoundary>
-                  <AnimatedRoutes />
+                  <AnimatedRoutes affiliateBanners={affiliateBanners} />
                 </ErrorBoundary>
                 <Chatbox />
                 <BacktoTop />
