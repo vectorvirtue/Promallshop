@@ -6,8 +6,8 @@
   background-attachment: fixed;
   background-repeat: no-repeat;
   width: 100%;
-  min-height: 450px;
-  padding: 2em var(--page-x);
+  height: clamp(190px, 53vw, 490px);
+  padding: 1em var(--page-x);
   box-sizing: border-box;
   display: flex;
   align-items: stretch;
@@ -20,7 +20,7 @@
   flex: 1 1 65%;
   border-radius: 1em;
   overflow: hidden;
-  min-height: 380px;
+  min-height: 0;
   transition: opacity 0.6s ease;
 }
 
@@ -45,45 +45,46 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 1em;
-  padding: 2em;
+  gap: 0.6em;
+  padding: 1.2em;
   /* dark gradient on the left so white text stays readable */
   background: linear-gradient(to right, rgba(0, 0, 0, 0.7) 45%, transparent 80%);
   z-index: 1;
 }
 
-.subtitle {
-  background-color: white;
-  border-top-left-radius: 1.5em;
-  border-bottom-right-radius: 1.5em;
-  color: #0B0B0B;
+/* .subtitle {
+  
+  color: #d97d10;
   font-weight: 500;
-  font-size: 0.85em;
+  font-size: 1.85em;
   padding: 0.45em 1em;
   display: inline-block;
+  text-transform: uppercase;
 }
 
-.title {
+.subtitle {
   text-transform: uppercase;
   font-size: 1.9em;
   font-weight: 800;
   line-height: 1.15;
   margin: 0;
   color: white;
-  max-width: 50%;
-}
+  max-width: 72%;
+} */
 
 .button {
+  margin-top: 8em;
   border: 2px solid #F18E1A;
   background-color: #F18E1A;
   color: white;
   border-radius: 0.4em;
   font-weight: 700;
   cursor: pointer;
-  padding: 0.7em 2em;
-  font-size: 0.95em;
+  padding: 0.55em 1.5em;
+  font-size: 0.85em;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  margin-left: 1.3em;
 }
 
 .button:hover {
@@ -93,15 +94,16 @@
 
 /* ── right: deals panel ────────────────────────────── */
 .dealsPanel {
-  flex: 0 0 280px;
+  flex: 0 0 27%;
+  min-width: 220px;
   background: white;
-  border-radius: 1em;
-  padding: 1.2em 1em;
+  border-radius: 0.8em;
+  padding: 0.8em;
   display: flex;
   flex-direction: column;
-  gap: 0.8em;
+  gap: 0.45em;
   box-shadow: 0 2px 12px rgba(0,0,0,0.12);
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .dealsLabel {
@@ -151,8 +153,8 @@
 }
 
 .dealImage {
-  width: 72px;
-  height: 72px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   border-radius: 0.5em;
   border: 1px solid #F18E1A;

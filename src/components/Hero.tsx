@@ -152,12 +152,12 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            {currentBanner.title && (
+            {/* {currentBanner.title && (
               <h2 className={styles.subtitle}>{currentBanner.title}</h2>
             )}
             {currentBanner.text && (
               <h1 className={styles.title}>{currentBanner.text}</h1>
-            )}
+            )} */}
             {currentBanner.link ? (
               <a href={currentBanner.link} className={styles.button}>
                 Shop Now
