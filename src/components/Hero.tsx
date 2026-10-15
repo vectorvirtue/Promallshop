@@ -127,7 +127,7 @@ export default function Hero() {
   const sliderStyle = bannersLoading
     ? { background: '#1a1a2e' }
     : currentBanner
-      ? { backgroundImage: `url(${currentBanner.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+      ? { backgroundImage: `url(${currentBanner.image})`, backgroundSize: 'cover', backgroundPosition: 'left center' }
       : { background: '#1a1a2e' }; // no banners — plain dark card
 
   return (

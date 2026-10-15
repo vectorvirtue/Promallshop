@@ -48,7 +48,7 @@
   gap: 0.6em;
   padding: 1.2em;
   /* dark gradient on the left so white text stays readable */
-  background: linear-gradient(to right, rgba(0, 0, 0, 0.7) 45%, transparent 80%);
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.3) 45%, transparent 80%);
   z-index: 1;
 }
 
@@ -230,6 +230,7 @@
   .button {
     padding: 0.6em 1.8em;
     font-size: 0.9em;
+    margin-left: 0;
   }
   
   .dealsPanel {
@@ -249,6 +250,7 @@
 @media (max-width: 768px) {
   .hero {
     flex-direction: column;
+    height: auto;
     min-height: unset;
     padding: 1em var(--page-x);
     gap: 1em;
