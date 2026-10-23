@@ -466,6 +466,13 @@ export default function Shop(){
   }
 
   const isHighValue = (price: number) => price >= quoteThreshold
+  const isUnavailable = (product: ApiProduct) =>
+    Number(product.qty) <= 0 || product.availability === 0
+  const handleAvailability = (product: ApiProduct) => {
+    if (isUnavailable(product)) {
+      handleRequestQuote(product)
+    }
+  }
 
   /* ── custom pointer-based dual slider ── */
   const trackRef = useRef<HTMLDivElement>(null)
@@ -959,9 +966,11 @@ export default function Shop(){
 
             <button
               className={styles.addToCart}
-              disabled={Number(p.qty) <= 0 || p.availability === 0}
               onClick={() => {
-                if (Number(p.qty) <= 0 || p.availability === 0) return
+                if (isUnavailable(p)) {
+                  handleAvailability(p)
+                  return
+                }
                 
                 const priceNum = Number(p.end_user_price || p.price)
                 if (priceNum > 0 && isHighValue(priceNum)) {
@@ -978,8 +987,8 @@ export default function Shop(){
                 }
               }}
             >
-              {Number(p.qty) <= 0 || p.availability === 0 
-                ? 'Out of Stock' 
+              {isUnavailable(p)
+                ? 'Request for Quote' 
                 : (Number(p.end_user_price || p.price) > 0 && isHighValue(Number(p.end_user_price || p.price)))
                 ? 'Request for Quote'
                 : 'Add to Cart'}
