@@ -109,12 +109,6 @@ export default function FlashSales() {
     productsApi.getAll()
       .then((res: unknown) => {
         const r = res as { success: boolean; data: ApiCategory[] }
-        if (import.meta.env.DEV) {
-          console.log('[FlashSales] category discounts:', (r.data ?? []).map(category => ({
-            category: category.category_name,
-            online_discount: category.online_discount,
-          })))
-        }
         const all = (Array.isArray(r.data) ? r.data : []).flatMap(c =>
           c.products.map(product => ({
             ...product,

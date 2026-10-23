@@ -71,12 +71,6 @@ export default function FeaturedProducts() {
     productsApi.getAll()
       .then((res: unknown) => {
         const r = res as { success: boolean; data: ApiCategory[] }
-        if (import.meta.env.DEV) {
-          console.log('[FeaturedProducts] category discounts:', (r.data ?? []).map(category => ({
-            category: category.category_name,
-            online_discount: category.online_discount,
-          })))
-        }
         const cats = Array.isArray(r.data) ? r.data.map(category => ({
           ...category,
           products: category.products.map(product => ({

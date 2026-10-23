@@ -6,7 +6,7 @@ import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
 import styles from './Productpage.module.css'
 import { getMonthEndTarget, getTimeLeft as getCountdownTimeLeft } from '../lib/countdown'
-import { getImageUrl, checkHasOrderedBefore, deliveryCostApi, quoteApi, type DeliveryCost } from '../lib/api'
+import { getImageUrl, checkHasOrderedBefore, deliveryCostApi, productsApi, quoteApi, type DeliveryCost } from '../lib/api'
 import { extractIdFromSlug, productPath } from '../lib/slugs'
 import { Helmet } from 'react-helmet-async'
 
@@ -31,6 +31,7 @@ interface Product {
   availability: number
   brand_id: string | null
   category_id: string
+  category_name?: string
   alternative_products: string | null
   complementary_products: string | null
   meta_title?: string
@@ -138,12 +139,6 @@ interface SimilarProduct {
   discount: number
 }
 
-interface ApiCategory {
-  category_id: number
-  category_name: string
-  products: SimilarProduct[]
-}
-
 function Stars({ count, size = 16 }: { count: number; size?: number }) {
   return (
     <span className={styles.stars}>
@@ -170,11 +165,11 @@ function parseFaq(raw: string): { q: string; a: string }[] {
 /* ── countdown uses shared month-end utility ── */
 
 /* ── fetch multiple products by ID in parallel ── */
-async function fetchProductsByIds(ids: string): Promise<SimilarProduct[]> {
-  const parsed = ids
+async function fetchProductsByIds(ids: string | null | undefined): Promise<SimilarProduct[]> {
+  const parsed = (ids ?? '')
     .split(',')
     .map(s => s.trim())
-    .filter(Boolean)
+    .filter(id => /^\d+$/.test(id) && Number(id) > 0)
 
   if (parsed.length === 0) return []
 
@@ -347,14 +342,10 @@ export default function Productpage() {
 
     async function load() {
       try {
-        const res = await fetch(`${API}/products/${id}`, {
-          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
-        })
-const json = await res.json()
-        console.log('[ProductPage] backend response:', res.status, json)
+        const response = await productsApi.getOne<Product | { success?: boolean; data?: Product }>(id)
 
         // the API wraps the product in a data envelope
-        const productData = json.data || json
+        const productData = (response as { data?: Product }).data ?? response as Product
         if (!productData.id) throw new Error('Product not found')
         const rawProd: Product = productData
 
@@ -369,6 +360,7 @@ const json = await res.json()
           images: imageList.length > 0 ? imageList : undefined,
         }
         setProduct(prod)
+        setCategoryName(prod.category_name ?? '')
         setActiveImg(imageList[0] ?? getImageUrl(rawProd.image))
 
         // fetch alternative and complementary in parallel
@@ -376,15 +368,6 @@ const json = await res.json()
           prod.alternative_products ? fetchProductsByIds(prod.alternative_products) : Promise.resolve([]),
           prod.complementary_products ? fetchProductsByIds(prod.complementary_products) : Promise.resolve([]),
         ])
-
-        // resolve category name from grouped endpoint
-        const catRes = await fetch(`${API}/products/grouped`, {
-          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
-        })
-        const catJson = await catRes.json()
-        const cats: ApiCategory[] = Array.isArray(catJson.data) ? catJson.data : []
-        const matched = cats.find(c => String(c.category_id) === String(prod.category_id))
-        if (matched) setCategoryName(matched.category_name)
 
         setAlternative(altProducts)
         setComplementary(compProducts)

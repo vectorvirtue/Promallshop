@@ -127,7 +127,6 @@ async function request<T>(
 ): Promise<T> {
   const { auth = false, ...rest } = options
   const url = /^https?:\/\//i.test(path) ? path : `${BASE_URL}${path}`
-  const method = rest.method ?? 'GET'
 
   const res = await fetch(url, {
     ...rest,
@@ -145,20 +144,6 @@ async function request<T>(
     data = text ? JSON.parse(text) : {}
   } catch {
     data = { message: text.slice(0, 200) }
-  }
-
-  if (import.meta.env.DEV) {
-    console.groupCollapsed(
-      `%c[api] ${method} ${path} → ${res.status}`,
-      `color: ${res.ok ? '#16a34a' : '#dc2626'}; font-weight: bold`
-    )
-    console.log('url  :', url)
-    if (res.ok) {
-      console.log('data :', data)
-    } else {
-      console.warn('error:', data)
-    }
-    console.groupEnd()
   }
 
   if (!res.ok) {
@@ -269,7 +254,7 @@ async function cachedRequest<T>(path: string): Promise<T> {
 
 export const productsApi = {
   getAll: () => cachedRequest('/products/grouped'),
-  getOne: (id: number | string) => request(`/products/${id}`),
+  getOne: <T = unknown>(id: number | string) => request<T>(`/products/${id}`),
   getFeatured: () => cachedRequest('/products/featured'),
   getDiscounted: () => cachedRequest('/products/discounted'),
   getAvailable: () => cachedRequest('/products/available'),
