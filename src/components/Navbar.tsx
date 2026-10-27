@@ -426,8 +426,8 @@ export default function Navbar() {
 
   color:'inherit',
   textDecoration:'none',
-}} to="/cart">
-            <ShoppingCartIcon size={28} />
+}} to="/cart" aria-label="View shopping cart">
+            <ShoppingCartIcon size={28} aria-hidden="true" />
           </Link>
           {totalItems > 0 && (
             <span className={styles.cartBadge}>{totalItems}</span>

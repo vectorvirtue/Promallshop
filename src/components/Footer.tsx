@@ -42,9 +42,7 @@ export default function Footer() {
         <div className={styles.brand}>
           <img src={logo} alt="Promallshop" className={styles.logo} />
           <p className={styles.brandText}>
-            Promallshop is an e-commerce platform dealing in IT Solutions such
-            as Video Conferencing, Keyboards, Mouse, Headsets and so many
-            others for your everyday use.
+            Promallshop is an e-commerce platform for IT products and technology solutions, helping businesses and individuals discover, compare, and procure the right technology with ease. From everyday tech essentials to video conferencing systems, interactive displays, networking equipment, and robotics solutions, Promallshop simplifies technology shopping and procurement in one convenient platform.
           </p>
         </div>
 
