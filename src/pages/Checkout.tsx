@@ -366,10 +366,11 @@ export default function Checkout() {
         ? `${address.address}, ${address.state}, ${address.country}`
         : pickupLocation
 
+      const productIds = items
+        .map(item => Number(item.product_id))
+        .filter(id => Number.isInteger(id) && id > 0)
       const orderPayload = {
-          product_ids: items
-          .map(item => Number(item.product_id))
-          .filter(id => Number.isFinite(id) && id > 0),
+        product_ids: productIds,
         billing_address: billingAddressStr,
         billing_address1: address.address,
         billing_address2: address.additionalInfo || '',
@@ -484,6 +485,25 @@ export default function Checkout() {
         })
       } else {
         // bank transfer or cheque — create order and show confirmation popup
+        const orderItems = items.map(item => {
+          const productId = Number(item.product_id)
+          if (!Number.isInteger(productId) || productId <= 0) {
+            throw new Error(`"${item.name}" is missing product information. Remove it from your cart and add it again.`)
+          }
+          return { productId, quantity: item.quantity }
+        })
+
+        if (orderItems.length === 0) {
+          throw new Error('Your cart has no products to order.')
+        }
+
+        // The bank/cheque order endpoint checks selected products against the
+        // backend cart, so mirror the selected local checkout items first.
+        await cartApi.clear()
+        for (const item of orderItems) {
+          await cartApi.add(item.productId, item.quantity)
+        }
+
         const orderRes = await ordersApi.create(orderPayload) as { data?: { bill_no?: string; id?: number } }
         await recordOrderItems(orderRes?.data?.id)
         markAsOrdered()
