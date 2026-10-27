@@ -26,7 +26,14 @@ type CategoryGif = {
   is_active: boolean
 }
 
-const staticCategories = [
+interface CategoryTile {
+  img: string
+  fallbackImg?: string
+  label: string
+  slug: string
+}
+
+const staticCategories: CategoryTile[] = [
   { img: codingRobotics,      label: 'Coding & Robotics Kits',        slug: 'coding-and-robotics-kits' },
   { img: computerPeripherals, label: 'Computer Peripherals',           slug: 'computer-peripherals' },
   { img: headsets,            label: 'Headsets',                       slug: 'headsets' },
@@ -35,7 +42,7 @@ const staticCategories = [
   { img: professionalImaging, label: 'Professional Imaging',           slug: 'professional-imaging-solutions' },
   { img: screens,             label: 'Screens',                        slug: 'screens' },
   { img: businessTech,        label: 'Business Technology',            slug: 'business-technology-solutions' },
-  { img: videoConf,           label: 'Video Conferencing',             slug: 'video-conferencing-solutions' },
+  { img: videoConf,           label: 'Video Conferencing Solutions',   slug: 'video-conferencing-solutions' },
   { img: videoAcc,            label: 'Video Conferencing Accessories', slug: 'vc-accessories' },
 ]
 
@@ -52,29 +59,50 @@ const itemVariants: Variants = {
 }
 
 // A plain category tile — links to the shop filtered by slug
-const StaticCategoryItem = ({ cat }: { cat: typeof staticCategories[number] }) => (
-  <motion.div className={styles.category} variants={itemVariants}>
-    <Link
-      to={`/shop/${cat.slug}`}
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}
-    >
-      <motion.img
-        src={cat.img}
-        // alt="" because the <h3> below already provides the accessible label
-        alt=""
-        className={styles.categoryImage}
-        whileHover={{ scale: 1.08 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-      />
-      <h3 className={styles.categoryTitle}>{cat.label}</h3>
-    </Link>
-  </motion.div>
-)
+const StaticCategoryItem = ({ cat }: { cat: CategoryTile }) => {
+  const [image, setImage] = useState(cat.img)
+
+  useEffect(() => {
+    setImage(cat.img)
+  }, [cat.img])
+
+  return (
+    <motion.div className={styles.category} variants={itemVariants}>
+      <Link
+        to={`/shop/${cat.slug}`}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}
+      >
+        <motion.img
+          src={image}
+          onError={() => {
+            if (cat.fallbackImg && image !== cat.fallbackImg) {
+              setImage(cat.fallbackImg)
+            }
+          }}
+          // alt="" because the <h3> below already provides the accessible label
+          alt=""
+          className={styles.categoryImage}
+          whileHover={{ scale: 1.08 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+        />
+        <h3 className={styles.categoryTitle}>{cat.label}</h3>
+      </Link>
+    </motion.div>
+  )
+}
 
 const categorySlug = (name: string) => name
   .toLowerCase()
   .replace(/[^a-z0-9]+/g, '-')
   .replace(/^-|-$/g, '')
+
+const addCacheBuster = (url: string, timestamp: number) => {
+  const [urlWithoutHash, hash] = url.split('#', 2)
+  const [base, query] = urlWithoutHash.split('?', 2)
+  const params = new URLSearchParams(query)
+  params.set('v', String(timestamp))
+  return `${base}?${params.toString()}${hash ? `#${hash}` : ''}`
+}
 
 export default function Categories() {
   const [categoryGifs, setCategoryGifs] = useState<CategoryGif[]>([])
@@ -88,7 +116,15 @@ export default function Categories() {
       .then((res) => res.json())
       .then((data) => {
         if (data.status === 'success' && Array.isArray(data.category_gifs)) {
-          setCategoryGifs(data.category_gifs.filter((gif: CategoryGif) => gif.is_active && gif.gif_url))
+          const timestamp = Date.now()
+          setCategoryGifs(
+            data.category_gifs
+              .filter((gif: CategoryGif) => gif.is_active && gif.gif_url)
+              .map((gif: CategoryGif) => ({
+                ...gif,
+                gif_url: addCacheBuster(gif.gif_url, timestamp),
+              }))
+          )
         }
       })
       .catch(() => {
@@ -101,12 +137,20 @@ export default function Categories() {
 
   const allTiles = [
     ...staticCategories.map((cat) => ({
-      cat: { ...cat, img: gifsBySlug.get(cat.slug)?.gif_url ?? cat.img },
+      cat: {
+        ...cat,
+        fallbackImg: cat.img,
+        img: gifsBySlug.get(cat.slug)?.gif_url || cat.img,
+      },
     })),
     ...categoryGifs
       .filter((gif) => !staticSlugs.has(categorySlug(gif.category_name)))
       .map((gif) => ({
-        cat: { img: gif.gif_url, label: gif.category_name, slug: categorySlug(gif.category_name) },
+        cat: {
+          img: gif.gif_url,
+          label: gif.category_name,
+          slug: categorySlug(gif.category_name),
+        },
       })),
   ]
 
