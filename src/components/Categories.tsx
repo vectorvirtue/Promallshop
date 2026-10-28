@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion, type Variants } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import styles from './Categories.module.css'
+import { promallCombinedApi } from '../lib/api'
 
 import codingRobotics      from '../assets/coding-and-robotics-kits.gif'
 import computerPeripherals from '../assets/computer-peripherals.gif'
@@ -13,10 +14,6 @@ import screens             from '../assets/screens.gif'
 import businessTech        from '../assets/business-technology-solutions.gif'
 import videoConf           from '../assets/video-conferencing-solutions.gif'
 import videoAcc            from '../assets/video-conferencing-accessories.gif'
-
-const PROMALL_PROXY_URL =
-  (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
-  'http://127.0.0.1:8001/proxy'
 
 type CategoryGif = {
   id: number
@@ -108,12 +105,7 @@ export default function Categories() {
   const [categoryGifs, setCategoryGifs] = useState<CategoryGif[]>([])
 
   useEffect(() => {
-    const url = import.meta.env.DEV
-      ? '/vite-proxy/combined/promallshop/'
-      : `${PROMALL_PROXY_URL}/combined/promallshop/`
-
-    fetch(url)
-      .then((res) => res.json())
+    promallCombinedApi.getAll<{ status?: string; category_gifs?: CategoryGif[] }>()
       .then((data) => {
         if (data.status === 'success' && Array.isArray(data.category_gifs)) {
           const timestamp = Date.now()

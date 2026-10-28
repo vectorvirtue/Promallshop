@@ -4,14 +4,10 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import styles from './FlashSales.module.css'
 import { useCart } from '../context/CartContext'
-import { productsApi, getImageUrl, quoteApi } from '../lib/api'
+import { productsApi, getImageUrl, quoteApi, promallCombinedApi } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
 import { productPath } from '../lib/slugs'
-
-const PROMALL_PROXY_URL =
-  (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
-  'http://127.0.0.1:8001/proxy'
 
 interface ApiProduct {
   id: number
@@ -79,12 +75,7 @@ export default function FlashSales() {
 
   useEffect(() => {
     // Fetch flash sale image and data from combined endpoint
-    const url = import.meta.env.DEV
-      ? '/vite-proxy/combined/promallshop/'
-      : `${PROMALL_PROXY_URL}/combined/promallshop/`
-
-    fetch(url)
-      .then((res) => res.json())
+    promallCombinedApi.getAll<{ status?: string; flash_sales?: FlashSaleData[] }>()
       .then((data) => {
         if (data.status === 'success' && Array.isArray(data.flash_sales)) {
           // Use first live entry, or first entry if none are explicitly live

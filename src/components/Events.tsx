@@ -3,6 +3,7 @@ import { Calendar, MapPin, Clock, ExternalLink } from 'lucide-react'
 import { motion } from 'framer-motion'
 import styles from './Events.module.css'
 import Breadcrumb from './Breadcrumb'
+import { promallCombinedApi } from '../lib/api'
 
 interface Event {
   id: number
@@ -34,10 +35,6 @@ interface ApiEventType {
   display_order?: number
 }
 
-const PROMALL_PROXY_URL =
-  (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
-  'http://127.0.0.1:8001/proxy'
-
 const cardVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
@@ -54,15 +51,10 @@ export default function Events() {
   const [activeFilter, setActiveFilter] = useState<string>('all')
 
   useEffect(() => {
-    const url = import.meta.env.DEV
-      ? '/vite-proxy/combined/promallshop/'
-      : `${PROMALL_PROXY_URL}/combined/promallshop/`
-
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) throw new Error(`Events request failed: ${response.status}`)
-        return response.json()
-      })
+    promallCombinedApi.getAll<{
+      event_types?: ApiEventType[]
+      upcoming_events?: ApiEvent[]
+    }>()
       .then((data) => {
         const types: ApiEventType[] = Array.isArray(data.event_types) ? data.event_types : []
         setEventTypes(types.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)))

@@ -4,7 +4,10 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const djangoProxy = env.VITE_PROMALL_PROXY_URL || 'https://manager.promallshop.com/proxy'
+  const promallCombinedUrl = new URL(
+    env.VITE_PROMALL_COMBINED_URL ||
+      'https://manager.promallshop.com/proxy/combined/promallshop/'
+  )
 
   
   return {
@@ -12,9 +15,9 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/vite-proxy': {
-          target: djangoProxy.replace(/\/proxy\/?$/, ''),
+          target: promallCombinedUrl.origin,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/vite-proxy/, '/proxy'),
+          rewrite: () => promallCombinedUrl.pathname,
         },
       },
     },

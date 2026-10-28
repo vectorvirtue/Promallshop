@@ -33,10 +33,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Product from "./pages/Productpage";
 import Events from "./components/Events";
 import { type AffiliateBannerRecord } from "./components/AffiliateBanner";
-
-const PROMALL_PROXY_URL =
-  (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
-  'http://127.0.0.1:8001/proxy'
+import { promallCombinedApi } from "./lib/api";
 
 /* ── Error Boundary — contains crashes so one broken component can't blank the whole app ── */
 class ErrorBoundary extends Component<
@@ -163,15 +160,7 @@ export default function App() {
   const topAffiliateBanners = affiliateBanners.filter((banner) => banner.placement === 'top')
 
   useEffect(() => {
-    const url = import.meta.env.DEV
-      ? '/vite-proxy/combined/promallshop/'
-      : `${PROMALL_PROXY_URL}/combined/promallshop/`
-
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) throw new Error(`Affiliate banner request failed: ${response.status}`)
-        return response.json()
-      })
+    promallCombinedApi.getAll<{ status?: string; affiliate_banners?: AffiliateBannerRecord[] }>()
       .then((data) => {
         if (data.status === 'success' && Array.isArray(data.affiliate_banners)) {
           setAffiliateBanners(

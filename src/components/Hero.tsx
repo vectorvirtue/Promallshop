@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import styles from "./Hero.module.css";
 import { useNavigate } from "react-router-dom";
-import { productsApi, getImageUrl, promallBannerApi } from "../lib/api";
+import { productsApi, getImageUrl, promallCombinedApi } from "../lib/api";
 import type { PromallBanner } from "../lib/api";
 import { Link } from "react-router-dom";
 import { productPath } from "../lib/slugs";
@@ -32,10 +32,10 @@ export default function Hero() {
   const navigate = useNavigate();
   const goToPage = () => navigate("/shop");
 
-  /* ── fetch Django banners ── */
+  /* ── fetch banners from the combined Promallshop response ── */
   useEffect(() => {
-    promallBannerApi
-      .getAll()
+    promallCombinedApi
+      .getAll<{ banners?: PromallBanner[] }>()
       .then((res) => {
         const received = Array.isArray(res.banners)
           ? [...res.banners].sort(

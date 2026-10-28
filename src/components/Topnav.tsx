@@ -12,7 +12,11 @@ const nigeriaFlag = (
 export default function Topnav({ affiliateBanner }: { affiliateBanner?: AffiliateBannerRecord }) {
   const bannerSrc = getImageUrl(affiliateBanner?.image ?? affiliateBanner?.media_file ?? '')
   const bannerImage = bannerSrc
-    ? <img className={styles.width} src={bannerSrc} alt={affiliateBanner?.title ?? 'Affiliate banner'} />
+    ? (
+      <span className={styles.bannerImage}>
+        <img className={styles.width} src={bannerSrc} alt={affiliateBanner?.title ?? 'Affiliate banner'} />
+      </span>
+    )
     : null
 
   return (

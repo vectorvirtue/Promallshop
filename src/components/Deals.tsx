@@ -4,12 +4,8 @@ import { useNavigate } from 'react-router-dom'  // <-- ADD THIS
 import styles from './Deal.module.css'
 import { getTimeLeft } from '../lib/countdown'
 import type { TimeLeft } from '../lib/countdown'
-import { getImageUrl } from '../lib/api'
+import { getImageUrl, promallCombinedApi } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
-
-const PROMALL_PROXY_URL =
-  (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
-  'http://127.0.0.1:8001/proxy'
 
 interface TodayDeal {
   id: number
@@ -33,12 +29,7 @@ export default function Deals() {
   const [time, setTime] = useState<TimeLeft>({ d: '00', h: '00', m: '00', s: '00' })
 
   useEffect(() => {
-    const url = import.meta.env.DEV
-      ? '/vite-proxy/combined/promallshop/'
-      : `${PROMALL_PROXY_URL}/combined/promallshop/`
-
-    fetch(url)
-      .then((res) => res.json())
+    promallCombinedApi.getAll<{ today_deals?: TodayDeal[] }>()
       .then((data) => {
         const deals: TodayDeal[] = Array.isArray(data?.today_deals)
           ? data.today_deals

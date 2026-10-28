@@ -1,153 +1,114 @@
-import styles from './Whychoose.module.css'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import styles from './Whychoose.module.css'
+import {
+  promallCombinedApi,
+  type AdditionalWebsiteContent,
+  type PromallCombinedResponse,
+} from '../lib/api'
 
-const sections = [
-  {
-    heading: 'Why Businesses in Nigeria and Ghana Choose Promallshop',
-    bullets: [
-      'Genuine products from trusted global technology brands',
-      'A wide range of IT equipment for businesses and organizations',
-      'High-quality computer accessories for productivity and communication',
-      'Competitive pricing on advanced technology products',
-      'Reliable technology solutions for offices, schools, and institutions',
-      'Access to modern collaboration and communication tools',
-    ],
-    text: 'Our goal is to help businesses and professionals adopt modern technology solutions that improve productivity, communication, and efficiency.',
-  },
-  {
-    heading: 'Video Conferencing Solutions for Modern Workplaces',
-    bullets: [
-      'Conference cameras and HD webcams',
-      'Professional microphones and speakerphones',
-      'All-in-one video conferencing systems',
-      'Meeting room collaboration devices',
-    ],
-    text: 'We supply equipment from trusted brands such as Logitech, Polycom, Yealink, Norden, and Vbet, ensuring crystal-clear audio and high-definition video communication for meetings, training sessions, and remote collaboration. These solutions are ideal for corporate boardrooms, training rooms, remote teams, and government organizations.',
-  },
-  {
-    heading: 'Coding and Robotics Kits for STEM Learning',
-    bullets: [
-      'Makeblock robotics and coding kits',
-      'Twin Robotics educational tools',
-      'Arduino starter and advanced kits',
-    ],
-    text: 'These tools help students develop valuable skills in coding, robotics engineering, automation, electronics, and creative problem solving. They are perfect for schools, STEM academies, coding bootcamps, and technology training centers.',
-  },
-  {
-    heading: 'Interactive Displays and Digital Signage Screens',
-    bullets: [
-      'Multi-touch interactive displays',
-      'Wireless presentation systems',
-      'Digital signage screens for retail and corporate communication',
-      'Smart collaboration displays for meetings and classrooms',
-    ],
-    text: 'We supply innovative display technology from trusted brands such as Samsung, MAXHUB, LG, and Sharp, enabling organizations to deliver engaging presentations, collaborative learning experiences, and modern workplace communication.',
-  },
-  {
-    heading: 'Computer Accessories for Offices and Home Workspaces',
-    bullets: [
-      'Professional headsets for meetings and calls',
-      'High-definition webcams',
-      'Wireless keyboards and precision mice',
-      'USB hubs and connectivity adapters',
-      'Laptop accessories and computer peripherals',
-    ],
-    text: 'These accessories are ideal for corporate offices, remote workers, home workspaces, and professionals who require reliable productivity tools.',
-  },
-  {
-    heading: 'Networking, Security, and Power Solutions',
-    bullets: [
-      'Networking equipment and enterprise routers',
-      'Surveillance cameras and security systems',
-      'Backup power solutions',
-      'Office connectivity and network devices',
-    ],
-    text: 'These solutions ensure businesses maintain secure networks, reliable connectivity, and uninterrupted operations.',
-  },
-]
+const allowedHtmlTags = new Set([
+  'A', 'B', 'BLOCKQUOTE', 'BR', 'EM', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
+  'I', 'LI', 'OL', 'P', 'STRONG', 'U', 'UL',
+])
 
-export default function Choose() {
-  return (
-    <>
-      <motion.article 
-        className={styles.container} 
-        aria-label="About Promallshop"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-      >
-        <motion.h2
-          initial={{ opacity: 0, y: -20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          Promallshop — No. 1 Shopping Destination For IT Solutions
-        </motion.h2>
-        <motion.p 
-          className={styles.intro}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          Welcome to <strong>Promallshop</strong>, a trusted <strong>tech store for IT equipment and computer accessories in West Africa.</strong>.
-          We provide advanced technology solutions designed for businesses, schools, government organizations, and individuals
-          who need reliable digital tools for productivity and communication.
-        </motion.p>
+function sanitizeCmsHtml(html: string): string {
+  const parsed = new DOMParser().parseFromString(html, 'text/html')
 
-        {sections.map((s, index) => (
-          <motion.section 
-            key={s.heading} 
-            className={styles.choices}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
-          >
-            <h3 className={styles.header}>{s.heading}</h3>
-            <ul className={styles.margin}>
-              {s.bullets.map((b) => (
-                <li key={b}>{b}</li>
-              ))}
-            </ul>
-            <p>{s.text}</p>
-          </motion.section>
-        ))}
+  const sanitizeChildren = (parent: ParentNode) => {
+    Array.from(parent.childNodes).forEach((node) => {
+      if (!(node instanceof Element)) return
 
-        <motion.section 
-          className={styles.choices}
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <h3 className={styles.header}>Enjoy 15% Off Your First Order</h3>
-          <p>
-            New customers can enjoy an exclusive <strong>15% discount on their first purchase at Promallshop</strong> —
-            on video conferencing systems, interactive displays, robotics kits, computer accessories, networking equipment, and more.
-            Promallshop offers premium technology products at competitive prices for businesses, schools, and professionals across Nigeria and Ghana.
-          </p>
-        </motion.section>
+      if (['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'SVG', 'MATH'].includes(node.tagName)) {
+        node.remove()
+        return
+      }
 
-        <motion.section 
-          className={styles.choices} 
-          style={{ marginBottom: '2em' }}
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <h3 className={styles.header}>Our Trusted Technology Partners</h3>
-          <p>
-            Promallshop collaborates with leading global technology brands including{' '}
-            <strong>MAXHUB, Huawei, Logitech, Yealink, Samsung, LG, Sharp, Bosch, Polycom, Sennheiser, Absen, Hikvision, Twin Robotics, Makeblock, and Arduino</strong>{' '}
-            to ensure customers receive genuine IT equipment and high-quality computer accessories backed by global quality standards and trusted manufacturer support.
-          </p>
-        </motion.section>
-      </motion.article>
-    </>
-  )
+      sanitizeChildren(node)
+      if (!allowedHtmlTags.has(node.tagName)) {
+        node.replaceWith(...Array.from(node.childNodes))
+        return
+      }
+
+      Array.from(node.attributes).forEach((attribute) => {
+        if (node.tagName !== 'A' || !['href', 'target'].includes(attribute.name.toLowerCase())) {
+          node.removeAttribute(attribute.name)
+        }
+      })
+
+      if (node.tagName === 'A') {
+        const href = node.getAttribute('href')
+        if (href) {
+          try {
+            const url = new URL(href, window.location.origin)
+            if (!['http:', 'https:', 'mailto:'].includes(url.protocol)) node.removeAttribute('href')
+          } catch {
+            node.removeAttribute('href')
+          }
+        }
+        if (node.getAttribute('target') === '_blank') {
+          node.setAttribute('rel', 'noopener noreferrer')
+        }
+      }
+    })
+  }
+
+  sanitizeChildren(parsed.body)
+  return parsed.body.innerHTML
 }
 
+export default function Choose() {
+  const [content, setContent] = useState<AdditionalWebsiteContent | null>(null)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    promallCombinedApi.getAll<PromallCombinedResponse>()
+      .then((response) => {
+        const items = Array.isArray(response.additional_website_content)
+          ? [...response.additional_website_content]
+              .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+          : []
+        setContent(items[0] ?? null)
+      })
+      .catch((cause: unknown) => {
+        console.error('Failed to load additional website content:', cause)
+        setError('Unable to load this content right now.')
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  return (
+    <motion.article
+      className={styles.container}
+      aria-label="About Promallshop"
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+    >
+      {content && (
+        <>
+          <motion.h2
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            {content.heading}
+          </motion.h2>
+          <motion.div
+            className={styles.cmsContent}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(content.description) }}
+          />
+        </>
+      )}
+      {!content && loading && <p role="status">Loading content…</p>}
+      {!content && error && <p role="status">{error}</p>}
+    </motion.article>
+  )
+}

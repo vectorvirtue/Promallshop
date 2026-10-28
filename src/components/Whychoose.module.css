@@ -31,3 +31,29 @@
   margin-bottom: 1em;
   color: #333;
 }
+
+.cmsContent {
+  color: #333;
+  font-size: 0.95em;
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+.cmsContent :global(p) {
+  margin: 0 0 1em;
+}
+
+.cmsContent :global(h3),
+.cmsContent :global(h4) {
+  margin: 1.25em 0 0.75em;
+  color: #0b0b0b;
+}
+
+.cmsContent :global(ul),
+.cmsContent :global(ol) {
+  margin: 0 0 1em 1.5em;
+}
+
+.cmsContent :global(li::marker) {
+  color: #0b0b0b;
+}

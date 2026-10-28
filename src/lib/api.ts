@@ -1,7 +1,40 @@
 export const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
-const PROMALL_PROXY_URL =
-  (import.meta.env.VITE_PROMALL_PROXY_URL as string) ||
-  'https://manager.promallshop.com/proxy'
+const PROMALL_COMBINED_URL =
+  (import.meta.env.VITE_PROMALL_COMBINED_URL as string) ||
+  'https://manager.promallshop.com/proxy/combined/promallshop/'
+
+export function getPromallCombinedUrl(): string {
+  return import.meta.env.DEV ? '/vite-proxy/combined/promallshop/' : PROMALL_COMBINED_URL
+}
+
+export const promallCombinedApi = {
+  getAll: async <T = unknown>(): Promise<T> => {
+    const response = await fetch(getPromallCombinedUrl())
+    if (!response.ok) {
+      throw new Error(`Promallshop combined request failed: ${response.status}`)
+    }
+    return (await response.json()) as T
+  },
+}
+
+export interface AdditionalWebsiteContent {
+  id: number
+  heading: string
+  description: string
+  display_order?: number
+}
+
+export interface WebsiteFaq {
+  id: number
+  question: string
+  answer: string
+  display_order?: number
+}
+
+export interface PromallCombinedResponse {
+  additional_website_content?: AdditionalWebsiteContent[]
+  website_faqs?: WebsiteFaq[]
+}
 
 /**
  * Converts a relative image path from the API into a full URL.
@@ -456,35 +489,10 @@ export const eventsApi = {
 // Promallshop banner API
 export interface PromallBanner {
   id: number
-  title: string
-  text: string
-  link: string
+  title?: string
+  text?: string
+  description?: string
+  link?: string
   image: string
   display_order?: number
-}
-
-export interface PromallBannerResponse {
-  status: string
-  entity: string
-  slug: string
-  url: string
-  banners: PromallBanner[]
-}
-
-export const promallBannerApi = {
-  getAll: async (): Promise<PromallBannerResponse> => {
-    // In development Vite proxies /vite-proxy/* → Django, avoiding CORS.
-    // In production the real PROMALL_PROXY_URL is used directly (same origin or CORS-enabled).
-    const bannerUrl = import.meta.env.DEV
-      ? '/vite-proxy/banner/promallshop/'
-      : `${PROMALL_PROXY_URL}/banner/promallshop/`
-
-    const response = await fetch(bannerUrl)
-
-    if (!response.ok) {
-      throw new Error(`Banner request failed: ${response.status}`)
-    }
-
-    return response.json()
-  },
 }
