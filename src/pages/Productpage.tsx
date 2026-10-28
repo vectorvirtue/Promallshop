@@ -139,6 +139,15 @@ interface SimilarProduct {
   discount: number
 }
 
+interface ProductCategory {
+  category_id: number | string
+  online_discount?: number
+}
+
+interface GroupedProductsResponse {
+  data?: Array<ProductCategory & { products: Array<{ id: number }> }>
+}
+
 function Stars({ count, size = 16 }: { count: number; size?: number }) {
   return (
     <span className={styles.stars}>
@@ -273,6 +282,7 @@ export default function Productpage() {
 
   const [product, setProduct] = useState<Product | null>(null)
   const [categoryName, setCategoryName] = useState('')
+  const [categoryOnlineDiscount, setCategoryOnlineDiscount] = useState<number | undefined>()
   const [alternative, setAlternative] = useState<SimilarProduct[]>([])
   const [complementary, setComplementary] = useState<SimilarProduct[]>([])
   const [loading, setLoading] = useState(true)
@@ -337,6 +347,7 @@ export default function Productpage() {
     setLoading(true)
     setError('')
     setCategoryName('')
+    setCategoryOnlineDiscount(undefined)
     setAlternative([])
     setComplementary([])
 
@@ -362,6 +373,18 @@ export default function Productpage() {
         setProduct(prod)
         setCategoryName(prod.category_name ?? '')
         setActiveImg(imageList[0] ?? getImageUrl(rawProd.image))
+
+        try {
+          const groupedResponse = await productsApi.getAll() as GroupedProductsResponse
+          const category = groupedResponse.data?.find(
+            (item) => Number(item.category_id) === Number(prod.category_id)
+          )
+          if (category) {
+            setCategoryOnlineDiscount(Number(category.online_discount) || 0)
+          }
+        } catch (cause) {
+          console.error('Failed to load category discount:', cause)
+        }
 
         // fetch alternative and complementary in parallel
         const [altProducts, compProducts] = await Promise.all([
@@ -404,8 +427,9 @@ export default function Productpage() {
   const priceNum = Number(product.end_user_price || product.price)
   const isHighValue = priceNum >= quoteThreshold
   const quoteRequired = priceNum > 0 && isHighValue
-  const hasDiscount = product.discount > 0
-  const originalPriceNum = hasDiscount ? Math.round(priceNum / (1 - product.discount / 100)) : 0
+  const discount = categoryOnlineDiscount ?? product.discount
+  const hasDiscount = discount > 0
+  const originalPriceNum = hasDiscount ? Math.round(priceNum / (1 - discount / 100)) : 0
   const originalPrice = hasDiscount ? formatPrice(originalPriceNum) : null
   const shipping = shippingData ? parseFloat(shippingData.amount) || 0 : 0
   const total = priceNum > 0 ? priceNum + shipping : 0
@@ -570,7 +594,7 @@ export default function Productpage() {
                 <span className={styles.oldPrice}>{originalPrice}</span>
               )}
               {hasDiscount && (
-                <span className={styles.discountTag}>{product.discount}% OFF</span>
+                <span className={styles.discountTag}>{discount}% OFF</span>
               )}
             </div>
 
@@ -692,7 +716,7 @@ export default function Productpage() {
             {/* price + discount */}
             <div className={styles.panelPriceRow}>
               <span className={styles.panelPrice}>{price}</span>
-              {hasDiscount && <span className={styles.panelDiscount}>{product.discount}% OFF</span>}
+              {hasDiscount && <span className={styles.panelDiscount}>{discount}% OFF</span>}
             </div>
 
             {/* payment summary */}

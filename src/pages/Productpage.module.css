@@ -750,6 +750,9 @@
     grid-template-columns: 260px 1fr 250px;
     gap: 1.5em;
   }
+  .cdUnit{
+    min-width: 75px;
+  }
 }
 
 @media (max-width: 900px) {
