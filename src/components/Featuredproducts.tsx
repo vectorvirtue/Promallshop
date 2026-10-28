@@ -16,6 +16,7 @@ interface ApiProduct {
   price: string | number
   end_user_price: string | number
   image: string
+  tag?: string | null
   discount: number
   categoryOnlineDiscount?: number
   availability: number
@@ -51,6 +52,10 @@ const cardVariants = {
 const LIMIT = 12
 
 const currentMonth = new Date().toLocaleString('default', { month: 'long' })
+const isAvailableProduct = (product: ApiProduct) =>
+  product.availability !== 0 && (product.qty === undefined || Number(product.qty) > 0)
+const isSpecialProduct = (product: ApiProduct) =>
+  product.tag?.trim().toLowerCase() === 'special'
 
 export default function FeaturedProducts() {
   const { addToCart } = useCart()
@@ -58,7 +63,7 @@ export default function FeaturedProducts() {
   const { openQuoteForm } = useQuoteForm()
   const [allProducts, setAllProducts] = useState<ApiProduct[]>([])
   const [categories, setCategories] = useState<ApiCategory[]>([])
-  const [active, setActive] = useState('All')
+  const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [quoteThreshold, setQuoteThreshold] = useState(2000000)
 
@@ -80,10 +85,10 @@ export default function FeaturedProducts() {
         })) : []
         setCategories(cats)
         // only show in-stock products
-        const inStock = cats.flatMap(c => c.products).filter(
-          p => p.availability !== 0 && (p.qty === undefined || Number(p.qty) > 0)
+        const inStockSpecials = cats.flatMap(c => c.products).filter(
+          p => isSpecialProduct(p) && isAvailableProduct(p)
         )
-        setAllProducts(inStock)
+        setAllProducts(inStockSpecials)
       })
       .catch(() => {
         setCategories([])
@@ -105,21 +110,17 @@ export default function FeaturedProducts() {
   const isHighValue = (price: number) => price >= quoteThreshold
 
   const filtered = (() => {
-    if (active === 'All') return allProducts.slice(LIMIT - 4, LIMIT - 4 + LIMIT)
-    const cat = categories.find(c => c.category_name === active)
-    const inStock = (cat?.products ?? []).filter(
-      p => p.availability !== 0 && (p.qty === undefined || Number(p.qty) > 0)
+    if (activeCategoryId === null) return allProducts.slice(0, LIMIT)
+    const cat = categories.find(c => Number(c.category_id) === activeCategoryId)
+    const inStockSpecials = (cat?.products ?? []).filter(
+      p => isSpecialProduct(p) && isAvailableProduct(p)
     )
-    return inStock.slice(0, LIMIT)
+    return inStockSpecials.slice(0, LIMIT)
   })()
 
-  // build filter tabs: All + ALL category names that have products (no limit)
-  const filterTabs = [
-    'All',
-    ...categories
-      .filter(c => c.products.length > 0)
-      .map(c => c.category_name),
-  ]
+  const categoriesWithSpecials = categories.filter(c =>
+    c.products.some(p => isSpecialProduct(p) && isAvailableProduct(p))
+  )
 
   return (
     <section className={styles.section}>
@@ -135,13 +136,21 @@ export default function FeaturedProducts() {
 
         <div className={styles.filtersWrap}>
           <div className={styles.filters}>
-            {filterTabs.map((f) => (
+            <button
+              className={`${styles.filterBtn} ${activeCategoryId === null ? styles.filterActive : ''}`}
+              onClick={() => setActiveCategoryId(null)}
+            >
+              ALL
+            </button>
+            {categoriesWithSpecials.map((category) => (
               <button
-                key={f}
-                className={`${styles.filterBtn} ${active === f ? styles.filterActive : ''}`}
-                onClick={() => setActive(f)}
+                key={category.category_id}
+                className={`${styles.filterBtn} ${activeCategoryId === Number(category.category_id) ? styles.filterActive : ''}`}
+                onClick={() => setActiveCategoryId(Number(category.category_id))}
               >
-                {f === 'All' ? 'ALL' : (f.length > 20 ? f.slice(0, 18) + '…' : f).toUpperCase()}
+                {category.category_name.length > 20
+                  ? `${category.category_name.slice(0, 18)}…`.toUpperCase()
+                  : category.category_name.toUpperCase()}
               </button>
             ))}
           </div>
@@ -181,6 +190,9 @@ export default function FeaturedProducts() {
                 {/* image */}
                 <div className={styles.imgWrap}>
                   <img src={getImageUrl(p.image)} alt={p.name} className={styles.productImg} />
+                  {p.tag?.trim().toLowerCase() === 'special' && (
+                    <span className={styles.specialBadge}>Special</span>
+                  )}
                 </div>
 
                 {/* info + heart */}

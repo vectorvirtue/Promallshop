@@ -19,6 +19,7 @@ interface Product {
   end_user_price: string | number
   image: string
   images?: string[]
+  tag?: string | null
   discount: number
   short_description: string
   description: string
@@ -429,6 +430,7 @@ export default function Productpage() {
   const quoteRequired = priceNum > 0 && isHighValue
   const discount = categoryOnlineDiscount ?? product.discount
   const hasDiscount = discount > 0
+  const isHot = product.tag?.trim().toLowerCase() === 'hot'
   const originalPriceNum = hasDiscount ? Math.round(priceNum / (1 - discount / 100)) : 0
   const originalPrice = hasDiscount ? formatPrice(originalPriceNum) : null
   const shipping = shippingData ? parseFloat(shippingData.amount) || 0 : 0
@@ -536,7 +538,7 @@ export default function Productpage() {
 
             {/* main image */}
             <div className={styles.mainImg}>
-              {hasDiscount && <span className={styles.hotBadge}>Hot</span>}
+              {isHot && <span className={styles.hotBadge}>Hot</span>}
               <img src={activeImg || getImageUrl(product.image)} alt={product.name} />
             </div>
 

@@ -15,6 +15,7 @@ interface ApiProduct {
   price: string | number
   end_user_price: string | number
   image: string
+  tag?: string | null
   discount: number
   categoryOnlineDiscount?: number
   availability: number
@@ -108,10 +109,15 @@ export default function FlashSales() {
         )
         // only in-stock products
         const inStock = all.filter(p => p.availability !== 0 && (p.qty === undefined || Number(p.qty) > 0))
-        // prefer discounted, fall back to all in-stock
+        const hot = inStock.filter(p => p.tag?.trim().toLowerCase() === 'hot')
         const discounted = inStock.filter(p => (p.categoryOnlineDiscount ?? p.discount) > 0)
-        const source = discounted.length >= LIMIT ? discounted : inStock
-        setProducts(source.slice(0, LIMIT))
+        const seen = new Set<number>()
+        const prioritized = [...hot, ...discounted, ...inStock].filter(product => {
+          if (seen.has(product.id)) return false
+          seen.add(product.id)
+          return true
+        })
+        setProducts(prioritized.slice(0, LIMIT))
       })
       .catch(() => setProducts([]))
       .finally(() => setLoading(false))
@@ -221,6 +227,9 @@ export default function FlashSales() {
               >
                 <div className={styles.imgWrap}>
                   <img src={getImageUrl(p.image)} alt={p.name} className={styles.productImg} />
+                  {p.tag?.trim().toLowerCase() === 'hot' && (
+                    <span className={styles.hotBadge}>Hot</span>
+                  )}
                 </div>
 
                 <div className={styles.infoRow}>
