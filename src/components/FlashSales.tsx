@@ -41,6 +41,19 @@ interface FlashSaleData {
   display_order: number
 }
 
+interface AffiliateBannerData {
+  id: number
+  title?: string
+  image?: string
+  media_file?: string
+  placement: string
+  display_order?: number
+  is_active?: boolean
+  is_live?: boolean
+  link?: string
+  affiliate_url?: string
+}
+
 function Stars({ count }: { count: number }) {
   return (
     <span className={styles.stars}>
@@ -69,28 +82,40 @@ export default function FlashSales() {
   const [products, setProducts] = useState<ApiProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [quoteThreshold, setQuoteThreshold] = useState(2000000)
-  const [flashSaleImage, setFlashSaleImage] = useState<string | null>(null)
-  // --- new states for countdown ---
+  const [flashSideBanner, setFlashSideBanner] = useState<AffiliateBannerData | null>(null)
   const [flashSale, setFlashSale] = useState<FlashSaleData | null>(null)
   const [secondsLeft, setSecondsLeft] = useState(0)
 
   useEffect(() => {
-    // Fetch flash sale image and data from combined endpoint
-    promallCombinedApi.getAll<{ status?: string; flash_sales?: FlashSaleData[] }>()
+    promallCombinedApi.getAll<{
+      status?: string
+      flash_sales?: FlashSaleData[]
+      affiliate_banners?: AffiliateBannerData[]
+    }>()
       .then((data) => {
         if (data.status === 'success' && Array.isArray(data.flash_sales)) {
           // Use first live entry, or first entry if none are explicitly live
           const live = data.flash_sales.find((f: FlashSaleData) => f.is_live)
             ?? data.flash_sales[0]
           if (live) {
-            setFlashSaleImage(getImageUrl(live.image))
             setFlashSale(live)
             setSecondsLeft(live.seconds_remaining || 0)
           }
         }
+        const banner = Array.isArray(data.affiliate_banners)
+          ? data.affiliate_banners
+              .filter(item =>
+                item.placement === 'flash_side' &&
+                item.is_active !== false &&
+                item.is_live !== false &&
+                Boolean(item.image || item.media_file)
+              )
+              .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))[0]
+          : undefined
+        setFlashSideBanner(banner ?? null)
       })
-      .catch(() => {
-        // silently ignore — topBar renders without the image
+      .catch((cause: unknown) => {
+        console.error('Failed to load flash sale banner:', cause)
       })
 
     // Fetch quote threshold
@@ -198,9 +223,22 @@ export default function FlashSales() {
             <div className={styles.saleEnded}>Sale Ended</div>
           )}
         </div>
-        {flashSaleImage && (
-          <img src={flashSaleImage} alt="Flash sale" className={styles.topGif} />
+        {flashSideBanner && (
+          (() => {
+            const image = (
+              <img
+                src={getImageUrl(flashSideBanner.image ?? flashSideBanner.media_file ?? '')}
+                alt={flashSideBanner.title || 'Flash sale'}
+                className={styles.topGif}
+              />
+            )
+            const href = flashSideBanner.link ?? flashSideBanner.affiliate_url
+            return href
+              ? <a href={href} target="_blank" rel="noopener noreferrer">{image}</a>
+              : image
+          })()
         )}
+      
       </div>
 
       <div className={styles.grid}>
