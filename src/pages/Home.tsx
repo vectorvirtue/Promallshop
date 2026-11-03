@@ -4,7 +4,7 @@ import FlashSales from "../components/FlashSales"
 import FeaturedProducts from "../components/Featuredproducts"
 import Deals from "../components/Deals"
 import Choose from "../components/Whychoose"
-import Whybuy from "../components/Whybuy"
+import Whybuy, { FirstOrderOffer } from "../components/Whybuy"
 import Partners from "../components/Partners"
 import Newsletter from "../components/Newsletter"
 import Blogs from "../components/Blogs"
@@ -12,30 +12,38 @@ import Awards from "../components/Awards"
 import { Helmet } from "react-helmet-async"
 import homeSocialImage from "../assets/promall1crop-2@2x.png"
 import AffiliateBanner, { type AffiliateBannerRecord } from "../components/AffiliateBanner"
+import { Link } from "react-router-dom"
+import { ArrowRight } from "lucide-react"
+import { useQuoteForm } from "../context/QuoteFormContext"
+import styles from "./Home.module.css"
+
+const homeTitle = "Buy IT Equipment in Nigeria | Promallshop"
+const homeDescription = "Shop IT equipment in Nigeria at Promallshop. Find computer accessories, video conferencing systems, interactive displays, digital signage, robotics kits and networking solutions."
 
 export default function Home({ affiliateBanners }: { affiliateBanners: AffiliateBannerRecord[] }) {
+  const { openQuoteForm } = useQuoteForm()
   const homeUrl = `${window.location.origin}/`
   const homeImage = new URL(homeSocialImage, window.location.origin).toString()
 
   return (
     <>
       <Helmet>
-        <title>Nigeria’s Top Tech Store: VC Solutions, Accessories, and More | Promallshop</title>
+        <title>{homeTitle}</title>
         <meta
           name="description"
-          content="Find top video conferencing solutions, headsets, webcams, keyboards, coding & robotic kits, and accessories at Promallshop. Best deals today!"
+          content={homeDescription}
         />
         <meta
           name="keywords"
-          content="Wireless Headsets, Gaming Headsets, Noise-canceling Headphones, Bluetooth Headsets, Logitech H390 USB Headset, Best Webcams for Streaming, Logitech Webcams, Video Conferencing Tools, Video Conferencing Solutions, Mechanical Keyboards, Ergonomic Keyboards, Gaming Keyboards, Wireless Keyboard and Mouse, Curved Monitors, Samsung Odyssey Monitors, Touchscreen Displays, Interactive Touchscreen Displays, Digital Signage, Wireless Presentation Devices, Logitech Video Conferencing Accessories, Wireless Mouse for Gaming, Programmable Mouse, Gaming Mice, Best Coding and Robotics Kits, Programmable Robot Kits for Adults, Programmable Robot Kits for Beginners, Arduino Kits, Mobile Phone Accessories, Powerbanks, Belkin Accessories, Headphones, AirPods, Car Chargers, USB Cables, Accessories, Mouse, Office Equipment, Toner Cartridge, Printer, Toner, Cartridge, Sublimation Printer, Printing Near Me, DTF Printer, Printer Ink, Office, Equipment, Scanner, Yealink, Huawei, Samsung, Hikvision, Belkin, Logitech, Video Conferencing, Shop, Technology"
+          content="IT equipment in Nigeria, Computer accessories Nigeria, IT products Nigeria, Video conferencing equipment Nigeria, Interactive displays Nigeria, Digital signage Nigeria"
         />
 
         <meta property="og:url" content={homeUrl} />
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="PROMALLSHOP ECOMMERCE STORE" />
+        <meta property="og:title" content={homeTitle} />
         <meta
           property="og:description"
-          content="Shop headsets, IT accessories, webcams, keyboards, coding kits, home automation, and office equipment at Promallshop. Discover deals on the latest tech."
+          content={homeDescription}
         />
         <meta property="og:image" content={homeImage} />
 
@@ -43,8 +51,8 @@ export default function Home({ affiliateBanners }: { affiliateBanners: Affiliate
         <meta name="twitter:site" content="@promallshop" />
         <meta name="twitter:site:id" content="1709918300" />
         <meta name="twitter:creator" content="@promallshop" />
-        <meta name="twitter:title" content="Promallshop Online Shopping" />
-        <meta name="twitter:description" content="Shop headsets, IT accessories, webcams, keyboards, coding kits, home automation, and office equipment at Promallshop. Discover deals on the latest tech." />
+        <meta name="twitter:title" content={homeTitle} />
+        <meta name="twitter:description" content={homeDescription} />
         <meta name="twitter:image" content={homeImage} />
         <meta name="twitter:url" content={homeUrl} />
 
@@ -73,29 +81,69 @@ export default function Home({ affiliateBanners }: { affiliateBanners: Affiliate
           url: window.location.origin,
           potentialAction: {
             '@type': 'SearchAction',
-            target: `${window.location.origin}/shop?q={search_term_string}`,
+            target: `${window.location.origin}/shop/search/{search_term_string}`,
             'query-input': 'required name=search_term_string',
           },
         })}</script>
       </Helmet>
 
+      <main>
       <Hero />
       <Categories />
       {affiliateBanners
         .filter((banner) => banner.placement === 'below_categories')
         .map((banner) => <AffiliateBanner key={banner.id} banner={banner} />)}
+      <div className={styles.offerPlacement}>
+        <FirstOrderOffer />
+      </div>
       <FlashSales />
       <FeaturedProducts />
-            
-
       <Deals/>
-      <Blogs/>
+      <section className={styles.intro} aria-labelledby="home-title">
+        <div className={styles.introHeading}>
+          <p className={styles.eyebrow}>Discover. Compare. Quote. Procure. Deploy.</p>
+          <h1 id="home-title">Buy IT Equipment and Technology Solutions in Nigeria</h1>
+          <p className={styles.lead}>
+            Welcome to Promallshop, your online destination for IT equipment, computer
+            accessories and business technology solutions in Nigeria. We help businesses,
+            schools, government institutions, IT resellers and individuals find the
+            technology products they need for work, learning, communication and digital transformation.
+          </p>
+          <div className={styles.actions}>
+            <Link className={styles.primaryAction} to="/shop">
+              Shop IT Products <ArrowRight size={18} aria-hidden="true" />
+            </Link>
+            <button className={styles.secondaryAction} type="button" onClick={() => openQuoteForm()}>
+              Request a Quote
+            </button>
+          </div>
+        </div>
+        <div className={styles.introDetails}>
+          <p className={styles.detailLabel}>For your next technology project</p>
+          <p>
+            From video conferencing equipment and interactive displays to digital signage
+            screens, networking devices, robotics kits and computer peripherals, Promallshop
+            brings together products from recognised global technology brands in one
+            convenient shopping destination.
+          </p>
+          <p>
+            Whether you are equipping an office, upgrading a meeting room, setting up a
+            smart classroom or purchasing IT equipment for your business, discover
+            technology solutions to meet your needs.
+          </p>
+          <a className={styles.categoryLink} href="#product-categories">
+            Explore our product categories <ArrowRight size={17} aria-hidden="true" />
+          </a>
+        </div>
+      </section>
       <Choose/>
-      <Whybuy/>
       <Partners/>
+      <Whybuy/>
+      <Blogs/>
      
       <Newsletter/>
        <Awards/>
+      </main>
     </>
   )
 }

@@ -1,114 +1,70 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import styles from './Whychoose.module.css'
 import {
   promallCombinedApi,
-  type AdditionalWebsiteContent,
+  type PromallSection2,
   type PromallCombinedResponse,
 } from '../lib/api'
 
-const allowedHtmlTags = new Set([
-  'A', 'B', 'BLOCKQUOTE', 'BR', 'EM', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
-  'I', 'LI', 'OL', 'P', 'STRONG', 'U', 'UL',
-])
-
-function sanitizeCmsHtml(html: string): string {
-  const parsed = new DOMParser().parseFromString(html, 'text/html')
-
-  const sanitizeChildren = (parent: ParentNode) => {
-    Array.from(parent.childNodes).forEach((node) => {
-      if (!(node instanceof Element)) return
-
-      if (['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'SVG', 'MATH'].includes(node.tagName)) {
-        node.remove()
-        return
-      }
-
-      sanitizeChildren(node)
-      if (!allowedHtmlTags.has(node.tagName)) {
-        node.replaceWith(...Array.from(node.childNodes))
-        return
-      }
-
-      Array.from(node.attributes).forEach((attribute) => {
-        if (node.tagName !== 'A' || !['href', 'target'].includes(attribute.name.toLowerCase())) {
-          node.removeAttribute(attribute.name)
-        }
-      })
-
-      if (node.tagName === 'A') {
-        const href = node.getAttribute('href')
-        if (href) {
-          try {
-            const url = new URL(href, window.location.origin)
-            if (!['http:', 'https:', 'mailto:'].includes(url.protocol)) node.removeAttribute('href')
-          } catch {
-            node.removeAttribute('href')
-          }
-        }
-        if (node.getAttribute('target') === '_blank') {
-          node.setAttribute('rel', 'noopener noreferrer')
-        }
-      }
-    })
-  }
-
-  sanitizeChildren(parsed.body)
-  return parsed.body.innerHTML
+function splitParagraphs(text: string): string[] {
+  return text.split(/\r?\n\s*\r?\n/).map(paragraph => paragraph.trim()).filter(Boolean)
 }
 
 export default function Choose() {
-  const [content, setContent] = useState<AdditionalWebsiteContent | null>(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [content, setContent] = useState<PromallSection2 | null>(null)
 
   useEffect(() => {
+    let cancelled = false
+
     promallCombinedApi.getAll<PromallCombinedResponse>()
       .then((response) => {
-        const items = Array.isArray(response.additional_website_content)
-          ? [...response.additional_website_content]
+        const section = response.promallsection2
+        if (!section || ![section.title, section.subtitle, section.description]
+          .every(value => typeof value === 'string' && value.trim())) return
+
+        const subsections = Array.isArray(section.subsections)
+          ? section.subsections
+              .filter(item => item && typeof item.title === 'string' && item.title.trim()
+                && typeof item.description === 'string' && item.description.trim())
               .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
           : []
-        setContent(items[0] ?? null)
+
+        if (!cancelled) setContent({ ...section, subsections })
       })
       .catch((cause: unknown) => {
-        console.error('Failed to load additional website content:', cause)
-        setError('Unable to load this content right now.')
+        console.error('Failed to load equipment guide:', cause)
       })
-      .finally(() => setLoading(false))
+
+    return () => { cancelled = true }
   }, [])
 
+  if (!content) return null
+
   return (
-    <motion.article
-      className={styles.container}
-      aria-label="About Promallshop"
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-    >
-      {content && (
-        <>
-          <motion.h2
-            initial={{ opacity: 0, y: -20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            {content.heading}
-          </motion.h2>
-          <motion.div
-            className={styles.cmsContent}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(content.description) }}
-          />
-        </>
+    <section className={styles.container} aria-labelledby="equipment-range-title">
+      <div className={styles.introduction}>
+        <p className={styles.eyebrow}>{content.title}</p>
+        <h2 id="equipment-range-title">{content.subtitle}</h2>
+        {splitParagraphs(content.description).map((paragraph, index) => (
+          <p className={styles.intro} key={index}>{paragraph}</p>
+        ))}
+      </div>
+
+      {content.subsections.length > 0 && (
+        <div className={styles.sections}>
+          {content.subsections.map((subsection, index) => (
+            <article key={subsection.id} className={styles.category}>
+              <span className={styles.number} aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+              <h3>{subsection.title}</h3>
+              <div className={styles.copy}>
+                {splitParagraphs(subsection.description).map((paragraph, paragraphIndex) => (
+                  <p key={paragraphIndex}>{paragraph}</p>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
       )}
-      {!content && loading && <p role="status">Loading content…</p>}
-      {!content && error && <p role="status">{error}</p>}
-    </motion.article>
+    </section>
   )
 }

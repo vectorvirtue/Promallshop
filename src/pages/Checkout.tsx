@@ -382,8 +382,7 @@ export default function Checkout() {
         gross_amount: String(subtotal),
         payment_type: paymentMethod === 'bank' ? 'bank_transfer'
           : paymentMethod === 'cheque' ? 'cheque'
-          : paymentMethod === 'paystack' ? 'paystack'
-          : 'flutterwave',
+          : 'online',
         vat_charge_rate: String(VAT_RATE),
         vat_charge: String(vatCharge),
         net_amount: String(grandTotal),

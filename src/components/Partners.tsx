@@ -1,5 +1,5 @@
 import styles from './Partners.module.css'
-import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 
 import hikvision  from '../assets/Hikvision.svg'
 import huawei     from '../assets/huawei_logo.png'
@@ -34,32 +34,34 @@ const track = [...partners, ...partners]
 
 export default function Partners() {
   return (
-    <motion.div 
-      className={styles.container}
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-    >
-      <motion.h2 
-        className={styles.title}
-        initial={{ opacity: 0, scale: 0.9 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        Brand Partners
-      </motion.h2>
+    <section className={styles.container} aria-labelledby="technology-brands-title">
+      <h2 className={styles.title} id="technology-brands-title">
+        Buy IT Products from Trusted Technology Brands
+      </h2>
+      <p className={styles.intro}>
+        Promallshop features technology products from recognised manufacturers across
+        computing, professional displays, business collaboration, networking, security
+        and educational technology.
+      </p>
 
       <div className={styles.marqueeWrapper}>
         <div className={styles.marqueeTrack}>
           {track.map((p, i) => (
-            <div key={i} className={styles.logoWrap}>
-              <img src={p.logo} alt={p.name} className={styles.logo} />
+            <div key={`${p.name}-${i}`} className={styles.logoWrap} aria-hidden={i >= partners.length ? true : undefined}>
+              <img src={p.logo} alt={p.name} className={styles.logo} loading="lazy" />
             </div>
           ))}
         </div>
       </div>
-    </motion.div>
+      <p className={styles.brandNames}>
+        Explore available products from Logitech, Yealink, Samsung, MAXHUB, Huawei, LG,
+        Sharp, Poly, Sennheiser, Bosch, Absen, Hikvision, Dahua, Makeblock, Arduino,
+        Extron, Crestron, Norden and Vbet.
+      </p>
+      <div className={styles.details}>
+        <p>Product availability and brand selections may change. Refer to individual listings for current models and specifications.</p>
+        <Link to="/shop" className={styles.link}>Explore available products <span aria-hidden="true">→</span></Link>
+      </div>
+    </section>
   )
 }

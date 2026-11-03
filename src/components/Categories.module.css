@@ -1,4 +1,5 @@
 .categories {
+  scroll-margin-top: 7rem;
   align-self: stretch;
   border: 1px solid #F18E1A;
   box-sizing: border-box;
@@ -19,7 +20,21 @@
   margin-bottom: 0.5em;
 }
 
-/* desktop: two rows layout */
+.intro {
+  max-width: 70ch;
+  margin-bottom: 1rem;
+  color: #555;
+  font-size: 0.88rem;
+  line-height: 1.8;
+}
+
+.category a:focus-visible {
+  outline: 3px solid #ba6100;
+  outline-offset: 4px;
+  border-radius: 0.6em;
+}
+
+/* Desktop category rows */
 .desktopGrid {
   width: 100%;
   display: flex;
@@ -27,7 +42,6 @@
   gap: 0.5em;
 }
 
-/* 7 equal columns per row */
 .categoryGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -36,12 +50,10 @@
   margin-top: 0.5em;
 }
 
-/* mobile: single 3-column grid — hidden on desktop */
 .mobileGrid {
   display: none;
 }
 
-/* last item alone — pin to left */
 .categoryLast {
   grid-column: 1;
 }
@@ -74,9 +86,6 @@
   word-break: break-word;
 }
 
-
-
-/* ── responsive ── */
 @media (max-width: 1024px) {
   .categoryGrid {
     grid-template-columns: repeat(5, 1fr);
@@ -84,7 +93,6 @@
 }
 
 @media (max-width: 768px) {
-  /* hide desktop rows, show mobile grid */
   .desktopGrid {
     display: none;
   }

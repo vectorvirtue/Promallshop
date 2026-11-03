@@ -57,11 +57,8 @@ const itemVariants: Variants = {
 
 // A plain category tile — links to the shop filtered by slug
 const StaticCategoryItem = ({ cat }: { cat: CategoryTile }) => {
-  const [image, setImage] = useState(cat.img)
-
-  useEffect(() => {
-    setImage(cat.img)
-  }, [cat.img])
+  const [failedImage, setFailedImage] = useState<string | null>(null)
+  const image = failedImage === cat.img && cat.fallbackImg ? cat.fallbackImg : cat.img
 
   return (
     <motion.div className={styles.category} variants={itemVariants}>
@@ -73,7 +70,7 @@ const StaticCategoryItem = ({ cat }: { cat: CategoryTile }) => {
           src={image}
           onError={() => {
             if (cat.fallbackImg && image !== cat.fallbackImg) {
-              setImage(cat.fallbackImg)
+              setFailedImage(cat.img)
             }
           }}
           // alt="" because the <h3> below already provides the accessible label
@@ -154,16 +151,21 @@ export default function Categories() {
     <StaticCategoryItem key={item.cat.slug} cat={item.cat} />
 
   return (
-    <div className={styles.categories}>
+    <section className={styles.categories} id="product-categories" aria-labelledby="categories-title">
       <motion.h2
+        id="categories-title"
         className={styles.header}
         initial={{ opacity: 0, y: -16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.5 }}
         transition={{ duration: 0.5 }}
       >
-        Our Popular Categories
+        Explore Our Product Categories
       </motion.h2>
+      <p className={styles.intro}>
+        Technology products for businesses, educational institutions, government
+        organisations, IT professionals and home users.
+      </p>
 
       {/* desktop: rows of 7 */}
       <div className={styles.desktopGrid}>
@@ -200,6 +202,6 @@ export default function Categories() {
       >
         {allTiles.map(renderTile)}
       </motion.div>
-    </div>
+    </section>
   )
 }

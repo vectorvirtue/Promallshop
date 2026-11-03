@@ -16,6 +16,44 @@
   margin: 0;
 }
 
+.intro,
+.brandNames {
+  max-width: 100ch;
+  font-size: 0.9rem;
+  line-height: 1.85;
+  color: #e0e5f0;
+}
+
+.details {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem 2rem;
+  font-size: 0.78rem;
+  line-height: 1.8;
+}
+
+.details p {
+  max-width: 85ch;
+  color: #c1c9dc;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-block: 0.6rem;
+  color: #ffc278;
+  font-weight: 700;
+  text-underline-offset: 4px;
+}
+
+.link:focus-visible {
+  outline: 3px solid #ffc278;
+  outline-offset: 4px;
+}
+
 /* ── marquee ── */
 .marqueeWrapper {
   width: 100%;
@@ -69,4 +107,22 @@
 .logo[alt="Logitech"] {
   max-width: 200px;
   height: 40px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marqueeTrack {
+    animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .marqueeWrapper {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  .logoWrap[aria-hidden="true"] {
+    display: none;
+  }
 }

@@ -17,13 +17,6 @@ export const promallCombinedApi = {
   },
 }
 
-export interface AdditionalWebsiteContent {
-  id: number
-  heading: string
-  description: string
-  display_order?: number
-}
-
 export interface WebsiteFaq {
   id: number
   question: string
@@ -31,9 +24,33 @@ export interface WebsiteFaq {
   display_order?: number
 }
 
+export interface PromallSection1 {
+  id: number
+  title: string
+  subtitle: string
+  description: string
+  link?: string | null
+}
+
+export interface PromallSection2Subsection {
+  id: number
+  title: string
+  description: string
+  display_order?: number
+}
+
+export interface PromallSection2 {
+  id: number
+  title: string
+  subtitle: string
+  description: string
+  subsections: PromallSection2Subsection[]
+}
+
 export interface PromallCombinedResponse {
-  additional_website_content?: AdditionalWebsiteContent[]
   website_faqs?: WebsiteFaq[]
+  promallsection1?: PromallSection1 | null
+  promallsection2?: PromallSection2 | null
 }
 
 /**
