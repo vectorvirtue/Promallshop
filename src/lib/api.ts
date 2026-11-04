@@ -32,7 +32,7 @@ export interface PromallSection1 {
   link?: string | null
 }
 
-export interface PromallSection2Subsection {
+export interface PromallSubsection {
   id: number
   title: string
   description: string
@@ -44,13 +44,21 @@ export interface PromallSection2 {
   title: string
   subtitle: string
   description: string
-  subsections: PromallSection2Subsection[]
+  subsections: PromallSubsection[]
+}
+
+export interface PromallSection3 {
+  id: number
+  title: string
+  subtitle: string
+  subsections: PromallSubsection[]
 }
 
 export interface PromallCombinedResponse {
   website_faqs?: WebsiteFaq[]
   promallsection1?: PromallSection1 | null
   promallsection2?: PromallSection2 | null
+  promallsection3?: PromallSection3 | null
 }
 
 /**

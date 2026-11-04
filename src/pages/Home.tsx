@@ -16,6 +16,7 @@ import { Link } from "react-router-dom"
 import { ArrowRight } from "lucide-react"
 import { useQuoteForm } from "../context/QuoteFormContext"
 import styles from "./Home.module.css"
+import { AFFILIATE_PROGRAM_URL } from "../lib/links"
 
 const homeTitle = "Buy IT Equipment in Nigeria | Promallshop"
 const homeDescription = "Shop IT equipment in Nigeria at Promallshop. Find computer accessories, video conferencing systems, interactive displays, digital signage, robotics kits and networking solutions."
@@ -89,6 +90,9 @@ export default function Home({ affiliateBanners }: { affiliateBanners: Affiliate
 
       <main>
       <Hero />
+      {affiliateBanners
+        .filter((banner) => banner.placement === 'program')
+        .map((banner) => <AffiliateBanner key={banner.id} banner={banner} href={AFFILIATE_PROGRAM_URL} />)}
       <Categories />
       {affiliateBanners
         .filter((banner) => banner.placement === 'below_categories')

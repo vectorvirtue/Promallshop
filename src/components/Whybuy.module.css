@@ -67,6 +67,19 @@
   line-height: 1.6;
 }
 
+.reasonCopy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.reasonCopy p {
+  white-space: pre-line;
+}
+
+.reasonCopy p + p {
+  margin-top: 0.85rem;
+}
+
 .reason p,
 .offerCopy > p:not(.eyebrow),
 .procurementCopy > p:not(.procurementEyebrow) {
