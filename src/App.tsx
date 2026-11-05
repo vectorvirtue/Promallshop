@@ -62,22 +62,22 @@ function AnimatedRoutes({ affiliateBanners }: { affiliateBanners: AffiliateBanne
         } />
         <Route path="/shop/:category?" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
-            <Shop />
+            <Shop affiliateBanners={affiliateBanners} />
           </motion.div>
         } />
         <Route path="/shop/:category/:subcategory" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
-            <Shop />
+            <Shop affiliateBanners={affiliateBanners} />
           </motion.div>
         } />
         <Route path="/shop/search/:term" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
-            <Shop />
+            <Shop affiliateBanners={affiliateBanners} />
           </motion.div>
         } />
         <Route path="/shop/:category/search/:term" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
-            <Shop />
+            <Shop affiliateBanners={affiliateBanners} />
           </motion.div>
         } />
         <Route path="/signup" element={

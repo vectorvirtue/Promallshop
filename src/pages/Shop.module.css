@@ -10,6 +10,9 @@
    padding: 5px var(--page-x);
   margin-block: 2em;
 }
+.bannerLink {
+  display: block;
+}
 .container{
      padding: 5px var(--page-x);
      display: flex;

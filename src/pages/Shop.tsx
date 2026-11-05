@@ -11,7 +11,7 @@ import { productsApi, getImageUrl, quoteApi, subcategoriesApi } from '../lib/api
 import { productPath } from '../lib/slugs'
 import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
-import shop from '../assets/shop.gif'
+import type { AffiliateBannerRecord } from '../components/AffiliateBanner'
 import shopSocialImage from '../assets/promall1crop-2@2x.png'
 interface ApiProduct {
   id: number
@@ -294,7 +294,8 @@ function PriceFilter({
   )
 }
 
-export default function Shop(){
+export default function Shop({ affiliateBanners }: { affiliateBanners: AffiliateBannerRecord[] }){
+ const shopTopBanners = affiliateBanners.filter(banner => banner.placement === 'shop_top')
  const { addToCart } = useCart()
  const { addToWishlist } = useWishlist()
  const { openQuoteForm } = useQuoteForm()
@@ -608,7 +609,18 @@ export default function Shop(){
   } : null
     return(
         <>
-         <img className={styles.gif} src={shop} alt="Belkin gif" />
+         {shopTopBanners.map(banner => {
+           const src = getImageUrl(banner.image || banner.media_file || '')
+           if (!src) return null
+
+           const image = <img key={banner.id} className={styles.gif} src={src} alt={banner.title || 'Shop banner'} />
+           const href = banner.link || banner.affiliate_url
+           return href ? (
+             <a key={banner.id} className={styles.bannerLink} href={href} target="_blank" rel="noopener noreferrer">
+               {image}
+             </a>
+           ) : image
+         })}
         <Helmet>
           <title>
             Nigeria’s Top Tech Store: VC Solutions, Accessories, and More | Promallshop
