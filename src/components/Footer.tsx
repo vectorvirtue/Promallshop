@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import styles from './Footer.module.css'
 import logo from '../assets/Promall1crop 2.svg'
-import { AFFILIATE_PROGRAM_URL } from '../lib/links'
+import { AFFILIATE_PROGRAM_PATH } from '../lib/links'
 
 const usefulLinks = [
   {
@@ -31,6 +31,10 @@ const usefulLinks = [
   {
     link: 'Track My Order',
     path: '/track-order'
+  },
+  {
+    link: 'Affiliate Program',
+    path: AFFILIATE_PROGRAM_PATH
   }
 ]
 
@@ -58,11 +62,6 @@ export default function Footer() {
                 </Link>
               </li>
             ))}
-            <li>
-              <a href={AFFILIATE_PROGRAM_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
-                Affiliate
-              </a>
-            </li>
           </ul>
         </div>
 

@@ -26,6 +26,7 @@ import OrderTracking from "./pages/TrackOrder";
 import Privacy from "./legal/Privacy";
 import FAQ from "./pages/FAQ";
 import About from "./pages/About";
+import Affiliate from "./pages/Affiliate";
 import Contact from "./pages/Contact";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -34,6 +35,7 @@ import Product from "./pages/Productpage";
 import Events from "./components/Events";
 import { type AffiliateBannerRecord } from "./components/AffiliateBanner";
 import { promallCombinedApi } from "./lib/api";
+import { AFFILIATE_PROGRAM_PATH } from "./lib/links";
 
 /* ── Error Boundary — contains crashes so one broken component can't blank the whole app ── */
 class ErrorBoundary extends Component<
@@ -118,6 +120,11 @@ function AnimatedRoutes({ affiliateBanners }: { affiliateBanners: AffiliateBanne
         <Route path="/about-us" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
             <About />
+          </motion.div>
+        } />
+        <Route path={AFFILIATE_PROGRAM_PATH} element={
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
+            <Affiliate />
           </motion.div>
         } />
         <Route path="/contact" element={
