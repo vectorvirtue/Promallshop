@@ -31,9 +31,10 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import ForgotPassword from "./pages/ForgotPassword";
 import Product from "./pages/Productpage";
+import PartnerDetails from "./pages/PartnerDetails";
 import Events from "./components/Events";
 import { type AffiliateBannerRecord } from "./components/AffiliateBanner";
-import { promallCombinedApi } from "./lib/api";
+import { promallCombinedApi, type PartnerCatalog, type PromallCombinedResponse } from "./lib/api";
 
 /* ── Error Boundary — contains crashes so one broken component can't blank the whole app ── */
 class ErrorBoundary extends Component<
@@ -48,7 +49,7 @@ class ErrorBoundary extends Component<
   }
 }
 
-function AnimatedRoutes({ affiliateBanners }: { affiliateBanners: AffiliateBannerRecord[] }) {
+function AnimatedRoutes({ affiliateBanners, partners }: { affiliateBanners: AffiliateBannerRecord[]; partners: PartnerCatalog }) {
   const location = useLocation();
   const routeKey = location.pathname.startsWith('/shop') ? '/shop' : location.pathname
 
@@ -57,7 +58,7 @@ function AnimatedRoutes({ affiliateBanners }: { affiliateBanners: AffiliateBanne
       <Routes location={location} key={routeKey}>
         <Route path="/" element={
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
-            <Home affiliateBanners={affiliateBanners} />
+            <Home affiliateBanners={affiliateBanners} partners={partners} />
           </motion.div>
         } />
         <Route path="/shop/:category?" element={
@@ -150,6 +151,11 @@ function AnimatedRoutes({ affiliateBanners }: { affiliateBanners: AffiliateBanne
             <Product />
           </motion.div>
         } />
+        <Route path="/partners/:slug" element={
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
+            <PartnerDetails />
+          </motion.div>
+        } />
       </Routes>
     </AnimatePresence>
   );
@@ -157,11 +163,29 @@ function AnimatedRoutes({ affiliateBanners }: { affiliateBanners: AffiliateBanne
 
 export default function App() {
   const [affiliateBanners, setAffiliateBanners] = useState<AffiliateBannerRecord[]>([])
+  const [partners, setPartners] = useState<PartnerCatalog>({ status: 'loading' })
   const topAffiliateBanners = affiliateBanners.filter((banner) => banner.placement === 'top')
 
   useEffect(() => {
-    promallCombinedApi.getAll<{ status?: string; affiliate_banners?: AffiliateBannerRecord[] }>()
+    let cancelled = false
+
+    promallCombinedApi.getAll<PromallCombinedResponse & { status?: string; affiliate_banners?: AffiliateBannerRecord[] }>()
       .then((data) => {
+        if (cancelled) return
+
+        if (Array.isArray(data.brands)) {
+          const seenSlugs = new Set<string>()
+          const brands = data.brands.filter(brand => {
+            const slug = brand?.slug
+            if (typeof slug !== 'string' || !slug.trim() || slug === '.' || slug === '..' || seenSlugs.has(slug)) return false
+            seenSlugs.add(slug)
+            return true
+          })
+          setPartners({ status: 'ready', brands })
+        } else {
+          setPartners({ status: 'error' })
+        }
+
         if (data.status === 'success' && Array.isArray(data.affiliate_banners)) {
           setAffiliateBanners(
             data.affiliate_banners
@@ -170,7 +194,13 @@ export default function App() {
           )
         }
       })
-      .catch(() => setAffiliateBanners([]))
+      .catch(() => {
+        if (cancelled) return
+        setAffiliateBanners([])
+        setPartners({ status: 'error' })
+      })
+
+    return () => { cancelled = true }
   }, [])
 
   return (
@@ -190,7 +220,7 @@ export default function App() {
                 <Topnav affiliateBanner={topAffiliateBanners[0]} />
                 <Navbar />
                 <ErrorBoundary>
-                  <AnimatedRoutes affiliateBanners={affiliateBanners} />
+                  <AnimatedRoutes affiliateBanners={affiliateBanners} partners={partners} />
                 </ErrorBoundary>
                 <Chatbox />
                 <BacktoTop />

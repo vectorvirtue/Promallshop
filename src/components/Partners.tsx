@@ -1,67 +1,51 @@
-import styles from './Partners.module.css'
 import { Link } from 'react-router-dom'
+import { getImageUrl, type PartnerCatalog } from '../lib/api'
+import { partnerPath } from '../lib/links'
+import styles from './Partners.module.css'
 
-import hikvision  from '../assets/Hikvision.svg'
-import huawei     from '../assets/huawei_logo.png'
-import canon      from '../assets/canon.png'
-import dahua      from '../assets/dahua.png'
-import logitech   from '../assets/Logitech.jpg'
-import makeblock  from '../assets/makeblock.png'
-import maxhub     from '../assets/maxhub.jpg'
-import polycom    from '../assets/polycom.jpg'
-import samsung    from '../assets/samsung.png'
-import unilumin   from '../assets/UNILUMIN.svg'
-import vt         from '../assets/vt.webp'
-import yealink    from '../assets/yealink.png'
+export default function Partners({ partners }: { partners: PartnerCatalog }) {
+  const logos = partners.status === 'ready'
+    ? partners.brands.flatMap(brand => {
+        if (typeof brand.image !== 'string' || !brand.image.trim()) return []
 
-const partners = [
-  { name: 'Hikvision',  logo: hikvision },
-  { name: 'Huawei',     logo: huawei },
-  { name: 'Canon',      logo: canon },
-  { name: 'Dahua',      logo: dahua },
-  { name: 'Logitech',   logo: logitech },
-  { name: 'Makeblock',  logo: makeblock },
-  { name: 'Maxhub',     logo: maxhub },
-  { name: 'Polycom',    logo: polycom },
-  { name: 'Samsung',    logo: samsung },
-  { name: 'Unilumin',   logo: unilumin },
-  { name: 'VT',         logo: vt },
-  { name: 'Yealink',    logo: yealink },
-]
+        return [{ slug: brand.slug, name: brand.title?.trim() || brand.slug, src: getImageUrl(brand.image) }]
+      })
+    : []
+  const hasMarquee = logos.length > 1
 
-// duplicate for seamless infinite loop
-const track = [...partners, ...partners]
-
-export default function Partners() {
   return (
     <section className={styles.container} aria-labelledby="technology-brands-title">
-      <h2 className={styles.title} id="technology-brands-title">
-        Buy IT Products from Trusted Technology Brands
-      </h2>
-      <p className={styles.intro}>
-        Promallshop features technology products from recognised manufacturers across
-        computing, professional displays, business collaboration, networking, security
-        and educational technology.
-      </p>
+      <h2 className={styles.title} id="technology-brands-title">Brand Partners</h2>
 
-      <div className={styles.marqueeWrapper}>
-        <div className={styles.marqueeTrack}>
-          {track.map((p, i) => (
-            <div key={`${p.name}-${i}`} className={styles.logoWrap} aria-hidden={i >= partners.length ? true : undefined}>
-              <img src={p.logo} alt={p.name} className={styles.logo} loading="lazy" />
-            </div>
-          ))}
+      {partners.status === 'loading' && <p role="status">Loading brand partners…</p>}
+      {partners.status === 'error' && <p role="status">Brand partners could not be loaded.</p>}
+      {partners.status === 'ready' && logos.length === 0 && <p>No brand partners are available right now.</p>}
+
+      {logos.length > 0 && (
+        <div className={`${styles.marqueeWrapper} ${hasMarquee ? styles.animated : ''}`}>
+          <div className={styles.marqueeTrack}>
+            {(hasMarquee ? [false, true] : [false]).map(duplicate => (
+              <div
+                key={duplicate ? 'duplicate' : 'original'}
+                className={`${styles.logoGroup} ${duplicate ? styles.duplicate : ''}`}
+                aria-hidden={duplicate || undefined}
+              >
+                {logos.map(logo => (
+                  <Link
+                    key={logo.slug}
+                    to={partnerPath(logo.slug)}
+                    className={styles.logoLink}
+                    aria-label={`View ${logo.name} details`}
+                    tabIndex={duplicate ? -1 : undefined}
+                  >
+                    <img src={logo.src} alt={logo.name} className={styles.logo} loading="lazy" />
+                  </Link>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-      <p className={styles.brandNames}>
-        Explore available products from Logitech, Yealink, Samsung, MAXHUB, Huawei, LG,
-        Sharp, Poly, Sennheiser, Bosch, Absen, Hikvision, Dahua, Makeblock, Arduino,
-        Extron, Crestron, Norden and Vbet.
-      </p>
-      <div className={styles.details}>
-        <p>Product availability and brand selections may change. Refer to individual listings for current models and specifications.</p>
-        <Link to="/shop" className={styles.link}>Explore available products <span aria-hidden="true">→</span></Link>
-      </div>
+      )}
     </section>
   )
 }

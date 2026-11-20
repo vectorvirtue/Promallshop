@@ -1,0 +1,167 @@
+.page {
+  width: 100%;
+  color: #172033;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+
+.hero {
+  padding: clamp(3rem, 7vw, 6rem) var(--page-x);
+  background: #04091a;
+  color: #fff;
+}
+
+.heroContent {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.breadcrumb,
+.current,
+.separator {
+  color: #c1c9dc;
+  font-size: 0.85rem;
+}
+
+.breadcrumb {
+  text-decoration: none;
+}
+
+.breadcrumb:hover {
+  color: #ffc278;
+}
+
+.separator {
+  margin: 0 0.6rem;
+}
+
+.hero h1 {
+  max-width: 900px;
+  margin: 2rem 0 1rem;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.15;
+}
+
+.hero p {
+  max-width: 850px;
+  color: #e0e5f0;
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.hero .type {
+  margin-top: 1rem;
+  color: #ffc278;
+  font-weight: 600;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 3rem;
+  align-items: start;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem var(--page-x);
+}
+
+.content:has(> :only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.description h2,
+.faqSection h2 {
+  margin: 0 0 1.5rem;
+  color: #101a32;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.description p {
+  margin: 0;
+  color: #4c566b;
+  line-height: 1.9;
+  white-space: pre-line;
+}
+
+.imageWrap {
+  overflow: hidden;
+  border-radius: 14px;
+  background: #f2f4f8;
+}
+
+.imageWrap:only-child {
+  max-width: 420px;
+}
+
+.imageWrap img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.faqSection {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1rem var(--page-x) 5rem;
+}
+
+.faqList {
+  display: grid;
+  gap: 1rem;
+}
+
+.faqItem {
+  padding: 1.2rem 1.4rem;
+  border: 1px solid #e1e5ed;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.faqItem summary {
+  color: #172033;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1.6;
+}
+
+.faqItem p {
+  margin: 1rem 0 0;
+  color: #596477;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+.status {
+  min-height: 45vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem var(--page-x);
+  text-align: center;
+}
+
+.status h1 {
+  margin: 0;
+  color: #172033;
+}
+
+.status p {
+  color: #596477;
+}
+
+.backLink {
+  color: #a65d13;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+}

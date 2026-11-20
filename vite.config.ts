@@ -14,10 +14,15 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       proxy: {
-        '/vite-proxy': {
+        '/vite-proxy/combined': {
           target: promallCombinedUrl.origin,
           changeOrigin: true,
           rewrite: () => promallCombinedUrl.pathname,
+        },
+        '/vite-proxy/brand-details': {
+          target: 'https://manager.promallshop.com',
+          changeOrigin: true,
+          rewrite: path => path.replace(/^\/vite-proxy\/brand-details/, '/proxy/promall/brands'),
         },
       },
     },

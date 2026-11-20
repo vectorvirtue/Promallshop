@@ -1,128 +1,89 @@
 .container {
   padding: 2em var(--page-x);
-  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1.5em;
   background: #04091a;
   color: white;
-  overflow: hidden;
 }
 
 .title {
   font-size: 1.4em;
   font-weight: 700;
-
-  margin: 0;
 }
 
-.intro,
-.brandNames {
-  max-width: 100ch;
-  font-size: 0.9rem;
-  line-height: 1.85;
-  color: #e0e5f0;
-}
-
-.details {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem 2rem;
-  font-size: 0.78rem;
-  line-height: 1.8;
-}
-
-.details p {
-  max-width: 85ch;
-  color: #c1c9dc;
-}
-
-.link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding-block: 0.6rem;
-  color: #ffc278;
-  font-weight: 700;
-  text-underline-offset: 4px;
-}
-
-.link:focus-visible {
-  outline: 3px solid #ffc278;
-  outline-offset: 4px;
-}
-
-/* ── marquee ── */
 .marqueeWrapper {
-  width: 100%;
-  overflow: hidden;
-  /* fade edges */
-  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  min-width: 0;
+  overflow-x: auto;
 }
 
 .marqueeTrack {
   display: flex;
+  width: max-content;
+  margin-inline: auto;
+}
+
+.logoGroup {
+  display: flex;
   align-items: center;
   gap: 1.5em;
-  width: max-content;
-  animation: scroll 28s linear infinite;
+  padding: 0.35rem;
 }
 
-.marqueeTrack:hover {
-  animation-play-state: paused;
+.duplicate {
+  display: none;
 }
 
-@keyframes scroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-/* white pill */
-.logoWrap {
+.logoLink {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  border-radius: 999px;
-  padding: 0.7em 1.8em;
   flex-shrink: 0;
-  transition: box-shadow 0.2s;
+  min-height: 54px;
+  padding: 0.7em 1.8em;
+  border-radius: 999px;
+  background: #fff;
 }
 
-.logoWrap:hover {
-  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.2);
+.logoLink:hover {
+  box-shadow: 0 4px 14px rgb(255 255 255 / 20%);
+}
+
+.logoLink:focus-visible {
+  outline: 2px solid #ffc278;
+  outline-offset: 2px;
 }
 
 .logo {
-  height: 32px;
   width: auto;
-  max-width: 110px;
+  height: 32px;
+  max-width: 145px;
   object-fit: contain;
 }
 
-/* Logitech logo needs more width */
-.logo[alt="Logitech"] {
-  max-width: 200px;
-  height: 40px;
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .animated:not(:has(:focus-visible)) {
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  }
+
+  .animated:not(:has(:focus-visible)) .marqueeTrack {
+    min-width: 200%;
+    animation: scroll 28s linear infinite;
+  }
+
+  .animated:not(:has(:focus-visible)) .logoGroup {
+    display: flex;
+    justify-content: space-around;
+    flex: 1 0 auto;
+    padding-inline-end: 1.5em;
+  }
+
+  .animated:hover .marqueeTrack {
+    animation-play-state: paused;
+  }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .marqueeTrack {
-    animation: none;
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 100%;
-  }
-
-  .marqueeWrapper {
-    mask-image: none;
-    -webkit-mask-image: none;
-  }
-
-  .logoWrap[aria-hidden="true"] {
-    display: none;
-  }
+@keyframes scroll {
+  to { transform: translateX(-50%); }
 }

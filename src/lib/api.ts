@@ -24,6 +24,42 @@ export interface WebsiteFaq {
   display_order?: number
 }
 
+export interface PartnerBrand {
+  slug: string
+  title?: string | null
+  image?: string | null
+  partner_type?: string | null
+  short_description?: string | null
+  description?: string | null
+  meta_title?: string | null
+  meta_description?: string | null
+  faqs?: WebsiteFaq[] | null
+}
+
+export type PartnerCatalog =
+  | { status: 'loading' | 'error' }
+  | { status: 'ready'; brands: PartnerBrand[] }
+
+const PARTNER_DETAILS_URL = import.meta.env.DEV
+  ? '/vite-proxy/brand-details'
+  : 'https://manager.promallshop.com/proxy/promall/brands'
+
+export const partnerBrandsApi = {
+  async getBySlug(slug: string, signal: AbortSignal): Promise<PartnerBrand | null> {
+    const response = await fetch(`${PARTNER_DETAILS_URL}/${encodeURIComponent(slug)}/?format=json`, { signal })
+    if (response.status === 404) return null
+    if (!response.ok) throw new Error(`Partner details request failed: ${response.status}`)
+
+    const data: { brand?: PartnerBrand | null } | null = await response.json()
+    const brand = data?.brand
+    if (typeof brand?.slug !== 'string' || !brand.slug.trim() || typeof brand.title !== 'string' || !brand.title.trim()) {
+      throw new Error('The partner details returned by the server are incomplete.')
+    }
+
+    return brand
+  },
+}
+
 export interface PromallSection1 {
   id: number
   title: string
@@ -55,6 +91,7 @@ export interface PromallSection3 {
 }
 
 export interface PromallCombinedResponse {
+  brands?: PartnerBrand[] | null
   website_faqs?: WebsiteFaq[]
   promallsection1?: PromallSection1 | null
   promallsection2?: PromallSection2 | null
