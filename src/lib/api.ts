@@ -1,4 +1,4 @@
-export const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
+﻿export const IMAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL as string) || ''
 const PROMALL_COMBINED_URL =
   (import.meta.env.VITE_PROMALL_COMBINED_URL as string) ||
   'https://manager.promallshop.com/proxy/combined/promallshop/'
@@ -104,7 +104,7 @@ export interface PromallCombinedResponse {
  */
 export function getImageUrl(path: string): string {
   if (!path) return ''
-  // some products have comma-separated multiple images — use the first one only
+  // some products have comma-separated multiple images â€” use the first one only
   const firstPath = path.split(',')[0].trim()
   if (firstPath.startsWith('http')) {
     if (firstPath.includes('ngrok')) {
@@ -131,7 +131,7 @@ if (import.meta.env.DEV && !BASE_URL) {
   )
 }
 
-/* ── token helpers ── */
+/* â”€â”€ token helpers â”€â”€ */
 export const getToken = (): string | null =>
   localStorage.getItem('token') ?? sessionStorage.getItem('token')
 
@@ -161,7 +161,7 @@ export const clearAuth = () => {
   })
 }
 
-/* ── first-time buyer check ── */
+/* â”€â”€ first-time buyer check â”€â”€ */
 export const markAsOrdered = (): void =>
   localStorage.setItem('has_ordered', 'true')
 
@@ -190,7 +190,7 @@ export async function checkHasOrderedBefore(): Promise<boolean> {
       }
     })
 
-    // 401 = token invalid/expired — clear it and treat as not logged in
+    // 401 = token invalid/expired â€” clear it and treat as not logged in
     if (res.status === 401) {
       clearAuth()
       return false
@@ -207,7 +207,7 @@ export async function checkHasOrderedBefore(): Promise<boolean> {
   }
 }
 
-/* ── base headers ── */
+/* â”€â”€ base headers â”€â”€ */
 const baseHeaders = (auth = false): HeadersInit => ({
   'Content-Type': 'application/json',
   'Accept': 'application/json',
@@ -215,7 +215,7 @@ const baseHeaders = (auth = false): HeadersInit => ({
   ...(auth && getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
 })
 
-/* ── generic request helper ── */
+/* â”€â”€ generic request helper â”€â”€ */
 async function request<T>(
   path: string,
   options: RequestInit & { auth?: boolean } = {}
@@ -231,7 +231,7 @@ async function request<T>(
     },
   })
 
-  // read as text first — an HTML error page would make res.json() throw a
+  // read as text first â€” an HTML error page would make res.json() throw a
   // SyntaxError and hide the real status/message
   const text = await res.text()
   let data: Record<string, unknown> = {}
@@ -256,7 +256,7 @@ async function request<T>(
   return data as T
 }
 
-/* ── auth ── */
+/* â”€â”€ auth â”€â”€ */
 export interface LoginResponse {
   success: boolean
   message: string
@@ -335,9 +335,9 @@ export const authApi = {
     }),
 }
 
-/* ── products ── */
+/* â”€â”€ products â”€â”€ */
 
-// in-memory cache — persists for the lifetime of the browser session
+// in-memory cache â€” persists for the lifetime of the browser session
 const _cache = new Map<string, unknown>()
 
 async function cachedRequest<T>(path: string): Promise<T> {
@@ -358,13 +358,13 @@ export const productsApi = {
   getByBrand: (brandId: number | string) => request(`/products/brand/${brandId}`),
 }
 
-/* ── subcategories ── */
+/* â”€â”€ subcategories â”€â”€ */
 export const subcategoriesApi = {
   getAll: () => request('/subcategories'),
   getGrouped: () => request('/subcategories/grouped'),
 }
 
-/* ── cart ── */
+/* â”€â”€ cart â”€â”€ */
 export const cartApi = {
   get: () => request('/cart/my-cart', { auth: true }),
   add: (product_id: string | number, quantity = 1, attributes = '') =>
@@ -376,7 +376,7 @@ export const cartApi = {
   clear: () => request('/cart/clear', { method: 'DELETE', auth: true }),
 }
 
-/* ── wishlist ── */
+/* â”€â”€ wishlist â”€â”€ */
 export const wishlistApi = {
   get: () => request('/wishlist/my-wishlist', { auth: true }),
   add: (product_id: string | number, quantity = 1) =>
@@ -398,7 +398,7 @@ export const wishlistApi = {
   clear: () => request('/wishlist/clear', { method: 'DELETE', auth: true }),
 }
 
-/* ── delivery costs ── */
+/* â”€â”€ delivery costs â”€â”€ */
 export interface DeliveryCost {
   cost_id: number
   name: string
@@ -426,7 +426,7 @@ export const deliveryCostApi = {
   },
 }
 
-/* ── users ── */
+/* â”€â”€ users â”€â”€ */
 export const usersApi = {
   /** Get current user profile */
   getProfile: () => 
@@ -463,7 +463,7 @@ export const usersApi = {
     }),
 }
 
-/* ── orders ── */export const ordersApi = {
+/* â”€â”€ orders â”€â”€ */export const ordersApi = {
   create: (payload: Record<string, unknown>) =>
     request('/orders', { method: 'POST', auth: true, body: JSON.stringify(payload) }),
   getAll: () => request('/orders/my-orders', { auth: true }),
@@ -473,13 +473,13 @@ export const usersApi = {
     request(`/orders/${id}/mark-paid`, { method: 'PATCH', auth: true }),
 }
 
-/* ── order items ──
- * The order record itself carries no product data — it is only an invoice header
+/* â”€â”€ order items â”€â”€
+ * The order record itself carries no product data â€” it is only an invoice header
  * (bill_no, amounts, status). Line items live in their own resource, and the
  * product name has to be resolved through /products/{id} because the item row
  * only stores product_id.
  *
- * NOTE: GET /order-items is NOT scoped to the signed-in user — it returns the
+ * NOTE: GET /order-items is NOT scoped to the signed-in user â€” it returns the
  * whole store's items. Callers must filter by their own order ids.
  */
 export interface ApiOrderItem {
@@ -499,7 +499,7 @@ export const orderItemsApi = {
     request('/order-items', { method: 'POST', auth: true, body: JSON.stringify(payload) }),
 }
 
-/* ── quote requests ── */
+/* â”€â”€ quote requests â”€â”€ */
 export interface QuoteRequest {
   name: string
   company_name: string
@@ -511,11 +511,6 @@ export interface QuoteRequest {
 }
 
 export const quoteApi = {
-  // The /settings/quote-threshold endpoint is not available on the backend.
-  // Return the default threshold directly to avoid a 404 on every page load.
-  getThreshold: () =>
-    Promise.resolve({ success: true, threshold: 2000000 }),
-
   // Update quote threshold (admin only)
   updateThreshold: (threshold: number) =>
     request('/settings/quote-threshold', {

@@ -7,7 +7,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Pagination } from 'antd'
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { productsApi, getImageUrl, quoteApi, subcategoriesApi } from '../lib/api'
+import { productsApi, getImageUrl, promallCombinedApi, subcategoriesApi } from '../lib/api'
 import { productPath } from '../lib/slugs'
 import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
@@ -40,6 +40,12 @@ interface ApiCategory {
   products: ApiProduct[]
 }
 
+
+interface PromallCombinedResponse {
+  status: string
+  price_threshold: string | number | null
+  currency?: string
+}
 
 function FaqAccordion({ html }: { html: string }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
@@ -318,7 +324,7 @@ export default function Shop({ affiliateBanners }: { affiliateBanners: Affiliate
  const [fetchError, setFetchError] = useState('')
  const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
  const [selectedSubcategory, setSelectedSubcategory] = useState<{ id: number; name: string } | null>(null)
- const [quoteThreshold, setQuoteThreshold] = useState(2000000)
+const [quoteThreshold, setQuoteThreshold] = useState<number | null>(null)
   const [subcategoriesMap, setSubcategoriesMap] = useState<Record<number, { id: number; name: string; slug: string }[]>>({})
 
  const fetchDone = useRef(false)
@@ -327,9 +333,24 @@ export default function Shop({ affiliateBanners }: { affiliateBanners: Affiliate
    if (fetchDone.current) return
    fetchDone.current = true
 
-   quoteApi.getThreshold()
-     .then(res => setQuoteThreshold(res.threshold))
-     .catch(() => setQuoteThreshold(2000000))
+  promallCombinedApi.getAll<PromallCombinedResponse>()
+  .then(res => {
+    if (res.status !== 'success') {
+      throw new Error('Invalid Promallshop combined response')
+    }
+
+    const threshold = res.price_threshold
+
+    setQuoteThreshold(
+      threshold === null || threshold === undefined || threshold === ''
+        ? null
+        : Number(threshold)
+    )
+  })
+  .catch(err => {
+    console.error('Promallshop threshold fetch error:', err)
+    setQuoteThreshold(null)
+  })
 
    setLoadingProducts(true)
    productsApi.getAll()
@@ -466,7 +487,11 @@ export default function Shop({ affiliateBanners }: { affiliateBanners: Affiliate
     })
   }
 
-  const isHighValue = (price: number) => price >= quoteThreshold
+  const isHighValue = (price: number) =>
+  quoteThreshold !== null &&
+  Number.isFinite(quoteThreshold) &&
+  price > quoteThreshold
+  
   const isUnavailable = (product: ApiProduct) =>
     Number(product.qty) <= 0 || product.availability === 0
   const handleAvailability = (product: ApiProduct) => {

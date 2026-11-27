@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+﻿import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Heart, Star, ChevronDown, ChevronUp, ShoppingCart, ShieldCheck, Truck, CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { useCart } from '../context/CartContext'
@@ -6,7 +6,7 @@ import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
 import styles from './Productpage.module.css'
 import { getMonthEndTarget, getTimeLeft as getCountdownTimeLeft } from '../lib/countdown'
-import { getImageUrl, checkHasOrderedBefore, deliveryCostApi, productsApi, quoteApi, type DeliveryCost } from '../lib/api'
+import { getImageUrl, checkHasOrderedBefore, deliveryCostApi, productsApi, promallCombinedApi, type DeliveryCost } from '../lib/api'
 import { extractIdFromSlug, productPath } from '../lib/slugs'
 import { Helmet } from 'react-helmet-async'
 
@@ -41,7 +41,7 @@ interface Product {
 }
 
 /**
- * The API packs the SEO strings into `sku` as "TITLE***DESCRIPTION***KEYWORDS" —
+ * The API packs the SEO strings into `sku` as "TITLE***DESCRIPTION***KEYWORDS" â€”
  * they are for meta tags, not for the page body. Older records only carry the
  * first two parts, so keywords falls back to the dedicated field.
  */
@@ -104,8 +104,8 @@ function headingText(html: string): string {
 
 /**
  * Split the CMS description into prose and specifications at whichever heading
- * marks the specs. The markup varies per product — <h3>, <strong>, "Key
- * Specifications", "Specifications and Features" — so match on the text rather
+ * marks the specs. The markup varies per product â€” <h3>, <strong>, "Key
+ * Specifications", "Specifications and Features" â€” so match on the text rather
  * than a fixed tag.
  */
 function splitDescription(html: string): { description: string; specifications: string } {
@@ -116,7 +116,7 @@ function splitDescription(html: string): { description: string; specifications: 
     if (!/specification/i.test(headingText(match[0]))) continue
 
     const before = html.slice(0, match.index)
-    /* drop a leading "Product Description" heading — the tab is already labelled */
+    /* drop a leading "Product Description" heading â€” the tab is already labelled */
     const first = before.match(/<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]>/i)
 
     return {
@@ -161,7 +161,7 @@ function Stars({ count, size = 16 }: { count: number; size?: number }) {
 
 function formatPrice(val: string | number) {
   const n = Number(val)
-  return n === 0 ? 'Price on request' : `₦ ${n.toLocaleString('en-NG')}`
+  return n === 0 ? 'Price on request' : `â‚¦ ${n.toLocaleString('en-NG')}`
 }
 
 function parseFaq(raw: string): { q: string; a: string }[] {
@@ -172,9 +172,9 @@ function parseFaq(raw: string): { q: string; a: string }[] {
   }).filter(f => f.q)
 }
 
-/* ── countdown uses shared month-end utility ── */
+/* â”€â”€ countdown uses shared month-end utility â”€â”€ */
 
-/* ── fetch multiple products by ID in parallel ── */
+/* â”€â”€ fetch multiple products by ID in parallel â”€â”€ */
 async function fetchProductsByIds(ids: string | null | undefined): Promise<SimilarProduct[]> {
   const parsed = (ids ?? '')
     .split(',')
@@ -198,7 +198,7 @@ async function fetchProductsByIds(ids: string | null | undefined): Promise<Simil
     .map(r => r.value.data)
 }
 
-/* ── reusable product strip with nav arrows ── */
+/* â”€â”€ reusable product strip with nav arrows â”€â”€ */
 interface ProductStripProps {
   title: string
   products: SimilarProduct[]
@@ -247,7 +247,7 @@ function ProductStrip({ title, products, stripRef, onScroll, addToCart, addToWis
                       <Link to={`/product/${p.id}`} className={styles.similarNameLink}>{p.name}</Link>
                     </p>
                     <p className={styles.similarPrice}>{price}</p>
-                    <span className={styles.similarStars}>★★★★★</span>
+                    <span className={styles.similarStars}>â˜…â˜…â˜…â˜…â˜…</span>
                   </div>
                   <button
                     className={styles.similarWishlist}
@@ -295,12 +295,12 @@ export default function Productpage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [isFirstTimeBuyer, setIsFirstTimeBuyer] = useState(false)
   const [countdown, setCountdown] = useState(() => getCountdownTimeLeft(getMonthEndTarget()))
-  const [quoteThreshold, setQuoteThreshold] = useState(2000000)
+  const [quoteThreshold, setQuoteThreshold] = useState<number | null>(null)
 
   const alternativeRef = useRef<HTMLDivElement>(null)
   const complementaryRef = useRef<HTMLDivElement>(null)
 
-  /* ── delivery cost for right panel (defaults to Lagos, Nigeria) ── */
+  /* â”€â”€ delivery cost for right panel (defaults to Lagos, Nigeria) â”€â”€ */
   const [shippingData, setShippingData] = useState<DeliveryCost | null>(null)
   const [shippingLoading, setShippingLoading] = useState(true)
 
@@ -313,14 +313,23 @@ export default function Productpage() {
     checkHasOrderedBefore().then(hasOrdered => setIsFirstTimeBuyer(!hasOrdered))
   }, [])
 
-  /* fetch quote threshold */
+  /* fetch global Promallshop price threshold */
   useEffect(() => {
-    quoteApi.getThreshold()
-      .then(res => setQuoteThreshold(res.threshold))
-      .catch(() => setQuoteThreshold(2000000))
+    promallCombinedApi.getAll<{
+      status?: string
+      price_threshold?: string | number | null
+    }>()
+      .then(data => {
+        const raw = data.status === 'success' ? data.price_threshold : null
+        const threshold = raw == null || raw === '' ? null : Number(raw)
+        setQuoteThreshold(
+          threshold !== null && Number.isFinite(threshold) ? threshold : null
+        )
+      })
+      .catch(() => setQuoteThreshold(null))
   }, [])
 
-  /* fetch default delivery cost — use DEFAULT record as general estimate */
+  /* fetch default delivery cost â€” use DEFAULT record as general estimate */
   useEffect(() => {
     setShippingLoading(true)
     deliveryCostApi
@@ -415,18 +424,18 @@ export default function Productpage() {
   if (error || !product) return (
     <div className={styles.errorWrap}>
       <p>{error || 'Product not found'}</p>
-      <button onClick={() => navigate('/shop')} className={styles.backBtn}>← Back to Shop</button>
+      <button onClick={() => navigate('/shop')} className={styles.backBtn}>â† Back to Shop</button>
     </div>
   )
 
   const faqs = parseFaq(product.faq)
   const { description, specifications } = splitDescription(product.description || '')
   const hasSpecs = specifications.trim().length > 0
-  /* the Read more blurb shows only the prose — specs live in their own tab */
+  /* the Read more blurb shows only the prose â€” specs live in their own tab */
   const readableDescription = htmlToReadableText(description)
   const price = formatPrice(product.end_user_price || product.price)
   const priceNum = Number(product.end_user_price || product.price)
-  const isHighValue = priceNum >= quoteThreshold
+  const isHighValue = quoteThreshold !== null && priceNum > quoteThreshold
   const quoteRequired = priceNum > 0 && isHighValue
   const discount = categoryOnlineDiscount ?? product.discount
   const hasDiscount = discount > 0
@@ -445,7 +454,7 @@ export default function Productpage() {
     ? product.video_url.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1]
     : null
 
-  /* thumbnail list — use product.images if present, otherwise just the main image */
+  /* thumbnail list â€” use product.images if present, otherwise just the main image */
   const thumbList = product.images && product.images.length > 0 ? product.images : [product.image]
 
   /* the API packs the SEO strings into `sku` as "TITLE***DESCRIPTION***KEYWORDS" */
@@ -510,18 +519,18 @@ export default function Productpage() {
 
       <nav className={styles.breadcrumb}>
         <Link to="/" className={styles.breadLink}>Home</Link>
-        <span>→</span>
+        <span>â†’</span>
         <Link to="/shop" className={styles.breadLink}>Shop</Link>
-        <span>→</span>
+        <span>â†’</span>
         <span className={styles.breadCurrent}>{product.name}</span>
       </nav>
 
       <div className={styles.page}>
 
-        {/* ══════════════ TOP SECTION ══════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â• TOP SECTION â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <div className={styles.topSection}>
 
-          {/* ── COL 1: gallery ── */}
+          {/* â”€â”€ COL 1: gallery â”€â”€ */}
           <div className={styles.gallery}>
             {/* vertical thumbnail strip */}
             <div className={styles.thumbStrip}>
@@ -555,7 +564,7 @@ export default function Productpage() {
             </div>
           </div>
 
-          {/* ── COL 2: product info ── */}
+          {/* â”€â”€ COL 2: product info â”€â”€ */}
           <div className={styles.info}>
             <p className={styles.catLabel}>{catLabel}</p>
             <h1 className={styles.productName}>{product.name}</h1>
@@ -565,7 +574,7 @@ export default function Productpage() {
                 <p className={styles.shortDesc}>
                   {showFullDesc
                     ? readableDescription
-                    : readableDescription.slice(0, 120) + (readableDescription.length > 120 ? '…' : '')}
+                    : readableDescription.slice(0, 120) + (readableDescription.length > 120 ? 'â€¦' : '')}
                 </p>
                 {readableDescription.length > 120 && (
                   <button
@@ -635,9 +644,9 @@ export default function Productpage() {
             <div className={styles.qtyRow}>
               <span className={styles.qtyLabel}>Qty</span>
               <div className={styles.qtyCtrl}>
-                <button onClick={() => setQty(q => Math.max(1, q - 1))}>‹</button>
+                <button onClick={() => setQty(q => Math.max(1, q - 1))}>â€¹</button>
                 <span>{qty}</span>
-                <button onClick={() => setQty(q => q + 1)}>›</button>
+                <button onClick={() => setQty(q => q + 1)}>â€º</button>
               </div>
             </div>
 
@@ -657,7 +666,7 @@ export default function Productpage() {
                 {product.qty <= 0 ? 'Out of Stock' : quoteRequired ? 'Request for Quote' : 'Add to Cart'}
               </button>
               {/* high-value products quote instead of checking out, so the quote
-                  action appears once — a second one here would duplicate it */}
+                  action appears once â€” a second one here would duplicate it */}
               {!quoteRequired && (
                 <button
                   className={styles.buyBtn}
@@ -683,12 +692,12 @@ export default function Productpage() {
             </div>
           </div>
 
-          {/* ── COL 3: right panel ── */}
+          {/* â”€â”€ COL 3: right panel â”€â”€ */}
           <div className={styles.rightPanel}>
-            {/* promo banner — first-time buyers see discount offer, returning customers see loyalty message */}
+            {/* promo banner â€” first-time buyers see discount offer, returning customers see loyalty message */}
             {isFirstTimeBuyer ? (
               <div className={styles.promoBanner}>
-                <p className={styles.promoText}>Hurry! Order now and get 15% discount on your purchase 🛍️</p>
+                <p className={styles.promoText}>Hurry! Order now and get 15% discount on your purchase ðŸ›ï¸</p>
                 <div className={styles.countdown}>
                   {[
                     { label: 'Days',    val: countdown.d },
@@ -740,7 +749,7 @@ export default function Productpage() {
                           ? <Loader2 size={13} style={{ animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
                           : shippingData
                             ? formatPrice(shipping)
-                            : '—'
+                            : 'â€”'
                         }
                       </td>
                     </tr>
@@ -760,7 +769,7 @@ export default function Productpage() {
                   Estimated delivery date{' '}
                   <strong>
                     {new Date(Date.now() + minDays * 86400000).toLocaleDateString('en-NG', { month: 'long', day: 'numeric' })}
-                    {' – '}
+                    {' â€“ '}
                     {new Date(Date.now() + maxDays * 86400000).toLocaleDateString('en-NG', { month: 'long', day: 'numeric' })}
                   </strong>
                 </p>
@@ -777,9 +786,9 @@ export default function Productpage() {
           </div>
 
         </div>
-        {/* ══════════════ END TOP SECTION ══════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â• END TOP SECTION â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
 
-        {/* ── TABS ── */}
+        {/* â”€â”€ TABS â”€â”€ */}
         <div className={styles.tabs}>
           {(['description', ...(hasSpecs ? (['specs'] as const) : []), 'faq'] as const).map(tab => (
             <button
@@ -827,7 +836,7 @@ export default function Productpage() {
           )}
         </div>
 
-        {/* ── VIDEO ── */}
+        {/* â”€â”€ VIDEO â”€â”€ */}
         {youtubeId && (
           <div className={styles.videoSection}>
             <h3 className={styles.sectionTitle}>Product Video</h3>
@@ -837,7 +846,7 @@ export default function Productpage() {
           </div>
         )}
 
-        {/* ── ALTERNATIVE PRODUCTS ── */}
+        {/* â”€â”€ ALTERNATIVE PRODUCTS â”€â”€ */}
         <ProductStrip
           title="Alternative Products"
           products={alternative}
@@ -847,7 +856,7 @@ export default function Productpage() {
           addToWishlist={addToWishlist}
         />
 
-        {/* ── COMPLEMENTARY PRODUCTS ── */}
+        {/* â”€â”€ COMPLEMENTARY PRODUCTS â”€â”€ */}
         <ProductStrip
           title="Complementary Products"
           products={complementary}

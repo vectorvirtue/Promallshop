@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { ShoppingCart, Heart, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import styles from './Featured.module.css'
 import { useCart } from '../context/CartContext'
-import { productsApi, getImageUrl, quoteApi } from '../lib/api'
+import { productsApi, getImageUrl, promallCombinedApi } from '../lib/api'
 import { useWishlist } from '../lib/useWishlist'
 import { useQuoteForm } from '../context/QuoteFormContext'
 import { productPath } from '../lib/slugs'
@@ -34,7 +34,7 @@ function Stars({ count }: { count: number }) {
   return (
     <span className={styles.stars}>
       {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className={i < count ? styles.starFilled : styles.starEmpty}>★</span>
+        <span key={i} className={i < count ? styles.starFilled : styles.starEmpty}>â˜…</span>
       ))}
     </span>
   )
@@ -65,13 +65,22 @@ export default function FeaturedProducts() {
   const [categories, setCategories] = useState<ApiCategory[]>([])
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
-  const [quoteThreshold, setQuoteThreshold] = useState(2000000)
+  const [quoteThreshold, setQuoteThreshold] = useState<number | null>(null)
 
   useEffect(() => {
-    // Fetch quote threshold
-    quoteApi.getThreshold()
-      .then(res => setQuoteThreshold(res.threshold))
-      .catch(() => setQuoteThreshold(2000000))
+    // Fetch global Promallshop price threshold
+    promallCombinedApi.getAll<{
+      status?: string
+      price_threshold?: string | number | null
+    }>()
+      .then(data => {
+        const raw = data.status === 'success' ? data.price_threshold : null
+        const threshold = raw == null || raw === '' ? null : Number(raw)
+        setQuoteThreshold(
+          threshold !== null && Number.isFinite(threshold) ? threshold : null
+        )
+      })
+      .catch(() => setQuoteThreshold(null))
 
     productsApi.getAll()
       .then((res: unknown) => {
@@ -99,7 +108,7 @@ export default function FeaturedProducts() {
 
   const handleRequestQuote = (product: ApiProduct) => {
     const priceNum = Number(product.end_user_price || product.price)
-    const priceStr = priceNum === 0 ? 'Price on request' : `₦ ${priceNum.toLocaleString('en-NG')}`
+    const priceStr = priceNum === 0 ? 'Price on request' : `â‚¦ ${priceNum.toLocaleString('en-NG')}`
     openQuoteForm({
       id: product.id,
       name: product.name,
@@ -107,7 +116,7 @@ export default function FeaturedProducts() {
     })
   }
 
-  const isHighValue = (price: number) => price >= quoteThreshold
+  const isHighValue = (price: number) => quoteThreshold !== null && price > quoteThreshold
 
   const filtered = (() => {
     if (activeCategoryId === null) return allProducts.slice(0, LIMIT)
@@ -124,7 +133,7 @@ export default function FeaturedProducts() {
 
   return (
     <section className={styles.section}>
-      {/* ── top bar ── */}
+      {/* â”€â”€ top bar â”€â”€ */}
       <div className={styles.topBar}>
         <div className={styles.topLeft}>
           <span className={styles.ongoingBadge}>
@@ -149,12 +158,12 @@ export default function FeaturedProducts() {
                 onClick={() => setActiveCategoryId(Number(category.category_id))}
               >
                 {category.category_name.length > 20
-                  ? `${category.category_name.slice(0, 18)}…`.toUpperCase()
+                  ? `${category.category_name.slice(0, 18)}â€¦`.toUpperCase()
                   : category.category_name.toUpperCase()}
               </button>
             ))}
           </div>
-          {/* ── swipe indicator ── */}
+          {/* â”€â”€ swipe indicator â”€â”€ */}
           <div className={styles.swipeIndicator}>
             <ChevronLeft size={16} />
             <span>Swipe to see more categories</span>
@@ -163,7 +172,7 @@ export default function FeaturedProducts() {
         </div>
       </div>
 
-      {/* ── product grid ── */}
+      {/* â”€â”€ product grid â”€â”€ */}
       <div className={styles.grid}>
         {loading
           ? Array.from({ length: LIMIT }).map((_, i) => (
@@ -212,10 +221,10 @@ export default function FeaturedProducts() {
                     <p className={styles.price}>
                       {currentPrice === 0
                         ? 'Price on request'
-                        : `₦ ${currentPrice.toLocaleString('en-NG')}`}
+                        : `â‚¦ ${currentPrice.toLocaleString('en-NG')}`}
                     </p>
                     {formerPrice > 0 && (
-                      <p className={styles.oldPrice}>₦ {formerPrice.toLocaleString('en-NG')}</p>
+                      <p className={styles.oldPrice}>â‚¦ {formerPrice.toLocaleString('en-NG')}</p>
                     )}
                     {discount > 0 && (
                       <p className={styles.discount}>{discount}% OFF</p>
@@ -233,7 +242,7 @@ export default function FeaturedProducts() {
                       name: p.name,
                       price: Number(p.end_user_price || p.price) === 0
                         ? 'Price on request'
-                        : `₦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
+                        : `â‚¦ ${Number(p.end_user_price || p.price).toLocaleString('en-NG')}`,
                       img: getImageUrl(p.image),
                     })}
                   >
@@ -256,7 +265,7 @@ export default function FeaturedProducts() {
                         name: p.name,
                         price: price === 0
                           ? 'Price on request'
-                          : `₦ ${price.toLocaleString('en-NG')}`,
+                          : `â‚¦ ${price.toLocaleString('en-NG')}`,
                         img: getImageUrl(p.image),
                       })
                     }
